@@ -10,6 +10,7 @@ create type privacidade_comunidade_enum as enum ('publica', 'privada');
 create type papel_comunidade_enum as enum ('membro', 'moderador', 'admin');
 create type tipo_galeria_enum as enum ('individual', 'comunitaria');
 create type status_galeria_enum as enum ('ativa', 'agendada', 'encerrada');
+create type tipo_notificacao_enum as enum ('candidatura', 'mensagem', 'convite', 'edital', 'salvo');
 
 -- 2. tabela de usuarios (geral - rf01, rf02, rf08, rf09, rf12)
 create table usuarios (
@@ -220,4 +221,71 @@ create table agenda_artista (
     
   -- (rf21)
     constraint sem_conflito_horario unique (artista_id, data_hora_inicio)
+);
+
+--(rf22)
+create table editais (
+    id serial primary key,
+    comunidade_id integer not null references comunidades(id) on delete cascade,
+    publicador_id integer not null references usuarios(id) on delete cascade,
+    titulo varchar(150) not null,
+    descricao text not null,
+    url_arquivo_oficial varchar(255) not null, -- arquivo pdf/docx do edital
+    data_inicio_inscricao date not null,
+    data_fim_inscricao date not null,
+    data_resultado date not null,
+    data_publicacao timestamp default current_timestamp
+);
+
+--(rf22)
+create table retificacoes_edital (
+    id serial primary key,
+    edital_id integer not null references editais(id) on delete cascade,
+    titulo_retificacao varchar(150) not null,
+    descricao_alteracoes text not null,
+    url_arquivo_aditivo varchar(255) not null, -- novo pdf com as alteracoes
+    data_retificacao timestamp default current_timestamp
+);
+
+-- (rf23)
+create table notificacoes (
+    id serial primary key,
+    usuario_destino_id integer not null references usuarios(id) on delete cascade,
+    tipo_notificacao tipo_notificacao_enum not null,
+    mensagem_alerta text not null,
+    link_contexto varchar(255) not null, -- url para onde o usuario vai ao clicar
+    lida boolean default false,
+    data_criacao timestamp default current_timestamp
+);
+
+--(rf24)
+create table salas_chat (
+    id serial primary key,
+    data_criacao timestamp default current_timestamp
+);
+
+--(rf24)
+create table participantes_chat (
+    sala_id integer references salas_chat(id) on delete cascade,
+    usuario_id integer references usuarios(id) on delete cascade,
+    primary key (sala_id, usuario_id)
+);
+
+
+create table mensagens_chat (
+    id serial primary key,
+    sala_id integer not null references salas_chat(id) on delete cascade,
+    remetente_id integer not null references usuarios(id) on delete cascade,
+    texto_mensagem text,                  -- nulo se for apenas envio de arquivo
+    url_anexo varchar(255),               -- imagens, audios ou documentos (.jpg, .pdf, etc)
+    lida boolean default false,
+    data_envio timestamp default current_timestamp
+);
+
+-- (rf25)
+create table log_vagas_canceladas (
+    id serial primary key,
+    vaga_id integer not null references vagas(id) on delete cascade,
+    cancelado_por_id integer not null references usuarios(id) on delete cascade,
+    data_cancelamento timestamp default current_timestamp
 );
