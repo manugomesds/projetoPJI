@@ -11,7 +11,9 @@ create type papel_comunidade_enum as enum ('membro', 'moderador', 'admin');
 create type tipo_galeria_enum as enum ('individual', 'comunitaria');
 create type status_galeria_enum as enum ('ativa', 'agendada', 'encerrada');
 create type tipo_notificacao_enum as enum ('candidatura', 'mensagem', 'convite', 'edital', 'salvo');
-
+create type tipo_conteudo_enum as enum ('vaga', 'comunidade', 'galeria', 'mensagem');
+create type status_moderacao_enum as enum ('aprovado', 'bloqueado', 'sob analise');
+create type tipo_alvo_salvo_enum as enum ('artista', 'obra', 'vaga');
 -- 2. tabela de usuarios (geral - rf01, rf02, rf08, rf09, rf12)
 create table usuarios (
     id serial primary key,
@@ -288,4 +290,80 @@ create table log_vagas_canceladas (
     vaga_id integer not null references vagas(id) on delete cascade,
     cancelado_por_id integer not null references usuarios(id) on delete cascade,
     data_cancelamento timestamp default current_timestamp
+);
+
+
+
+-- (rf26)
+create table moderacao_conteudo (
+    id serial primary key,
+    tipo_conteudo tipo_conteudo_enum not null,
+    conteudo_id integer not null,          -- id da vaga, comunidade, galeria ou mensagem
+    autor_id integer not null references usuarios(id) on delete cascade,
+    status_moderacao status_moderacao_enum default 'sob analise',
+    score_risco numeric(3,2) default 0.00,  -- pontuacao automatica de risco de spam/abuso
+    justificativa_acao text,               -- motivo do bloqueio ou aprovacao
+    data_analise timestamp,
+    data_criacao timestamp default current_timestamp
+);
+
+--  (rf26)
+create table reportes_usuario (
+    id serial primary key,
+    denunciante_id integer not null references usuarios(id) on delete cascade,
+    tipo_conteudo tipo_conteudo_enum not null,
+    conteudo_id integer not null,
+    motivo_reporte varchar(150) not null,
+    descricao_adicional text,
+    data_reporte timestamp default current_timestamp
+);
+
+-- (rf27)
+create table itens_salvos (
+    id serial primary key,
+    usuario_id integer not null references usuarios(id) on delete cascade,
+    tipo_alvo tipo_alvo_salvo_enum not null,
+    alvo_id integer not null,              -- id do artista, do arquivo do portfolio ou da vaga
+    data_salvamento timestamp default current_timestamp,
+    
+
+    constraint salvo_unico unique (usuario_id, tipo_alvo, alvo_id)
+);
+
+-- (rf28, rf29)
+create table ranking_top_da_semana (
+    id serial primary key,
+    artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
+    score_semanal numeric(10,2) not null,
+    data_inicio_ciclo date not null,
+    data_fim_ciclo date not null,
+    posicao_ranking integer not null,
+    data_calculo timestamp default current_timestamp
+);
+
+-- (niveis 1 a 5 - rf29)
+create table historico_medalhas (
+    id serial primary key,
+    artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
+    nivel_antigo integer check (nivel_antigo between 1 and 5),
+    nivel_novo integer not null check (nivel_novo between 1 and 5),
+    motivo_progressao varchar(255),      
+    data_mudanca timestamp default current_timestamp
+);
+
+create table conquistas_desbloqueadas (
+    id serial primary key,
+    artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
+    nome_conquista varchar(100) not null,   
+    descricao_conquista text not null,
+    data_desbloqueio timestamp default current_timestamp
+);
+
+-- (exclusao de conta - rf30)
+create table log_exclusoes_lgpd (
+    id serial primary key,
+    usuario_id_antigo integer not null,    -- mantido apenas o id numerico desvinculado de nomes
+    motivo_opcional text,
+    data_exclusao timestamp default current_timestamp,
+    comprovante_hash char(64) not null     -- token gerado para provar a exclusao orquestrada
 );
