@@ -40,6 +40,9 @@ public class UsuarioService {
         if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ConflictException("E-mail já cadastrado.");
         }
+        if (request.getSenha() == null || request.getSenha().isBlank()) {
+            throw new IllegalArgumentException("Senha é obrigatória.");
+        }
         Usuario usuario = new Usuario();
         preencherUsuario(usuario, request);
         usuario.setSenha(passwordEncoder.encode(request.getSenha()));
@@ -60,7 +63,9 @@ public class UsuarioService {
                     throw new ConflictException("E-mail já cadastrado.");
                 });
         preencherUsuario(usuario, request);
-        usuario.setSenha(passwordEncoder.encode(request.getSenha()));
+        if (request.getSenha() != null && !request.getSenha().isBlank()) {
+            usuario.setSenha(passwordEncoder.encode(request.getSenha()));
+        }
         return toResponse(usuarioRepository.save(usuario));
     }
 

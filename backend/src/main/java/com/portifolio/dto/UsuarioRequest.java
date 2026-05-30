@@ -26,7 +26,6 @@ public class UsuarioRequest {
     @Email(message = "E-mail inválido")
     private String email;
 
-    @NotBlank(message = "Senha é obrigatória")
     private String senha;
 
     @NotNull(message = "Tipo de usuário é obrigatório")

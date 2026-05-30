@@ -7,6 +7,10 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 
+/**
+ * Configuração temporária para liberar todas as requisições.
+ * Autenticação com JWT será habilitada posteriormente.
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
