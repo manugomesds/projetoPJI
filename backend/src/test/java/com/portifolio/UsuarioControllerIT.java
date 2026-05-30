@@ -6,21 +6,21 @@ import com.portifolio.model.enums.TipoUsuario;
 import java.time.LocalDate;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.client.RestTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 class UsuarioControllerIT {
 
-    @Autowired
-    private TestRestTemplate restTemplate;
+    @LocalServerPort
+    private int port;
+
+    private final RestTemplate restTemplate = new RestTemplate();
 
     @Test
     void deveCriarEBuscarUsuario() {
@@ -32,13 +32,14 @@ class UsuarioControllerIT {
         request.setSenha("senha123");
         request.setTipoUsuario(TipoUsuario.ARTISTA);
 
-        ResponseEntity<UsuarioResponse> created = restTemplate.postForEntity("/api/usuarios", request, UsuarioResponse.class);
+        String baseUrl = "http://localhost:" + port;
+        ResponseEntity<UsuarioResponse> created = restTemplate.postForEntity(baseUrl + "/api/usuarios", request, UsuarioResponse.class);
 
         assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
         assertThat(created.getBody()).isNotNull();
         Long id = created.getBody().getId();
 
-        ResponseEntity<UsuarioResponse> fetched = restTemplate.getForEntity("/api/usuarios/" + id, UsuarioResponse.class);
+        ResponseEntity<UsuarioResponse> fetched = restTemplate.getForEntity(baseUrl + "/api/usuarios/" + id, UsuarioResponse.class);
 
         assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.OK);
         assertThat(fetched.getBody()).isNotNull();

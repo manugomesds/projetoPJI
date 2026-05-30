@@ -54,6 +54,16 @@ xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/x
 <artifactId>spring-boot-starter-test</artifactId>
 <scope>test</scope>
 </dependency>
+<dependency>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-test</artifactId>
+<scope>test</scope>
+</dependency>
+<dependency>
+<groupId>org.springframework.boot</groupId>
+<artifactId>spring-boot-test-autoconfigure</artifactId>
+<scope>test</scope>
+</dependency>
 </dependencies>
 
 <build>
