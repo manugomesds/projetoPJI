@@ -3,8 +3,8 @@ package com.portifolio.model;
 import com.portifolio.model.enums.StatusCandidatura;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -47,7 +47,7 @@ public class Candidatura {
     @Column(name = "link_portfolio_candidatura", nullable = false, length = 255)
     private String linkPortfolioCandidatura;
 
-    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status")
     private StatusCandidatura status;
 
