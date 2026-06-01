@@ -16,7 +16,7 @@ create type status_moderacao_enum as enum ('aprovado', 'bloqueado', 'sob analise
 create type tipo_alvo_salvo_enum as enum ('artista', 'obra', 'vaga');
 -- 2. tabela de usuarios (geral - rf01, rf02, rf08, rf09, rf12)
 create table usuarios (
-    id serial primary key,
+    id bigserial primary key,
     nome varchar(150) not null,
     data_nascimento date not null,
     telefone varchar(20) not null,
@@ -55,7 +55,7 @@ create table perfis_contratantes (
 
 -- (rf03, rf04, rf05, rf08, rf10)
 create table tags (
-    id serial primary key,
+    id bigserial primary key,
     nome varchar(50) unique not null
 );
 
@@ -68,7 +68,7 @@ create table tags_artista (
 
 -- (rf03, rf04, rf05, rf07)
 create table vagas (
-    id serial primary key,
+    id bigserial primary key,
     contratante_id integer not null references perfis_contratantes(usuario_id) on delete cascade,
     titulo varchar(150) not null,
     descricao text not null,
@@ -94,7 +94,7 @@ create table tags_vaga (
 
 -- (rf05, rf06)
 create table candidaturas (
-    id serial primary key,
+    id bigserial primary key,
     vaga_id integer not null references vagas(id) on delete cascade,
     artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
     mensagem_apresentacao text not null,
@@ -108,13 +108,13 @@ create table candidaturas (
 
 -- rf10, rf13)
 create table visualizacoes_perfil (
-    id serial primary key,
+    id bigserial primary key,
     perfil_visitado_id integer not null references usuarios(id) on delete cascade,
     data_visualizacao timestamp default current_timestamp
 );
 -- (rf15, rf16)
 create table portfolio_arquivos (
-    id serial primary key,
+    id bigserial primary key,
     artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
     url_arquivo varchar(255) not null,
     nome_original varchar(150) not null,
@@ -130,7 +130,7 @@ create table portfolio_arquivos (
 
 -- (rf14)
 create table denuncias_plagio (
-    id serial primary key,
+    id bigserial primary key,
     denunciante_id integer not null references usuarios(id) on delete cascade,
     perfil_denunciado_id integer not null references usuarios(id) on delete cascade,
     tipo_violacao tipo_violacao_enum not null,
@@ -145,7 +145,7 @@ create table denuncias_plagio (
 
 -- (rf18)
 create table embeds_externos (
-    id serial primary key,
+    id bigserial primary key,
     artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
     url_original varchar(255) not null,
     codigo_iframe text not null,    
@@ -156,7 +156,7 @@ create table embeds_externos (
 
 -- (rf19)
 create table comunidades (
-    id serial primary key,
+    id bigserial primary key,
     criador_id integer not null references usuarios(id) on delete cascade,
     nome varchar(100) not null unique,
     descricao text not null,
@@ -177,7 +177,7 @@ create table membros_comunidade (
 
 -- (rf20)
 create table galerias_virtuais (
-    id serial primary key,
+    id bigserial primary key,
     dono_id integer not null references usuarios(id) on delete cascade, -- artista ou admin da comunidade
     comunidade_id integer references comunidades(id) on delete cascade, -- nulo se for individual
     titulo varchar(150) not null,
@@ -198,7 +198,7 @@ create table itens_galeria (
 
 --  (rf20)
 create table interacoes_galeria (
-    id serial primary key,
+    id bigserial primary key,
     usuario_id integer not null references usuarios(id) on delete cascade,
     arquivo_id integer not null references portfolio_arquivos(id) on delete cascade,
     curtiu boolean default false,
@@ -208,7 +208,7 @@ create table interacoes_galeria (
 
 -- (rf21)
 create table agenda_artista (
-    id serial primary key,
+    id bigserial primary key,
     artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
     titulo_compromisso varchar(150) not null,
     descricao_compromisso text,
@@ -227,7 +227,7 @@ create table agenda_artista (
 
 --(rf22)
 create table editais (
-    id serial primary key,
+    id bigserial primary key,
     comunidade_id integer not null references comunidades(id) on delete cascade,
     publicador_id integer not null references usuarios(id) on delete cascade,
     titulo varchar(150) not null,
@@ -241,7 +241,7 @@ create table editais (
 
 --(rf22)
 create table retificacoes_edital (
-    id serial primary key,
+    id bigserial primary key,
     edital_id integer not null references editais(id) on delete cascade,
     titulo_retificacao varchar(150) not null,
     descricao_alteracoes text not null,
@@ -251,7 +251,7 @@ create table retificacoes_edital (
 
 -- (rf23)
 create table notificacoes (
-    id serial primary key,
+    id bigserial primary key,
     usuario_destino_id integer not null references usuarios(id) on delete cascade,
     tipo_notificacao tipo_notificacao_enum not null,
     mensagem_alerta text not null,
@@ -262,7 +262,7 @@ create table notificacoes (
 
 --(rf24)
 create table salas_chat (
-    id serial primary key,
+    id bigserial primary key,
     data_criacao timestamp default current_timestamp
 );
 
@@ -275,7 +275,7 @@ create table participantes_chat (
 
 
 create table mensagens_chat (
-    id serial primary key,
+    id bigserial primary key,
     sala_id integer not null references salas_chat(id) on delete cascade,
     remetente_id integer not null references usuarios(id) on delete cascade,
     texto_mensagem text,                  -- nulo se for apenas envio de arquivo
@@ -286,7 +286,7 @@ create table mensagens_chat (
 
 -- (rf25)
 create table log_vagas_canceladas (
-    id serial primary key,
+    id bigserial primary key,
     vaga_id integer not null references vagas(id) on delete cascade,
     cancelado_por_id integer not null references usuarios(id) on delete cascade,
     data_cancelamento timestamp default current_timestamp
@@ -296,7 +296,7 @@ create table log_vagas_canceladas (
 
 -- (rf26)
 create table moderacao_conteudo (
-    id serial primary key,
+    id bigserial primary key,
     tipo_conteudo tipo_conteudo_enum not null,
     conteudo_id integer not null,          -- id da vaga, comunidade, galeria ou mensagem
     autor_id integer not null references usuarios(id) on delete cascade,
@@ -309,7 +309,7 @@ create table moderacao_conteudo (
 
 --  (rf26)
 create table reportes_usuario (
-    id serial primary key,
+    id bigserial primary key,
     denunciante_id integer not null references usuarios(id) on delete cascade,
     tipo_conteudo tipo_conteudo_enum not null,
     conteudo_id integer not null,
@@ -320,7 +320,7 @@ create table reportes_usuario (
 
 -- (rf27)
 create table itens_salvos (
-    id serial primary key,
+    id bigserial primary key,
     usuario_id integer not null references usuarios(id) on delete cascade,
     tipo_alvo tipo_alvo_salvo_enum not null,
     alvo_id integer not null,              -- id do artista, do arquivo do portfolio ou da vaga
@@ -332,7 +332,7 @@ create table itens_salvos (
 
 -- (rf28, rf29)
 create table ranking_top_da_semana (
-    id serial primary key,
+    id bigserial primary key,
     artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
     score_semanal numeric(10,2) not null,
     data_inicio_ciclo date not null,
@@ -343,7 +343,7 @@ create table ranking_top_da_semana (
 
 -- (niveis 1 a 5 - rf29)
 create table historico_medalhas (
-    id serial primary key,
+    id bigserial primary key,
     artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
     nivel_antigo integer check (nivel_antigo between 1 and 5),
     nivel_novo integer not null check (nivel_novo between 1 and 5),
@@ -352,7 +352,7 @@ create table historico_medalhas (
 );
 
 create table conquistas_desbloqueadas (
-    id serial primary key,
+    id bigserial primary key,
     artista_id integer not null references perfis_artistas(usuario_id) on delete cascade,
     nome_conquista varchar(100) not null,   
     descricao_conquista text not null,
@@ -361,7 +361,7 @@ create table conquistas_desbloqueadas (
 
 -- (exclusao de conta - rf30)
 create table log_exclusoes_lgpd (
-    id serial primary key,
+    id bigserial primary key,
     usuario_id_antigo integer not null,    -- mantido apenas o id numerico desvinculado de nomes
     motivo_opcional text,
     data_exclusao timestamp default current_timestamp,
