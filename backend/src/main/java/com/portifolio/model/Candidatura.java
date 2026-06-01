@@ -45,6 +45,7 @@ public class Candidatura {
     @Column(name = "link_portfolio_candidatura", nullable = false, length = 255)
     private String linkPortfolioCandidatura;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private StatusCandidatura status;
 
