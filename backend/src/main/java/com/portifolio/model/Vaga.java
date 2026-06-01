@@ -67,14 +67,14 @@ public class Vaga {
     @Column(columnDefinition = "text")
     private String beneficios;
 
-    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "modelo_trabalho", nullable = false)
     private ModeloTrabalho modeloTrabalho;
 
     @Column(name = "tipo_contrato", nullable = false, length = 100)
     private String tipoContrato;
 
-    @Enumerated(EnumType.STRING)
+    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
     @Column(name = "status")
     private StatusVaga status;
 
