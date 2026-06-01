@@ -4,8 +4,8 @@ import com.portifolio.model.enums.ModeloTrabalho;
 import com.portifolio.model.enums.StatusVaga;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -67,14 +67,14 @@ public class Vaga {
     @Column(columnDefinition = "text")
     private String beneficios;
 
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Enumerated(EnumType.STRING)
     @Column(name = "modelo_trabalho", nullable = false)
     private ModeloTrabalho modeloTrabalho;
 
     @Column(name = "tipo_contrato", nullable = false, length = 100)
     private String tipoContrato;
 
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private StatusVaga status;
 
