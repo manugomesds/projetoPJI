@@ -43,7 +43,7 @@ public class Usuario {
     @Column(nullable = false, length = 255)
     private String senha;
 
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Enumerated(EnumType.STRING)
     @Column(name = "tipo_usuario", nullable = false)
     private TipoUsuario tipoUsuario;
 
