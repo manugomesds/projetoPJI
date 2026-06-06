@@ -44,7 +44,6 @@ public class PerfilContratanteService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
         PerfilContratante perfil = new PerfilContratante();
         perfil.setUsuario(usuario);
-        perfil.setUsuarioId(usuario.getId());
         preencherPerfil(perfil, request);
         return toResponse(perfilContratanteRepository.save(perfil));
     }
