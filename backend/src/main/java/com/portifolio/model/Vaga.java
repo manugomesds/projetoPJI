@@ -4,8 +4,6 @@ import com.portifolio.model.enums.ModeloTrabalho;
 import com.portifolio.model.enums.StatusVaga;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -67,15 +65,13 @@ public class Vaga {
     @Column(columnDefinition = "text")
     private String beneficios;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "modelo_trabalho", nullable = false)
+    @Column(name = "modelo_trabalho", nullable = false, columnDefinition = "modelo_trabalho_enum")
     private ModeloTrabalho modeloTrabalho;
 
     @Column(name = "tipo_contrato", nullable = false, length = 100)
     private String tipoContrato;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "status", columnDefinition = "status_vaga_enum")
     private StatusVaga status;
 
     @Column(name = "data_publicacao")
