@@ -3,8 +3,6 @@ package com.portifolio.model;
 import com.portifolio.model.enums.StatusCandidatura;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -47,8 +45,7 @@ public class Candidatura {
     @Column(name = "link_portfolio_candidatura", nullable = false, length = 255)
     private String linkPortfolioCandidatura;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status")
+    @Column(name = "status", columnDefinition = "status_candidatura_enum")
     private StatusCandidatura status;
 
     @Column(name = "data_candidatura")
