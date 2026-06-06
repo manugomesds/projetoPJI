@@ -37,20 +37,19 @@ public class PerfilArtistaService {
     @Transactional(readOnly = true)
     public PerfilArtistaResponse buscarPorId(Long id) {
         PerfilArtista perfil = perfilArtistaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista nao encontrado."));
         return toResponse(perfil);
     }
 
     @Transactional
     public PerfilArtistaResponse criar(PerfilArtistaRequest request) {
         if (perfilArtistaRepository.existsById(request.getUsuarioId())) {
-            throw new ConflictException("Perfil de artista já cadastrado para este usuário.");
+            throw new ConflictException("Perfil de artista ja cadastrado para este usuario.");
         }
         Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         PerfilArtista perfil = new PerfilArtista();
         perfil.setUsuario(usuario);
-        perfil.setUsuarioId(usuario.getId());
         preencherPerfil(perfil, request);
         perfil.setUltimaAtualizacao(LocalDateTime.now());
         return toResponse(perfilArtistaRepository.save(perfil));
@@ -59,7 +58,7 @@ public class PerfilArtistaService {
     @Transactional
     public PerfilArtistaResponse atualizar(Long id, PerfilArtistaRequest request) {
         PerfilArtista perfil = perfilArtistaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista nao encontrado."));
         preencherPerfil(perfil, request);
         perfil.setUltimaAtualizacao(LocalDateTime.now());
         return toResponse(perfilArtistaRepository.save(perfil));
@@ -68,7 +67,7 @@ public class PerfilArtistaService {
     @Transactional
     public void deletar(Long id) {
         PerfilArtista perfil = perfilArtistaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista nao encontrado."));
         perfilArtistaRepository.delete(perfil);
     }
 
@@ -87,7 +86,7 @@ public class PerfilArtistaService {
     private Set<Tag> resolverTags(Set<Long> tagIds) {
         List<Tag> tags = tagRepository.findAllById(tagIds);
         if (tags.size() != tagIds.size()) {
-            throw new ResourceNotFoundException("Uma ou mais tags não foram encontradas.");
+            throw new ResourceNotFoundException("Uma ou mais tags nao foram encontradas.");
         }
         return new HashSet<>(tags);
     }
