@@ -3,8 +3,6 @@ package com.portifolio.model;
 import com.portifolio.model.enums.TipoUsuario;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -43,8 +41,7 @@ public class Usuario {
     @Column(nullable = false, length = 255)
     private String senha;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_usuario", nullable = false)
+    @Column(name = "tipo_usuario", nullable = false, columnDefinition = "tipo_usuario_enum")
     private TipoUsuario tipoUsuario;
 
     @Column(name = "perfil_completo")
