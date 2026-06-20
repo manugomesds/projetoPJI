@@ -21,7 +21,9 @@ create table usuarios (
     data_nascimento date not null,
     telefone varchar(20) not null,
     email varchar(150) unique not null,
-    senha varchar(255) not null,
+    senha varchar(255),
+    google_id varchar(255) unique,
+    foto_perfil varchar(255),
     tipo_usuario tipo_usuario_enum not null,
     perfil_completo boolean default false,
     token_recuperacao varchar(255),
@@ -36,6 +38,7 @@ create table usuarios (
 create table perfis_artistas (
     usuario_id bigint primary key references usuarios(id) on delete cascade,
     biografia text,
+    foto_perfil varchar(255),
     localizacao varchar(150),
     url_portfolio varchar(255),
     nivel_medalha integer default 1 check (nivel_medalha between 1 and 5),
@@ -48,6 +51,7 @@ create table perfis_contratantes (
     usuario_id bigint primary key references usuarios(id) on delete cascade,
     nome_empresa varchar(150),
     biografia text,
+    foto_perfil varchar(255),
     localizacao varchar(150),
     banner_url varchar(255)
 );
@@ -361,3 +365,15 @@ create table log_exclusoes_lgpd (
     data_exclusao timestamp default current_timestamp,
     comprovante_hash char(64) not null
 );
+ 
+-- RF33: tabela de refresh tokens
+create table refresh_tokens (
+    id BIGSERIAL primary key,
+    usuario_id bigint not null references usuarios(id) on delete cascade,
+    token_hash varchar(64) not null unique,
+    expiracao timestamp not null,
+    ativo boolean not null default true,
+    data_criacao timestamp default current_timestamp
+);
+ 
+create index if not exists idx_refresh_tokens_usuario on refresh_tokens(usuario_id);
