@@ -19,9 +19,15 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario nao encontrado: " + email));
+
+        // RF32: usuarios Google nao possuem senha local (campo e null no banco).
+        // O placeholder {noop}GOOGLE_USER satisfaz a validacao interna do Spring Security
+        // sem comprometer a seguranca — a autenticacao ja foi feita pelo JWT.
+        String senha = usuario.getSenha() != null ? usuario.getSenha() : "{noop}GOOGLE_USER";
+
         return User.builder()
                 .username(usuario.getEmail())
-                .password(usuario.getSenha())
+                .password(senha)
                 .roles(usuario.getTipoUsuario().name())
                 .build();
     }
