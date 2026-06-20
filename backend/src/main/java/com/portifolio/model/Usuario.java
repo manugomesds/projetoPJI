@@ -38,7 +38,8 @@ public class Usuario {
     @Column(nullable = false, length = 150, unique = true)
     private String email;
 
-    @Column(nullable = false, length = 255)
+    // RF32: nullable — usuarios Google nao possuem senha local
+    @Column(length = 255)
     private String senha;
 
     @Column(name = "tipo_usuario", nullable = false, columnDefinition = "tipo_usuario_enum")
@@ -64,4 +65,13 @@ public class Usuario {
 
     @Column(name = "email_responsavel", length = 150)
     private String emailResponsavel;
+
+    // RF32: identificador unico da conta Google (sub do ID Token)
+    @Column(name = "google_id", length = 255, unique = true)
+    private String googleId;
+
+    // RF34: foto vinda do Google no primeiro acesso (Opcao B)
+    // Sobrescrita quando usuario define foto propria em perfis_artistas/perfis_contratantes
+    @Column(name = "foto_perfil", length = 255)
+    private String fotoPerfil;
 }
