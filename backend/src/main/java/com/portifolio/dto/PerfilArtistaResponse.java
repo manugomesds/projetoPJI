@@ -18,4 +18,7 @@ public class PerfilArtistaResponse {
     private String bannerUrl;
     private LocalDateTime ultimaAtualizacao;
     private Set<Long> tagIds;
+
+    // RF34: URL do avatar resolvida (foto propria > foto Google > DiceBear)
+    private String avatarUrl;
 }
