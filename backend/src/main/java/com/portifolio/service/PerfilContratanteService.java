@@ -20,6 +20,7 @@ public class PerfilContratanteService {
 
     private final PerfilContratanteRepository perfilContratanteRepository;
     private final UsuarioRepository usuarioRepository;
+    private final AvatarService avatarService; // RF34
 
     @Transactional(readOnly = true)
     public List<PerfilContratanteResponse> listarTodos() {
@@ -31,17 +32,17 @@ public class PerfilContratanteService {
     @Transactional(readOnly = true)
     public PerfilContratanteResponse buscarPorId(Long id) {
         PerfilContratante perfil = perfilContratanteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante nao encontrado."));
         return toResponse(perfil);
     }
 
     @Transactional
     public PerfilContratanteResponse criar(PerfilContratanteRequest request) {
         if (perfilContratanteRepository.existsById(request.getUsuarioId())) {
-            throw new ConflictException("Perfil de contratante já cadastrado para este usuário.");
+            throw new ConflictException("Perfil de contratante ja cadastrado para este usuario.");
         }
         Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         PerfilContratante perfil = new PerfilContratante();
         perfil.setUsuario(usuario);
         preencherPerfil(perfil, request);
@@ -51,7 +52,7 @@ public class PerfilContratanteService {
     @Transactional
     public PerfilContratanteResponse atualizar(Long id, PerfilContratanteRequest request) {
         PerfilContratante perfil = perfilContratanteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante nao encontrado."));
         preencherPerfil(perfil, request);
         return toResponse(perfilContratanteRepository.save(perfil));
     }
@@ -59,7 +60,7 @@ public class PerfilContratanteService {
     @Transactional
     public void deletar(Long id) {
         PerfilContratante perfil = perfilContratanteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante não encontrado."));
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante nao encontrado."));
         perfilContratanteRepository.delete(perfil);
     }
 
@@ -71,12 +72,20 @@ public class PerfilContratanteService {
     }
 
     private PerfilContratanteResponse toResponse(PerfilContratante perfil) {
+        // RF34: prioridade foto_perfil do perfil > foto do Google (usuarios.foto_perfil) > DiceBear
+        String avatarUrl = avatarService.resolverUrl(
+                perfil.getUsuarioId(),
+                perfil.getUsuario().getFotoPerfil(),  // foto salva via Google (RF32)
+                perfil.getFotoPerfil()                // foto definida pelo usuario via RF08
+        );
+
         return PerfilContratanteResponse.builder()
                 .usuarioId(perfil.getUsuarioId())
                 .nomeEmpresa(perfil.getNomeEmpresa())
                 .biografia(perfil.getBiografia())
                 .localizacao(perfil.getLocalizacao())
                 .bannerUrl(perfil.getBannerUrl())
+                .avatarUrl(avatarUrl)
                 .build();
     }
 }
