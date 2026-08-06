@@ -377,3 +377,12 @@ create table refresh_tokens (
 );
  
 create index if not exists idx_refresh_tokens_usuario on refresh_tokens(usuario_id);
+
+-- RF03: adiciona estado CANCELADA (usado por RF25 futuramente) e índices de performance
+
+ALTER TYPE status_vaga_enum ADD VALUE IF NOT EXISTS 'cancelada';
+
+CREATE INDEX IF NOT EXISTS idx_vagas_status_id ON vagas(status, id);
+CREATE INDEX IF NOT EXISTS idx_vagas_cidade ON vagas(cidade);
+CREATE INDEX IF NOT EXISTS idx_vagas_estado ON vagas(estado);
+CREATE INDEX IF NOT EXISTS idx_vagas_contratante_id ON vagas(contratante_id);
