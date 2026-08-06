@@ -5,7 +5,8 @@ import java.util.Arrays;
 public enum StatusVaga implements DatabaseEnum {
     ABERTA("aberta"),
     PAUSADA("pausada"),
-    ENCERRADA("encerrada");
+    ENCERRADA("encerrada"),
+    CANCELADA("cancelada");
 
     private final String databaseValue;
 
