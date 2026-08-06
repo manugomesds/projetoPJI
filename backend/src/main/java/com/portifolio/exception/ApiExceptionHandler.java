@@ -10,6 +10,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class ApiExceptionHandler {
@@ -44,6 +45,15 @@ public class ApiExceptionHandler {
                 .collect(Collectors.toList());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(buildError(HttpStatus.BAD_REQUEST, "Dados inválidos.", detalhes));
+    }
+
+    // RF03: filtro invalido (ex.: modeloTrabalho=INVALIDO) gera erro de conversao do Spring.
+    // Sem este handler, o corpo de erro fugiria do formato padrao ErroResposta.
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ErroResposta> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        String mensagem = "Parâmetro '" + ex.getName() + "' possui valor inválido.";
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(buildError(HttpStatus.BAD_REQUEST, mensagem, List.of()));
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
