@@ -56,6 +56,10 @@ public class PerfilArtista {
     @Column(name = "ultima_atualizacao")
     private LocalDateTime ultimaAtualizacao;
 
+    // RF34: foto de perfil definida pelo usuario via RF08 (sobrescreve foto do Google)
+    @Column(name = "foto_perfil", length = 255)
+    private String fotoPerfil;
+
     @ManyToMany
     @jakarta.persistence.JoinTable(
             name = "tags_artista",

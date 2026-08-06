@@ -26,6 +26,7 @@ public class PerfilArtistaService {
     private final PerfilArtistaRepository perfilArtistaRepository;
     private final UsuarioRepository usuarioRepository;
     private final TagRepository tagRepository;
+    private final AvatarService avatarService; // RF34
 
     @Transactional(readOnly = true)
     public List<PerfilArtistaResponse> listarTodos() {
@@ -95,6 +96,14 @@ public class PerfilArtistaService {
         Set<Long> tagIds = perfil.getTags().stream()
                 .map(Tag::getId)
                 .collect(Collectors.toSet());
+
+        // RF34: prioridade foto_perfil do perfil > foto do Google (usuarios.foto_perfil) > DiceBear
+        String avatarUrl = avatarService.resolverUrl(
+                perfil.getUsuarioId(),
+                perfil.getUsuario().getFotoPerfil(),  // foto salva via Google (RF32)
+                perfil.getFotoPerfil()                // foto definida pelo usuario via RF08
+        );
+
         return PerfilArtistaResponse.builder()
                 .usuarioId(perfil.getUsuarioId())
                 .biografia(perfil.getBiografia())
@@ -105,6 +114,7 @@ public class PerfilArtistaService {
                 .bannerUrl(perfil.getBannerUrl())
                 .ultimaAtualizacao(perfil.getUltimaAtualizacao())
                 .tagIds(tagIds)
+                .avatarUrl(avatarUrl)
                 .build();
     }
 }

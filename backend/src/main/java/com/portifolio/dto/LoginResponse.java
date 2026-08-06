@@ -14,4 +14,10 @@ public class LoginResponse {
     private String email;
     private TipoUsuario tipoUsuario;
     private Boolean perfilCompleto;
+
+    // RF34: URL do avatar (foto real ou DiceBear gerado — nunca null)
+    private String avatarUrl;
+
+    // RF33: presente apenas quando rememberMe = true; null caso contrario
+    private String refreshToken;
 }

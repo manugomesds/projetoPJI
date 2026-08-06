@@ -11,4 +11,7 @@ public class PerfilContratanteResponse {
     private String biografia;
     private String localizacao;
     private String bannerUrl;
+
+    // RF34: URL do avatar resolvida (foto propria > foto Google > DiceBear)
+    private String avatarUrl;
 }

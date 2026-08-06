@@ -5,5 +5,9 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
+
     Optional<Usuario> findByEmail(String email);
+
+    // RF32: busca por conta Google vinculada
+    Optional<Usuario> findByGoogleId(String googleId);
 }

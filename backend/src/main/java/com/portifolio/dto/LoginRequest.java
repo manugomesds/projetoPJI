@@ -15,4 +15,7 @@ public class LoginRequest {
 
     @NotBlank(message = "Senha e obrigatoria")
     private String senha;
+
+    // RF33: se true, emite refresh token de 30 dias
+    private Boolean rememberMe = false;
 }

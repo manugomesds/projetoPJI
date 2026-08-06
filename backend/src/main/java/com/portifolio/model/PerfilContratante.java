@@ -41,4 +41,8 @@ public class PerfilContratante {
 
     @Column(name = "banner_url", length = 255)
     private String bannerUrl;
+
+    // RF34: foto de perfil definida pelo usuario via RF08 (sobrescreve foto do Google)
+    @Column(name = "foto_perfil", length = 255)
+    private String fotoPerfil;
 }
