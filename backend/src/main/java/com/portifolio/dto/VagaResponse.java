@@ -27,4 +27,8 @@ public class VagaResponse {
     private StatusVaga status;
     private LocalDateTime dataPublicacao;
     private Set<Long> tagIds;
+
+    // RF03 Fase 2 — true apenas dentro de vagasCanceladasComCandidatura;
+    // sinaliza ao frontend exibir o badge "Vaga Cancelada"
+    private boolean cancelada;
 }
