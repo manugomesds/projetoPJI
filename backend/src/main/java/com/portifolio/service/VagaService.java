@@ -5,14 +5,18 @@ import com.portifolio.dto.VagaListagemResponse;
 import com.portifolio.dto.VagaRequest;
 import com.portifolio.dto.VagaResponse;
 import com.portifolio.exception.ResourceNotFoundException;
+import com.portifolio.model.Candidatura;
 import com.portifolio.model.PerfilContratante;
 import com.portifolio.model.Tag;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.StatusVaga;
+import com.portifolio.model.enums.TipoUsuario;
+import com.portifolio.repository.CandidaturaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
 import com.portifolio.repository.TagRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.repository.specification.VagaSpecifications;
+import com.portifolio.security.AuthenticatedUserResolver;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -38,8 +42,12 @@ public class VagaService {
     private final VagaRepository vagaRepository;
     private final PerfilContratanteRepository perfilContratanteRepository;
     private final TagRepository tagRepository;
+    private final CandidaturaRepository candidaturaRepository;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
 
     // RF03 — Listagem e busca paginada (cursor-based) de vagas ABERTAS. Endpoint público.
+    // RF03 Fase 2 — se o artista autenticado tiver candidaturas em vagas CANCELADA,
+    // elas voltam em uma seção separada da resposta.
     @Transactional(readOnly = true)
     public VagaListagemResponse listar(VagaBuscaFiltro filtro) {
 
@@ -57,7 +65,6 @@ public class VagaService {
                 .and(VagaSpecifications.remuneracaoMaxima(filtro.getFaixaSalarialMax()))
                 .and(VagaSpecifications.comAlgumaTag(filtro.getTagIds()));
 
-        // Busca tamanho+1 apenas para descobrir se existe próxima página (RNF12)
         Pageable pageable = PageRequest.of(0, tamanho + 1, Sort.by(Sort.Direction.ASC, "id"));
         List<Vaga> bruto = vagaRepository.findAll(spec, pageable).getContent();
 
@@ -67,11 +74,39 @@ public class VagaService {
         List<VagaResponse> content = carregarComTagsEContratante(pagina);
         Long nextCursor = hasMore ? pagina.get(pagina.size() - 1).getId() : null;
 
+        List<VagaResponse> vagasCanceladasComCandidatura = buscarVagasCanceladasParaArtistaLogado();
+
         return VagaListagemResponse.builder()
                 .content(content)
                 .nextCursor(nextCursor)
                 .hasMore(hasMore)
+                .vagasCanceladasComCandidatura(vagasCanceladasComCandidatura)
                 .build();
+    }
+
+    // RF03 Fase 2. O artista NUNCA é identificado por parâmetro do cliente —
+    // sempre resolvido a partir do token JWT já validado pelo JwtAuthFilter (RNF08).
+    private List<VagaResponse> buscarVagasCanceladasParaArtistaLogado() {
+        return authenticatedUserResolver.usuarioAtual()
+                .filter(usuario -> usuario.getTipoUsuario() == TipoUsuario.ARTISTA)
+                .map(usuario -> {
+                    List<Candidatura> candidaturas = candidaturaRepository
+                            .findByArtista_UsuarioIdAndVaga_Status(usuario.getId(), StatusVaga.CANCELADA);
+
+                    if (candidaturas.isEmpty()) {
+                        return List.<VagaResponse>of();
+                    }
+
+                    List<Long> vagaIds = candidaturas.stream()
+                            .map(c -> c.getVaga().getId())
+                            .distinct()
+                            .toList();
+
+                    return vagaRepository.findByIdIn(vagaIds).stream()
+                            .map(v -> toResponse(v, true))
+                            .toList();
+                })
+                .orElse(List.of());
     }
 
     // Segunda consulta: busca tags+contratante para o conjunto de IDs já paginado (RNF05).
@@ -165,6 +200,10 @@ public class VagaService {
     }
 
     private VagaResponse toResponse(Vaga vaga) {
+        return toResponse(vaga, false);
+    }
+
+    private VagaResponse toResponse(Vaga vaga, boolean cancelada) {
         Set<Long> tagIds = vaga.getTags().stream()
                 .map(Tag::getId)
                 .collect(Collectors.toSet());
@@ -185,6 +224,7 @@ public class VagaService {
                 .status(vaga.getStatus())
                 .dataPublicacao(vaga.getDataPublicacao())
                 .tagIds(tagIds)
+                .cancelada(cancelada)
                 .build();
     }
 }
