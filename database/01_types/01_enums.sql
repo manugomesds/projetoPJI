@@ -14,3 +14,4 @@ CREATE TYPE tipo_notificacao_enum AS ENUM ('candidatura', 'mensagem', 'convite',
 CREATE TYPE tipo_conteudo_enum AS ENUM ('vaga', 'comunidade', 'galeria', 'mensagem');
 CREATE TYPE status_moderacao_enum AS ENUM ('aprovado', 'bloqueado', 'sob analise');
 CREATE TYPE tipo_alvo_salvo_enum AS ENUM ('artista', 'obra', 'vaga');
+CREATE TYPE status_usuario_enum AS ENUM ('pendente', 'pendente_consentimento', 'ativa', 'inativa', 'bloqueada');
