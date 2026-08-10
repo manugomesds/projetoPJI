@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meu perfil — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/cadastro.css">
+</head>
+<body class="pagina-escura">
+  <header>
+    <nav class="navbar" aria-label="Navegação principal">
+      <a href="dashboard-contratante.html">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+      <div class="navbar__acoes">
+        <a class="navbar__link" href="dashboard-contratante.html">Dashboard</a>
+        <button class="navbar__link" type="button" data-logout>Sair</button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="cadastro">
+    <div class="card cadastro__card">
+      <header class="cadastro__cabecalho">
+        <h1 class="cadastro__titulo">Meu <span class="destaque-magenta">perfil</span></h1>
+      </header>
+
+      <form class="cadastro__form" id="form-perfil">
+        <div class="campo">
+          <label class="campo__rotulo" for="perfil-nome">Nome</label>
+          <input class="campo__input" id="perfil-nome" name="nome" type="text" required>
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="perfil-nascimento">Data de nascimento</label>
+          <input class="campo__input" id="perfil-nascimento" name="dataNascimento" type="date" required>
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="perfil-telefone">Telefone</label>
+          <input class="campo__input" id="perfil-telefone" name="telefone" type="tel" required>
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="perfil-email">E-mail</label>
+          <input class="campo__input" id="perfil-email" name="email" type="email" required>
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="perfil-senha">Nova senha (opcional)</label>
+          <input class="campo__input" id="perfil-senha" name="novaSenha" type="password">
+        </div>
+        <div class="campo" data-campo-empresa>
+          <label class="campo__rotulo" for="perfil-empresa">Nome da empresa</label>
+          <input class="campo__input" id="perfil-empresa" name="nomeEmpresa" type="text">
+        </div>
+        <div class="campo" data-campo-tipo-perfil>
+          <label class="campo__rotulo" for="perfil-tipo">Especificação do perfil</label>
+          <input class="campo__input" id="perfil-tipo" name="tipoPerfil" type="text">
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="perfil-biografia">Biografia</label>
+          <textarea class="campo__input" id="perfil-biografia" name="biografia" required></textarea>
+        </div>
+        <div class="campo">
+          <label class="campo__rotulo" for="perfil-localizacao">Localização</label>
+          <input class="campo__input" id="perfil-localizacao" name="localizacao" type="text" required>
+        </div>
+        <div class="cadastro__acoes">
+          <button class="btn btn--primario cadastro__registrar" type="submit">Salvar perfil</button>
+          <button class="btn btn--contorno" type="button" data-excluir-conta>Excluir conta</button>
+        </div>
+      </form>
+    </div>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

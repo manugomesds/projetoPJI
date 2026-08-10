@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Criar conta — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/cadastro.css">
+</head>
+<body class="pagina-escura">
+
+  <header>
+    <nav class="navbar" aria-label="Navegação principal">
+      <a href="index.html">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+
+      <ul class="navbar__menu">
+        <li><a class="navbar__link navbar__link--destaque" href="explorar.html">Explorar</a></li>
+        <li><a class="navbar__link" href="comunidade.html">Comunidade</a></li>
+        <li><a class="navbar__link" href="empresa.html">Empresa</a></li>
+      </ul>
+
+      <div class="navbar__acoes">
+        <a class="navbar__link" href="login.html">Login</a>
+        <a class="navbar__link navbar__link--destaque" href="cadastro-contratante.html" aria-current="page">Cadastrar</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="cadastro">
+    <div class="card cadastro__card">
+
+      <header class="cadastro__cabecalho">
+        <h1 class="cadastro__titulo">Comece a usar a <span class="destaque-magenta">Palco</span></h1>
+        <p class="cadastro__subtitulo">
+          Crie sua conta para conectar artistas e contratantes, divulgar talentos
+          e encontrar novas oportunidades.
+        </p>
+      </header>
+
+      <form class="cadastro__form" id="form-cadastro" novalidate>
+
+        <!-- ---------------- Coluna esquerda ---------------- -->
+
+        <div class="campo">
+          <label class="campo__rotulo" for="nome">Nome</label>
+          <input class="campo__input" type="text" id="nome" name="nome"
+                 placeholder="Nome" autocomplete="given-name" required>
+        </div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="sobrenome">Sobrenome</label>
+          <input class="campo__input" type="text" id="sobrenome" name="sobrenome"
+                 placeholder="Sobrenome" autocomplete="family-name" required>
+        </div>
+
+        <!-- Data de nascimento: três selects lado a lado -->
+        <fieldset class="campo cadastro__nascimento">
+          <legend class="campo__rotulo">Data de nascimento</legend>
+          <div class="cadastro__nascimento-grupo">
+            <select class="campo__select" id="dia" name="dia" aria-label="Dia" required>
+              <option value="">Dia</option>
+            </select>
+            <select class="campo__select" id="mes" name="mes" aria-label="Mês" required>
+              <option value="">Mês</option>
+            </select>
+            <select class="campo__select" id="ano" name="ano" aria-label="Ano" required>
+              <option value="">Ano</option>
+            </select>
+          </div>
+        </fieldset>
+
+        <!-- Especificação do perfil: dropdown customizado -->
+        <div class="campo cadastro__perfil">
+          <span class="campo__rotulo" id="rotulo-perfil">Especificação do perfil</span>
+
+          <div class="seletor" data-seletor>
+            <button class="seletor__gatilho" type="button"
+                    aria-haspopup="listbox" aria-expanded="false"
+                    aria-labelledby="rotulo-perfil">
+              <span class="seletor__valor" data-seletor-valor>
+                Qual tipo de perfil você será dentro da aplicação...
+              </span>
+              <img class="seletor__seta" src="assets/botao-mais-opcao.svg" alt="">
+            </button>
+
+            <ul class="seletor__lista" role="listbox" aria-labelledby="rotulo-perfil" hidden>
+              <li class="seletor__opcao" role="option" tabindex="0"
+                  data-descricao="Pessoas que desejam contratar artistas para eventos pessoais.">Pessoa Física</li>
+              <li class="seletor__opcao" role="option" tabindex="0"
+                  data-descricao="Órgãos e entidades ligados ao poder público.">Instituição pública</li>
+              <li class="seletor__opcao" role="option" tabindex="0"
+                  data-descricao="Empresas e entidades privadas que contratam artistas.">Instituição Privada</li>
+              <li class="seletor__opcao" role="option" tabindex="0"
+                  data-descricao="Produtoras que organizam eventos e projetos culturais.">Produtora Cultural</li>
+              <li class="seletor__opcao" role="option" tabindex="0"
+                  data-descricao="Agências que representam e contratam talentos.">Agência</li>
+              <li class="seletor__opcao" role="option" tabindex="0"
+                  data-descricao="Escolas, faculdades e centros de formação.">Instituição de Ensino</li>
+              <li class="seletor__opcao" role="option" tabindex="0"
+                  data-descricao="Organizações sem fins lucrativos.">ONG</li>
+              <li class="seletor__opcao" role="option" tabindex="0"
+                  data-descricao="Outro tipo de perfil não listado acima.">Outro</li>
+            </ul>
+
+            <input type="hidden" name="perfil" data-seletor-input>
+          </div>
+
+          <!-- Chip com a opção escolhida + explicação -->
+          <div class="cadastro__perfil-escolha" data-perfil-escolha hidden>
+            <span class="tag" data-perfil-tag>
+              <span data-perfil-nome></span>
+              <button class="tag__remover" type="button" aria-label="Remover seleção">&times;</button>
+            </span>
+            <div class="cadastro__perfil-info">
+              <strong data-perfil-titulo></strong>
+              <p data-perfil-descricao></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telefone -->
+        <fieldset class="campo cadastro__telefone">
+          <legend class="campo__rotulo">Telefone para contato</legend>
+          <div class="cadastro__telefone-grupo">
+            <input class="campo__input campo__input--curto" type="text" id="ddd" name="ddd"
+                   placeholder="DD+" inputmode="numeric" maxlength="3" aria-label="DDD">
+            <input class="campo__input" type="tel" id="telefone" name="telefone"
+                   placeholder="Telefone" autocomplete="tel">
+          </div>
+        </fieldset>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="senha">Crie sua senha</label>
+          <div class="campo__controle">
+            <input class="campo__input campo__input--com-icone" type="password" id="senha"
+                   name="senha" placeholder="Crie sua senha"
+                   autocomplete="new-password" required>
+            <button class="campo__olho" type="button" data-alvo="senha" aria-label="Mostrar senha">
+              <img src="assets/icone-olho.png" alt="">
+            </button>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="email">E-mail</label>
+          <input class="campo__input" type="email" id="email" name="email"
+                 placeholder="Email@example.com" autocomplete="email" required>
+        </div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="confirmar-senha">Confirme sua senha</label>
+          <div class="campo__controle">
+            <input class="campo__input campo__input--com-icone" type="password" id="confirmar-senha"
+                   name="confirmar-senha" placeholder="Confirme sua senha"
+                   autocomplete="new-password" required>
+            <button class="campo__olho" type="button" data-alvo="confirmar-senha" aria-label="Mostrar senha">
+              <img src="assets/icone-olho.png" alt="">
+            </button>
+          </div>
+        </div>
+
+        <div class="campo" data-responsavel hidden>
+          <label class="campo__rotulo" for="nome-responsavel">Nome do responsável legal</label>
+          <input class="campo__input" type="text" id="nome-responsavel" name="nomeResponsavel">
+        </div>
+
+        <div class="campo" data-responsavel hidden>
+          <label class="campo__rotulo" for="telefone-responsavel">Telefone do responsável legal</label>
+          <input class="campo__input" type="tel" id="telefone-responsavel" name="telefoneResponsavel">
+        </div>
+
+        <div class="campo" data-responsavel hidden>
+          <label class="campo__rotulo" for="email-responsavel">E-mail do responsável legal</label>
+          <input class="campo__input" type="email" id="email-responsavel" name="emailResponsavel">
+        </div>
+
+        <!-- Termos + botão ocupam a linha inteira -->
+        <div class="cadastro__termos">
+          <input class="cadastro__checkbox" type="checkbox" id="termos" name="termos" required>
+          <label for="termos">
+            Li e concordo com os <a href="termos.html">Termos de Uso</a>
+            e a <a href="privacidade.html">Política de Privacidade</a>.
+          </label>
+        </div>
+
+        <div class="cadastro__acoes">
+          <button class="btn btn--primario cadastro__registrar" type="submit">Registrar</button>
+        </div>
+
+      </form>
+    </div>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

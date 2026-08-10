@@ -1,0 +1,282 @@
+/* ==========================================================================
+   Palco — editar-vaga.css
+   Modo de edicao da vaga. Reaproveita detalhe-vaga.css e sobrescreve
+   apenas o que muda quando os campos ficam editaveis.
+   ========================================================================== */
+
+.editar {
+  width: min(100% - 2rem, 922px);
+  margin: 3rem auto 0;
+}
+
+.editar__card {
+  padding: 2.5rem 2rem;
+  background-color: #ffffff;
+  border: 1px solid var(--cor-magenta);
+  border-radius: 18px;
+  box-shadow: var(--sombra-botao);
+}
+
+/* --------------------------------------------------------------------------
+   Campos editaveis no lugar do texto
+   -------------------------------------------------------------------------- */
+.editar__titulo {
+  width: 100%;
+  padding: 0;
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+}
+
+.editar__titulo:hover,
+.editar__titulo:focus {
+  border-bottom-color: var(--cor-magenta);
+}
+
+.editar__linha {
+  width: 100%;
+  padding: 0.1rem 0;
+  font-size: var(--texto-base);
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+}
+
+.editar__linha:hover,
+.editar__linha:focus {
+  border-bottom-color: var(--cor-magenta);
+}
+
+.editar__linha--leve {
+  font-weight: 300;
+}
+
+.editar__linha--fina {
+  font-weight: 200;
+}
+
+/* Caixa da descricao */
+.editar__descricao {
+  width: 100%;
+  min-height: 111px;
+  padding: 1rem 1.25rem;
+  font-size: var(--texto-sm);
+  font-weight: 200;
+  line-height: 1.55;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-magenta);
+  border-radius: 18px;
+  resize: vertical;
+}
+
+/* --------------------------------------------------------------------------
+   Tabela de condicoes em modo edicao
+   -------------------------------------------------------------------------- */
+.editar__tabela-caixa {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-magenta);
+  border-radius: 18px;
+}
+
+.editar__celula {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.editar__celula input {
+  width: 100%;
+  max-width: 130px;
+  font-size: var(--texto-base);
+  text-align: center;
+  background: transparent;
+  border: none;
+  border-bottom: 1px dashed transparent;
+}
+
+.editar__celula input:hover,
+.editar__celula input:focus {
+  border-bottom-color: var(--cor-magenta);
+}
+
+.editar__lapis {
+  flex-shrink: 0;
+  width: 21px;
+  height: 23px;
+}
+
+.editar__lapis img {
+  width: 100%;
+  height: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Tags removiveis + botao adicionar
+   -------------------------------------------------------------------------- */
+.requisitos__tag--editavel {
+  position: relative;
+  gap: 0.5rem;
+  width: auto;
+  min-width: 123px;
+  padding-inline: 0.85rem;
+}
+
+.requisitos__remover {
+  font-size: 0.7rem;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.52);
+}
+
+.requisitos__remover:hover {
+  color: var(--cor-magenta);
+}
+
+.requisitos__adicionar {
+  min-width: 76px;
+  min-height: 22px;
+  margin-top: 0.5rem;
+  padding: 0 0.75rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: var(--cor-texto);
+  background-color: var(--cor-amarelo);
+  border-radius: 18px;
+  box-shadow: var(--sombra-botao);
+}
+
+/* --------------------------------------------------------------------------
+   Acao final
+   -------------------------------------------------------------------------- */
+.editar__acoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 2.5rem;
+}
+
+.editar__publicar {
+  min-width: 189px;
+  min-height: 65px;
+  font-size: var(--texto-xl);
+  font-weight: 600;
+  color: var(--cor-navy);
+  letter-spacing: 0.05em;
+  background-color: var(--cor-amarelo);
+  border-radius: 18px;
+  box-shadow: var(--sombra-botao);
+}
+
+.editar__publicar:hover {
+  filter: brightness(1.06);
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 800px) {
+  .editar__card {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .editar__titulo {
+    font-size: 1.75rem;
+  }
+
+  .editar__acoes {
+    justify-content: center;
+  }
+
+  .editar__publicar {
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Etapa 2 da edicao: galeria de fotos e localizacao
+   ========================================================================== */
+.editar-midia {
+  display: grid;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr);
+  gap: 3rem;
+  align-items: start;
+}
+
+/* Galeria de fotos da vaga */
+.galeria {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.galeria__item {
+  width: 100%;
+  height: 197px;
+  object-fit: cover;
+  border-radius: 10px;
+}
+
+/* Bloco de localizacao */
+.localizacao__mapa {
+  width: 100%;
+  max-width: 414px;
+  height: 372px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.localizacao__busca {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  max-width: 420px;
+  min-height: 67px;
+  margin-top: 1.75rem;
+  padding: 0 1.25rem;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-magenta);
+  border-radius: 18px;
+}
+
+.localizacao__busca img {
+  flex-shrink: 0;
+  width: 33px;
+  height: 33px;
+}
+
+.localizacao__endereco {
+  width: 100%;
+  font-size: var(--texto-sm);
+  font-weight: 200;
+  background: transparent;
+  border: none;
+}
+
+.localizacao__abrangencia {
+  min-width: 124px;
+  min-height: 40px;
+  margin-top: 0.75rem;
+  padding: 0 1.75rem 0 1.25rem;
+  font-size: var(--texto-sm);
+  font-weight: 500;
+  background-color: var(--cor-branco);
+  background-image: url('../assets/seta-select.svg');
+  background-repeat: no-repeat;
+  background-position: right 1rem center;
+  background-size: 12px 7px;
+  border: 1px solid var(--cor-magenta);
+  border-radius: 18px;
+  appearance: none;
+  cursor: pointer;
+}
+
+@media (max-width: 800px) {
+  .editar-midia {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}

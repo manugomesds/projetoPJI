@@ -1,0 +1,15 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="64.308" height="64.308" viewBox="0 0 64.308 64.308" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Avatar / Caio Mendes">
+<g clip-path="url(#clip0_0_77)">
+<circle id="Fundo" cx="32.154" cy="32.154" r="32.154" fill="#D8E7FF"/>
+<circle id="Face" cx="34.0832" cy="31.5109" r="13.5047" fill="#BB7D55"/>
+<circle id="Cabelo" cx="29.5817" cy="21.8647" r="15.4339" fill="#0A0E2A"/>
+<rect id="Corpo" x="18.0063" y="43.7295" width="28.2955" height="21.8647" rx="10.9324" fill="#FFBF00"/>
+</g>
+</g>
+<defs>
+<clipPath id="clip0_0_77">
+<rect width="64.308" height="64.308" rx="32.154" fill="white"/>
+</clipPath>
+</defs>
+</svg>

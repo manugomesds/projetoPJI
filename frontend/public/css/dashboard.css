@@ -1,0 +1,395 @@
+/* ==========================================================================
+   Palco — dashboard.css
+   Dashboard do Contratante: cabecalho, faixa de resumo, cartoes de metrica
+   e paineis de candidaturas / minhas vagas.
+   ========================================================================== */
+
+.dashboard {
+  width: min(100% - 2rem, 1398px);
+  margin: 3.5rem auto 0;
+}
+
+/* --------------------------------------------------------------------------
+   Cabecalho
+   -------------------------------------------------------------------------- */
+.dashboard__topo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 2.5rem;
+}
+
+.dashboard__titulo {
+  font-family: var(--fonte-display);
+  font-size: clamp(2.5rem, 5vw, 4.35rem);
+  line-height: 1.12;
+  color: var(--cor-navy);
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+}
+
+.dashboard__subtitulo {
+  margin-top: 0.5rem;
+  font-size: 1.3rem;
+  color: var(--cor-navy);
+}
+
+.dashboard__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+/* Botoes do dashboard (cantos mais suaves que os do resto do site) */
+.btn-dash {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-height: 61px;
+  padding: 0 1.5rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+  border-radius: 19px;
+  transition: filter 0.2s ease;
+}
+
+.btn-dash:hover {
+  filter: brightness(0.97);
+}
+
+.btn-dash--primario {
+  background-color: var(--cor-amarelo);
+}
+
+.btn-dash--secundario {
+  background-color: #ffffff;
+  border: 1.4px solid rgba(10, 14, 42, 0.18);
+}
+
+.btn-dash--pequeno {
+  min-height: 39px;
+  padding: 0 1.1rem;
+  font-size: 0.8rem;
+}
+
+.btn-dash img {
+  width: 24px;
+  height: 24px;
+}
+
+/* --------------------------------------------------------------------------
+   Faixa de resumo
+   -------------------------------------------------------------------------- */
+.resumo {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-md);
+  align-items: center;
+  justify-content: space-between;
+  padding: 2.25rem 2.5rem;
+  overflow: hidden;
+  color: #ffffff;
+  background-color: var(--cor-navy);
+  border-radius: 36px;
+  box-shadow: 0 14px 39px rgba(10, 14, 42, 0.12);
+}
+
+/* Feixe de luz decorativo no canto direito */
+.resumo__luz {
+  position: absolute;
+  top: -126px;
+  right: -60px;
+  width: 391px;
+  height: 391px;
+  pointer-events: none;
+}
+
+.resumo__saudacao {
+  position: relative;
+  font-size: 2.1rem;
+  font-weight: 700;
+}
+
+.resumo__texto {
+  position: relative;
+  max-width: 840px;
+  margin-top: 0.75rem;
+  font-size: 1.22rem;
+}
+
+.resumo__metricas {
+  position: relative;
+  display: flex;
+  gap: var(--gap-sm);
+}
+
+.mini-metrica {
+  width: 129px;
+  padding: 1.1rem 0.5rem;
+  text-align: center;
+  background-color: #12183a;
+  border: 1.4px solid rgba(255, 191, 0, 0.25);
+  border-radius: 25px;
+}
+
+.mini-metrica__valor {
+  display: block;
+  font-family: var(--fonte-display);
+  font-size: 2.6rem;
+  line-height: 1;
+  color: var(--cor-amarelo);
+}
+
+.mini-metrica__rotulo {
+  display: block;
+  margin-top: 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+/* --------------------------------------------------------------------------
+   Cartoes de metrica
+   -------------------------------------------------------------------------- */
+.metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-top: 2.5rem;
+}
+
+.metrica {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  padding: 1.85rem;
+  background-color: #ffffff;
+  border: 1.4px solid rgba(10, 14, 42, 0.08);
+  border-radius: 30px;
+  box-shadow: 0 11px 14px rgba(10, 14, 42, 0.07);
+}
+
+/* Icone sobre o circulo amarelo de fundo */
+.metrica__icone {
+  position: relative;
+  flex-shrink: 0;
+  width: 59px;
+  height: 59px;
+}
+
+.metrica__icone img:first-child {
+  width: 100%;
+  height: 100%;
+}
+
+.metrica__icone img:last-child {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 31px;
+  height: 31px;
+  transform: translate(-50%, -50%);
+}
+
+.metrica__valor {
+  display: block;
+  font-family: var(--fonte-display);
+  font-size: 3rem;
+  line-height: 1.05;
+  color: var(--cor-navy);
+}
+
+.metrica__rotulo {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 1.14rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+}
+
+.metrica__nota {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.96rem;
+  color: var(--cor-navy);
+}
+
+/* --------------------------------------------------------------------------
+   Paineis
+   -------------------------------------------------------------------------- */
+.paineis {
+  display: grid;
+  grid-template-columns: minmax(0, 897px) minmax(0, 461px);
+  gap: 2.4rem;
+  margin-top: 2.75rem;
+}
+
+.painel {
+  padding: 2rem;
+  background-color: #ffffff;
+  border: 1.4px solid rgba(10, 14, 42, 0.08);
+  border-radius: 33px;
+  box-shadow: 0 14px 36px rgba(10, 14, 42, 0.08);
+}
+
+.painel__topo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 1.75rem;
+}
+
+.painel__titulo {
+  font-size: 1.9rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+}
+
+.painel__descricao {
+  margin-top: 0.75rem;
+  font-size: 1.05rem;
+  color: var(--cor-navy);
+}
+
+.painel__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+/* --------------------------------------------------------------------------
+   Item de candidatura
+   -------------------------------------------------------------------------- */
+.candidatura {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+  padding: 1.15rem 1.25rem;
+  background-color: #f7f3f8;
+  border: 1.4px solid rgba(10, 14, 42, 0.08);
+  border-radius: 22px;
+}
+
+.candidatura__avatar {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+}
+
+.candidatura__dados {
+  flex: 1 1 200px;
+}
+
+.candidatura__nome {
+  font-size: 1.22rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+}
+
+.candidatura__papel {
+  font-size: 0.96rem;
+  color: var(--cor-navy);
+}
+
+/* Percentual de compatibilidade */
+.candidatura__score {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 87px;
+  min-height: 42px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+  background-color: var(--cor-amarelo);
+  border-radius: 21px;
+}
+
+/* --------------------------------------------------------------------------
+   Item de vaga ativa
+   -------------------------------------------------------------------------- */
+.vaga-ativa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+  padding: 1.35rem 1.25rem;
+  background-color: #f7f3f8;
+  border: 1.4px solid rgba(10, 14, 42, 0.08);
+  border-radius: 22px;
+}
+
+.vaga-ativa__icone {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+}
+
+.vaga-ativa__dados {
+  flex: 1 1 160px;
+}
+
+.vaga-ativa__nome {
+  font-size: 1.14rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+}
+
+.vaga-ativa__stats {
+  font-size: 0.96rem;
+  color: var(--cor-navy);
+}
+
+.vaga-ativa__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 95px;
+  min-height: 39px;
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+  background-color: var(--cor-amarelo);
+  border-radius: 19px;
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .paineis {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 800px) {
+  .resumo {
+    padding: 1.75rem 1.5rem;
+  }
+
+  .resumo__metricas {
+    flex-wrap: wrap;
+  }
+
+  .mini-metrica {
+    flex: 1 1 100px;
+    width: auto;
+  }
+
+  .painel {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .candidatura,
+  .vaga-ativa {
+    justify-content: center;
+    text-align: center;
+  }
+}

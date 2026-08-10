@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editar vaga · fotos e local — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/detalhe-vaga.css">
+  <link rel="stylesheet" href="css/editar-vaga.css">
+</head>
+<body class="pagina-app">
+
+  <!-- ============ Menu lateral "Explorar" ============ -->
+  <div class="drawer-overlay" data-drawer-overlay hidden></div>
+
+  <aside class="drawer" id="menu-explorar" data-drawer aria-label="Explorar">
+    <button class="drawer__fechar" type="button" data-drawer-fechar aria-label="Fechar menu">&times;</button>
+
+    <h2 class="drawer__titulo">EXPLORAR</h2>
+    <p class="drawer__descricao">
+      Descubra vagas, talentos, contratantes e experiências culturais dentro da Palco.
+    </p>
+
+    <div class="drawer__divisor"></div>
+
+    <nav class="drawer__opcoes">
+      <a class="drawer__opcao" href="minhas-vagas.html">
+        <img src="assets/menu-vagas.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Vagas</span>
+          <span class="drawer__opcao-desc">Oportunidades abertas para artistas independentes.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="buscar-artistas.html">
+        <img src="assets/menu-artistas.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Artistas</span>
+          <span class="drawer__opcao-desc">Encontre talentos por área, cidade e estilo.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="contratantes.html">
+        <img src="assets/menu-contratantes.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Contratantes</span>
+          <span class="drawer__opcao-desc">Veja produtores, instituições e pessoas contratando.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="galeria-virtual.html">
+        <img src="assets/menu-galeria.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Galeria Virtual</span>
+          <span class="drawer__opcao-desc">Explore obras, exposições e apresentações digitais.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="top-da-semana.html">
+        <img src="assets/menu-top-semana.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Top da Semana</span>
+          <span class="drawer__opcao-desc">Artistas em destaque por atividade e engajamento.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+    </nav>
+
+    <a class="drawer__cta" href="explorar.html">
+      VER TUDO EM EXPLORAR <span aria-hidden="true">&rarr;</span>
+    </a>
+  </aside>
+
+  <!-- ============ Navbar ============ -->
+  <header>
+    <nav class="app-navbar" aria-label="Navegação principal">
+      <button class="app-navbar__hamburguer" type="button"
+              data-drawer-abrir aria-controls="menu-explorar" aria-expanded="false">
+        <span class="sr-only">Abrir menu Explorar</span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+
+      <a href="dashboard-contratante.html">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+
+      <ul class="app-navbar__menu">
+        <li><a class="navbar__link navbar__link--destaque" href="explorar.html">Explorar</a></li>
+        <li><a class="navbar__link" href="comunidade.html">Comunidade</a></li>
+        <li><a class="navbar__link" href="empresa.html">Empresa</a></li>
+      </ul>
+
+      <div class="app-navbar__acoes">
+        <a class="app-navbar__icone" href="meus-salvos.html" aria-label="Favoritos">
+          <img src="assets/icone-favoritos.png" alt="">
+        </a>
+
+        <a class="app-navbar__icone" href="notificacoes.html" aria-label="Notificações">
+          <img src="assets/icone-notificacao.png" alt="">
+          <span class="app-navbar__badge" aria-hidden="true"></span>
+        </a>
+
+        <span class="app-navbar__divisor" aria-hidden="true"></span>
+
+        <a href="perfil.html" aria-label="Meu perfil">
+          <img class="app-navbar__perfil" src="assets/avatar-perfil.png" alt="">
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="editar">
+    <form class="editar__card" id="form-editar-midia">
+
+      <h1 class="sr-only">Editar vaga — fotos e localização</h1>
+
+      <div class="editar-midia">
+
+        <!-- Galeria de fotos -->
+        <section class="galeria" aria-label="Fotos da vaga">
+          <img class="galeria__item" data-vaga-foto src="assets/vaga-foto-1.png" alt="Equipe montando o set de gravação" tabindex="0">
+          <img class="galeria__item" data-vaga-foto src="assets/vaga-foto-2.png" alt="Operador de câmera durante a gravação" tabindex="0">
+          <img class="galeria__item" data-vaga-foto src="assets/vaga-foto-3.png" alt="Profissional ajustando o equipamento" tabindex="0">
+          <img class="galeria__item" data-vaga-foto src="assets/vaga-foto-3.png" alt="Bastidores da produção" tabindex="0">
+        </section>
+
+        <!-- Localização -->
+        <section class="localizacao" aria-label="Localização da vaga">
+          <img class="localizacao__mapa" src="assets/mapa-localizacao.png"
+               alt="Mapa com a localização da vaga em São Paulo">
+
+          <div class="localizacao__busca">
+            <img src="assets/icone-buscar-mapa.svg" alt="">
+            <input class="localizacao__endereco" type="text" id="endereco" name="endereco"
+                   value="Avenida Surubim, 100, Jardim Guaracy, CEP 00786-324"
+                   aria-label="Endereço da vaga">
+          </div>
+
+          <select class="localizacao__abrangencia" id="abrangencia" name="abrangencia"
+                  aria-label="Abrangência da vaga">
+            <option value="regional" selected>Regional</option>
+            <option value="local">Local</option>
+            <option value="nacional">Nacional</option>
+            <option value="remoto">Remoto</option>
+          </select>
+        </section>
+
+      </div>
+
+      <div class="editar__acoes">
+        <button class="editar__publicar" type="submit">Publicar</button>
+      </div>
+
+    </form>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

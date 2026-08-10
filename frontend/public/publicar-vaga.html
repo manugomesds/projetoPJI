@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Publicar nova vaga — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/detalhe-vaga.css">
+  <link rel="stylesheet" href="css/editar-vaga.css">
+  <link rel="stylesheet" href="css/cadastro.css">
+</head>
+<body class="pagina-app">
+  <header>
+    <nav class="app-navbar" aria-label="Navegação principal">
+      <a href="dashboard-contratante.html">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+      <ul class="app-navbar__menu">
+        <li><a class="navbar__link navbar__link--destaque" href="minhas-vagas.html">Minhas vagas</a></li>
+      </ul>
+      <div class="app-navbar__acoes">
+        <a href="perfil.html" aria-label="Meu perfil">
+          <img class="app-navbar__perfil" src="assets/avatar-perfil.png" alt="">
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="editar">
+    <form class="editar__card cadastro__form" id="form-publicar-vaga">
+      <h1 class="cadastro__titulo">Publicar <span class="destaque-magenta">nova vaga</span></h1>
+
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-titulo">Título da vaga</label>
+        <input class="campo__input" id="vaga-titulo" name="titulo" type="text" required maxlength="150">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-categoria">Categoria artística</label>
+        <input class="campo__input" id="vaga-categoria" name="categoria" type="text" maxlength="100">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-descricao">Descrição</label>
+        <textarea class="editar__descricao" id="vaga-descricao" name="descricao" required></textarea>
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-requisitos">Requisitos</label>
+        <textarea class="editar__descricao" id="vaga-requisitos" name="requisitos" required></textarea>
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-remuneracao">Remuneração</label>
+        <input class="campo__input" id="vaga-remuneracao" name="remuneraValor" type="number" min="0" step="0.01" required>
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-pagamento">Forma de pagamento</label>
+        <input class="campo__input" id="vaga-pagamento" name="formaPagamento" type="text" required maxlength="100">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-cidade">Cidade</label>
+        <input class="campo__input" id="vaga-cidade" name="cidade" type="text" required maxlength="100">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-estado">Estado (UF)</label>
+        <input class="campo__input" id="vaga-estado" name="estado" type="text" required maxlength="2">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-endereco">Endereço completo</label>
+        <input class="campo__input" id="vaga-endereco" name="enderecoCompleto" type="text">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-beneficios">Benefícios</label>
+        <input class="campo__input" id="vaga-beneficios" name="beneficios" type="text">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-modelo">Modelo de trabalho</label>
+        <select class="campo__select" id="vaga-modelo" name="modeloTrabalho" required>
+          <option value="PRESENCIAL">Presencial</option>
+          <option value="REMOTO">Remoto</option>
+          <option value="HIBRIDO">Híbrido</option>
+        </select>
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-contrato">Tipo de contrato</label>
+        <input class="campo__input" id="vaga-contrato" name="tipoContrato" type="text" required maxlength="100">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-experiencia">Experiência</label>
+        <input class="campo__input" id="vaga-experiencia" name="experiencia" type="text" maxlength="100">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-prazo">Prazo para candidatura</label>
+        <input class="campo__input" id="vaga-prazo" name="dataLimiteCandidatura" type="date">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-abrangencia">Abrangência</label>
+        <select class="campo__select" id="vaga-abrangencia" name="abrangencia">
+          <option value="local">Local</option>
+          <option value="regional">Regional</option>
+          <option value="nacional">Nacional</option>
+          <option value="remoto">Remoto</option>
+        </select>
+      </div>
+      <fieldset class="campo">
+        <legend class="campo__rotulo">Tags</legend>
+        <div class="requisitos__lista" data-tags-vaga></div>
+      </fieldset>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-foto-1">Foto 1 (URL)</label>
+        <input class="campo__input" id="vaga-foto-1" name="foto" type="url">
+      </div>
+      <div class="campo">
+        <label class="campo__rotulo" for="vaga-foto-2">Foto 2 (URL)</label>
+        <input class="campo__input" id="vaga-foto-2" name="foto" type="url">
+      </div>
+
+      <div class="cadastro__acoes">
+        <button class="btn btn--primario cadastro__registrar" type="submit">Publicar</button>
+      </div>
+    </form>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

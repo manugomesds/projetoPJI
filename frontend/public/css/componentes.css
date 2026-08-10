@@ -1,0 +1,253 @@
+/* ==========================================================================
+   Palco — componentes.css
+   Componentes reutilizados entre as telas: navbar, botoes, campos e cards.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Navbar
+   -------------------------------------------------------------------------- */
+.navbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  width: min(100% - 2rem, var(--largura-max));
+  margin: 34px auto 0;
+  padding: 1rem 2rem;
+  background-color: rgba(10, 14, 42, 0.98);
+  border: 1px solid #ffffff;
+  border-radius: var(--raio-pill);
+  box-shadow: var(--sombra-navbar);
+}
+
+.navbar__logo {
+  flex-shrink: 0;
+  width: 72px;
+  height: 67px;
+  object-fit: contain;
+}
+
+.navbar__menu {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+}
+
+/* Empurra o bloco de acoes para a direita */
+.navbar__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  margin-left: auto;
+}
+
+.navbar__link {
+  padding: 0.25rem 0.5rem;
+  font-size: var(--texto-lg);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--cor-branco);
+  transition: color 0.2s ease;
+}
+
+.navbar__link:hover {
+  color: var(--cor-amarelo);
+}
+
+/* Item da navbar em destaque (pilula amarela) */
+.navbar__link--destaque {
+  padding: 0.5rem 1.75rem;
+  color: var(--cor-navy);
+  background-color: var(--cor-amarelo);
+  border-radius: var(--raio-pill);
+  box-shadow: var(--sombra-botao);
+}
+
+.navbar__link--destaque:hover {
+  color: var(--cor-navy);
+  filter: brightness(1.08);
+}
+
+/* --------------------------------------------------------------------------
+   Botoes
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-xs);
+  padding: 0.875rem 2rem;
+  font-size: var(--texto-lg);
+  font-weight: 600;
+  text-align: center;
+  border-radius: var(--raio-lg);
+  transition: filter 0.2s ease, transform 0.1s ease;
+}
+
+.btn:hover {
+  filter: brightness(1.06);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Acao principal */
+.btn--primario {
+  min-height: 69px;
+  font-size: var(--texto-2xl);
+  color: var(--cor-texto);
+  background-color: var(--cor-amarelo);
+  box-shadow: var(--sombra-botao);
+}
+
+/* Acao secundaria, contorno magenta */
+.btn--contorno {
+  min-height: 60px;
+  font-size: var(--texto-base);
+  font-weight: 300;
+  color: var(--cor-texto-suave);
+  background-color: transparent;
+  border: 1px solid var(--cor-magenta-borda);
+  box-shadow: var(--sombra-campo);
+}
+
+/* Acao destrutiva */
+.btn--perigo {
+  color: var(--cor-branco);
+  background-color: var(--cor-magenta);
+  box-shadow: var(--sombra-botao);
+}
+
+.btn--bloco {
+  width: 100%;
+}
+
+/* --------------------------------------------------------------------------
+   Campos de formulario
+   -------------------------------------------------------------------------- */
+.campo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+}
+
+.campo__rotulo {
+  font-size: var(--texto-xl);
+  font-weight: 600;
+  color: var(--cor-texto);
+}
+
+/* Envolve o input para posicionar o botao de olho */
+.campo__controle {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.campo__input {
+  width: 100%;
+  min-height: 60px;
+  padding: 0 1.75rem;
+  font-size: var(--texto-base);
+  font-weight: 300;
+  color: var(--cor-texto);
+  background-color: transparent;
+  border: 1px solid var(--cor-magenta-borda);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-campo);
+}
+
+.campo__input::placeholder {
+  color: var(--cor-texto-suave);
+}
+
+textarea.campo__input {
+  min-height: 160px;
+  padding-block: 1.25rem;
+  border-radius: var(--raio-md);
+  resize: vertical;
+}
+
+/* Espaco a direita para o botao de mostrar senha */
+.campo__input--com-icone {
+  padding-right: 5.5rem;
+}
+
+.campo__olho {
+  position: absolute;
+  right: 1rem;
+  display: flex;
+  align-items: center;
+  width: 77px;
+  height: 43px;
+  padding: 0;
+  border-radius: 19px;
+}
+
+.campo__olho img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.campo__ajuda {
+  font-size: var(--texto-base);
+  font-weight: 600;
+  color: var(--cor-navy);
+}
+
+.campo__ajuda:hover {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Card
+   -------------------------------------------------------------------------- */
+.card {
+  background-color: var(--cor-branco);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-card);
+}
+
+/* --------------------------------------------------------------------------
+   Texto legal do rodape dos formularios
+   -------------------------------------------------------------------------- */
+.texto-legal {
+  font-size: var(--texto-xs);
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--cor-texto-suave);
+}
+
+.texto-legal a {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .navbar {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--gap-sm);
+    border-radius: var(--raio-md);
+  }
+
+  .navbar__acoes {
+    margin-left: 0;
+  }
+
+  .navbar__link {
+    font-size: var(--texto-base);
+  }
+
+  .campo__rotulo {
+    font-size: var(--texto-lg);
+  }
+
+  .btn--primario {
+    min-height: 60px;
+    font-size: var(--texto-xl);
+  }
+}

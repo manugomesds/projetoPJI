@@ -1,0 +1,94 @@
+/* ==========================================================================
+   Palco — login.css
+   Estilos exclusivos da tela de Login.
+   ========================================================================== */
+
+.pagina-login {
+  min-height: 100vh;
+  padding-bottom: 4rem;
+  background-color: var(--cor-magenta);
+  background-image: url('../assets/bg-gradiente.png');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+}
+
+.login {
+  display: flex;
+  justify-content: center;
+  padding-block: 3.5rem;
+}
+
+.login__card {
+  width: 100%;
+  max-width: 606px;
+  padding: 3.25rem 3.75rem;
+}
+
+.login__titulo {
+  margin-bottom: 2.5rem;
+  font-size: var(--texto-3xl);
+  font-weight: 600;
+  text-align: center;
+}
+
+.login__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-md);
+}
+
+/* O link fica logo abaixo do campo de senha, alinhado a esquerda */
+.login__esqueceu {
+  margin-top: 0.25rem;
+}
+
+.login__entrar {
+  width: 268px;
+  margin-inline: auto;
+  margin-top: 0.5rem;
+}
+
+.login__google {
+  width: 325px;
+  margin-inline: auto;
+}
+
+.login__cadastro {
+  font-size: var(--texto-base);
+  font-weight: 600;
+  color: var(--cor-navy);
+  text-align: center;
+}
+
+.login__cadastro a:hover {
+  text-decoration: underline;
+}
+
+.login__legal {
+  text-align: left;
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 700px) {
+  .login {
+    padding-block: 2rem;
+  }
+
+  .login__card {
+    padding: 2rem 1.5rem;
+    border-radius: var(--raio-sm);
+  }
+
+  .login__titulo {
+    font-size: var(--texto-xl);
+    margin-bottom: 1.5rem;
+  }
+
+  .login__entrar,
+  .login__google {
+    width: 100%;
+  }
+}

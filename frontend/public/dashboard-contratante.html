@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body class="pagina-app">
+
+  <!-- ============ Menu lateral "Explorar" ============ -->
+  <div class="drawer-overlay" data-drawer-overlay hidden></div>
+
+  <aside class="drawer" id="menu-explorar" data-drawer aria-label="Explorar">
+    <button class="drawer__fechar" type="button" data-drawer-fechar aria-label="Fechar menu">&times;</button>
+
+    <h2 class="drawer__titulo">EXPLORAR</h2>
+    <p class="drawer__descricao">
+      Descubra vagas, talentos, contratantes e experiências culturais dentro da Palco.
+    </p>
+
+    <div class="drawer__divisor"></div>
+
+    <nav class="drawer__opcoes">
+      <a class="drawer__opcao" href="minhas-vagas.html">
+        <img src="assets/menu-vagas.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Vagas</span>
+          <span class="drawer__opcao-desc">Oportunidades abertas para artistas independentes.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="buscar-artistas.html">
+        <img src="assets/menu-artistas.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Artistas</span>
+          <span class="drawer__opcao-desc">Encontre talentos por área, cidade e estilo.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="contratantes.html">
+        <img src="assets/menu-contratantes.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Contratantes</span>
+          <span class="drawer__opcao-desc">Veja produtores, instituições e pessoas contratando.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="galeria-virtual.html">
+        <img src="assets/menu-galeria.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Galeria Virtual</span>
+          <span class="drawer__opcao-desc">Explore obras, exposições e apresentações digitais.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="top-da-semana.html">
+        <img src="assets/menu-top-semana.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Top da Semana</span>
+          <span class="drawer__opcao-desc">Artistas em destaque por atividade e engajamento.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+    </nav>
+
+    <a class="drawer__cta" href="explorar.html">
+      VER TUDO EM EXPLORAR <span aria-hidden="true">&rarr;</span>
+    </a>
+  </aside>
+
+  <!-- ============ Navbar ============ -->
+  <header>
+    <nav class="app-navbar" aria-label="Navegação principal">
+      <button class="app-navbar__hamburguer" type="button"
+              data-drawer-abrir aria-controls="menu-explorar" aria-expanded="false">
+        <span class="sr-only">Abrir menu Explorar</span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+
+      <a href="dashboard-contratante.html">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+
+      <ul class="app-navbar__menu">
+        <li><a class="navbar__link navbar__link--destaque" href="explorar.html">Explorar</a></li>
+        <li><a class="navbar__link" href="comunidade.html">Comunidade</a></li>
+        <li><a class="navbar__link" href="empresa.html">Empresa</a></li>
+      </ul>
+
+      <div class="app-navbar__acoes">
+        <a class="app-navbar__icone" href="meus-salvos.html" aria-label="Favoritos">
+          <img src="assets/icone-favoritos.png" alt="">
+        </a>
+
+        <a class="app-navbar__icone" href="notificacoes.html" aria-label="Notificações">
+          <img src="assets/icone-notificacao.png" alt="">
+          <span class="app-navbar__badge" aria-hidden="true"></span>
+        </a>
+
+        <span class="app-navbar__divisor" aria-hidden="true"></span>
+
+        <a href="perfil.html" aria-label="Meu perfil">
+          <img class="app-navbar__perfil" src="assets/avatar-perfil.png" alt="">
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="dashboard">
+
+    <div class="dashboard__topo">
+      <div>
+        <h1 class="dashboard__titulo">Dashboard Contratante</h1>
+        <p class="dashboard__subtitulo">
+          Gerencie suas vagas, acompanhe candidaturas e descubra talentos para seus projetos.
+        </p>
+      </div>
+
+      <div class="dashboard__acoes">
+        <a class="btn-dash btn-dash--secundario" href="buscar-artistas.html">
+          <img src="assets/icone-buscar.svg" alt="">
+          Buscar artistas
+        </a>
+        <a class="btn-dash btn-dash--primario" href="publicar-vaga.html">
+          Publicar nova vaga
+          <img src="assets/icone-mais.svg" alt="">
+        </a>
+      </div>
+    </div>
+
+    <!-- ============ Faixa de resumo ============ -->
+    <section class="resumo" aria-label="Resumo da conta">
+      <img class="resumo__luz" src="assets/luz-palco.svg" alt="">
+
+      <div>
+        <h2 class="resumo__saudacao">Olá, Kaique Produções</h2>
+        <p class="resumo__texto">
+          Você tem 6 novas candidaturas, 3 vagas ativas e 12 talentos sugeridos
+          aguardando análise.
+        </p>
+      </div>
+
+      <div class="resumo__metricas">
+        <div class="mini-metrica">
+          <span class="mini-metrica__valor">6</span>
+          <span class="mini-metrica__rotulo">candidaturas</span>
+        </div>
+        <div class="mini-metrica">
+          <span class="mini-metrica__valor">3</span>
+          <span class="mini-metrica__rotulo">vagas ativas</span>
+        </div>
+        <div class="mini-metrica">
+          <span class="mini-metrica__valor">12</span>
+          <span class="mini-metrica__rotulo">talentos sugeridos</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ Cartões de métrica ============ -->
+    <section class="metricas" aria-label="Indicadores">
+        <article class="metrica">
+          <div class="metrica__icone">
+            <img src="assets/fundo-icone.svg" alt="">
+            <img src="assets/icone-candidaturas.svg" alt="">
+          </div>
+          <div>
+            <span class="metrica__valor">06</span>
+            <span class="metrica__rotulo">Novas candidaturas</span>
+            <span class="metrica__nota">desde sua última visita</span>
+          </div>
+        </article>
+        <article class="metrica">
+          <div class="metrica__icone">
+            <img src="assets/fundo-icone.svg" alt="">
+            <img src="assets/icone-vagas.svg" alt="">
+          </div>
+          <div>
+            <span class="metrica__valor">03</span>
+            <span class="metrica__rotulo">Vagas ativas</span>
+            <span class="metrica__nota">oportunidades abertas</span>
+          </div>
+        </article>
+        <article class="metrica">
+          <div class="metrica__icone">
+            <img src="assets/fundo-icone.svg" alt="">
+            <img src="assets/icone-mensagens.svg" alt="">
+          </div>
+          <div>
+            <span class="metrica__valor">14</span>
+            <span class="metrica__rotulo">Mensagens</span>
+            <span class="metrica__nota">conversas não lidas</span>
+          </div>
+        </article>
+        <article class="metrica">
+          <div class="metrica__icone">
+            <img src="assets/fundo-icone.svg" alt="">
+            <img src="assets/icone-alcance.svg" alt="">
+          </div>
+          <div>
+            <span class="metrica__valor">1.8k</span>
+            <span class="metrica__rotulo">Alcance semanal</span>
+            <span class="metrica__nota">visualizações nas vagas</span>
+          </div>
+        </article>
+    </section>
+
+    <!-- ============ Painéis ============ -->
+    <div class="paineis">
+
+      <section class="painel">
+        <div class="painel__topo">
+          <div>
+            <h2 class="painel__titulo">Novas candidaturas</h2>
+            <p class="painel__descricao">
+              Analise candidatos recém-inscritos nas suas vagas ativas.
+            </p>
+          </div>
+          <a class="btn-dash btn-dash--secundario" href="#">Ver todas</a>
+        </div>
+
+        <div class="painel__lista">
+          <article class="candidatura">
+            <img class="candidatura__avatar" src="assets/avatar-livia.svg" alt="">
+            <div class="candidatura__dados">
+              <h3 class="candidatura__nome">Lívia Nery</h3>
+              <p class="candidatura__papel">Produtor(a) de Eventos</p>
+            </div>
+            <span class="candidatura__score">96%</span>
+            <a class="btn-dash btn-dash--secundario" href="perfil-artista.html">Ver perfil</a>
+            <a class="btn-dash btn-dash--primario" href="#">Avaliar</a>
+          </article>
+          <article class="candidatura">
+            <img class="candidatura__avatar" src="assets/avatar-caio.svg" alt="">
+            <div class="candidatura__dados">
+              <h3 class="candidatura__nome">Caio Mendes</h3>
+              <p class="candidatura__papel">Assistente de Direção</p>
+            </div>
+            <span class="candidatura__score">89%</span>
+            <a class="btn-dash btn-dash--secundario" href="perfil-artista.html">Ver perfil</a>
+            <a class="btn-dash btn-dash--primario" href="#">Avaliar</a>
+          </article>
+          <article class="candidatura">
+            <img class="candidatura__avatar" src="assets/avatar-amanda.svg" alt="">
+            <div class="candidatura__dados">
+              <h3 class="candidatura__nome">Amanda Rocha</h3>
+              <p class="candidatura__papel">Oficina de artes visuais</p>
+            </div>
+            <span class="candidatura__score">84%</span>
+            <a class="btn-dash btn-dash--secundario" href="perfil-artista.html">Ver perfil</a>
+            <a class="btn-dash btn-dash--primario" href="#">Avaliar</a>
+          </article>
+        </div>
+      </section>
+
+      <section class="painel">
+        <div class="painel__topo">
+          <div>
+            <h2 class="painel__titulo">Minhas vagas</h2>
+            <p class="painel__descricao">Status rápido das publicações.</p>
+          </div>
+          <a class="btn-dash btn-dash--primario btn-dash--pequeno" href="publicar-vaga.html">
+            Nova vaga
+            <img src="assets/icone-mais.svg" alt="">
+          </a>
+        </div>
+
+        <div class="painel__lista">
+          <article class="vaga-ativa">
+            <img class="vaga-ativa__icone" src="assets/icone-vaga-lista.svg" alt="">
+            <div class="vaga-ativa__dados">
+              <h3 class="vaga-ativa__nome">Festival Sonora 2025</h3>
+              <p class="vaga-ativa__stats">12 candidaturas • 248 views</p>
+            </div>
+            <span class="vaga-ativa__status">Aberta</span>
+          </article>
+          <article class="vaga-ativa">
+            <img class="vaga-ativa__icone" src="assets/icone-vaga-lista.svg" alt="">
+            <div class="vaga-ativa__dados">
+              <h3 class="vaga-ativa__nome">Teatro em Foco</h3>
+              <p class="vaga-ativa__stats">4 candidaturas • 96 views</p>
+            </div>
+            <span class="vaga-ativa__status">Aberta</span>
+          </article>
+          <article class="vaga-ativa">
+            <img class="vaga-ativa__icone" src="assets/icone-vaga-lista.svg" alt="">
+            <div class="vaga-ativa__dados">
+              <h3 class="vaga-ativa__nome">Galeria Urbana</h3>
+              <p class="vaga-ativa__stats">Pausada • 31 salvos</p>
+            </div>
+            <span class="vaga-ativa__status">Pausa</span>
+          </article>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

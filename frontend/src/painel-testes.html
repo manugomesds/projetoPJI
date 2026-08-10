@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOS Artistas — Painel de Testes</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Segoe UI', Arial, sans-serif;
+  background: #f0f2f5;
+  color: #333;
+  min-height: 100vh;
+}
+
+header {
+  background: #1a1a2e;
+  color: white;
+  padding: 0 24px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 56px;
+  box-shadow: 0 2px 8px rgba(0,0,0,.4);
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+header h1 { font-size: 15px; font-weight: 700; }
+
+.session-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .3px;
+}
+.badge.on  { background: #43a047; color: white; }
+.badge.off { background: #555;    color: #ccc;  }
+
+.btn-sm {
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+}
+.btn-sm.danger  { background: #c62828; color: white; }
+
+main {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  border-radius: 10px;
+  padding: 22px 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.09);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.card-title { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+
+.rf { font-size: 10px; background: #e8f5e9; color: #2e7d32;
+      padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
+.card-desc { font-size: 12px; color: #888; margin-bottom: 16px; }
+
+.grid   { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.grid-1 { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.span-2 { grid-column: span 2; }
+
+.field label { display: block; font-size: 11px; font-weight: 600; color: #666; margin-bottom: 4px; }
+.field input, .field select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+.field input:focus, .field select:focus { border-color: #43a047; }
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  color: #555;
+  cursor: pointer;
+}
+
+.btn {
+  padding: 9px 22px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  transition: filter .15s;
+  letter-spacing: .2px;
+}
+.btn:hover { filter: brightness(.9); }
+.btn.green  { background: #43a047; color: white; }
+.btn.blue   { background: #1565c0; color: white; }
+.btn.red    { background: #e53935; color: white; }
+
+.resp-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #aaa;
+  letter-spacing: .5px;
+  margin-top: 16px;
+  margin-bottom: 6px;
+}
+
+pre.resp {
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 14px;
+  border-radius: 8px;
+  font-size: 12px;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 220px;
+  overflow-y: auto;
+  min-height: 42px;
+  border-left: 3px solid #444;
+}
+pre.resp.ok  { border-left-color: #43a047; }
+pre.resp.err { border-left-color: #e53935; }
+
+.divider {
+  text-align: center;
+  font-size: 11px;
+  color: #bbb;
+  margin: 12px 0;
+  position: relative;
+}
+.divider::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 50%;
+  height: 1px;
+  background: #eee;
+  z-index: 0;
+}
+.divider span { background: white; padding: 0 10px; position: relative; z-index: 1; }
+
+.avatar-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+.avatar-box img {
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  border: 2px solid #ddd;
+  background: #eee;
+}
+.avatar-box .av-url { font-size: 11px; color: #666; word-break: break-all; }
+.avatar-box .av-label { font-size: 10px; font-weight: 700; color: #43a047; margin-bottom: 2px; }
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+<header>
+  <h1>🎨 SOS Artistas — Painel de Testes da API</h1>
+  <div class="session-bar">
+    <span>Token:</span>    <span class="badge off" id="b-token">ausente</span>
+    <span>Refresh:</span>  <span class="badge off" id="b-refresh">ausente</span>
+    <span>User ID:</span>  <span class="badge off" id="b-uid">—</span>
+    <button class="btn-sm danger" onclick="limparSessao()">Limpar sessão</button>
+  </div>
+</header>
+
+<main>
+
+<!-- ═══ 1. CADASTRO ══════════════════════════════════════════ -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">📝 Cadastro</span>
+    <span class="rf">RF01</span>
+  </div>
+  <div class="card-desc">POST /api/auth/cadastro — Cria um novo usuário. Nenhum token necessário.</div>
+
+  <div class="grid">
+    <div class="field"><label>Nome</label><input id="c-nome" value="Artista Teste"></div>
+    <div class="field"><label>Data de Nascimento</label><input id="c-nasc" type="date" value="1995-06-15"></div>
+    <div class="field"><label>Telefone</label><input id="c-tel" value="11999999999"></div>
+    <div class="field"><label>E-mail</label><input id="c-email" value="artista@teste.com"></div>
+    <div class="field"><label>Senha</label><input id="c-senha" type="password" value="123456"></div>
+    <div class="field">
+      <label>Tipo de Usuário</label>
+      <select id="c-tipo">
+        <option value="ARTISTA">ARTISTA</option>
+        <option value="CONTRATANTE">CONTRATANTE</option>
+      </select>
+    </div>
+  </div>
+
+  <button class="btn green" onclick="cadastrar()">Cadastrar</button>
+
+  <div class="resp-label">RESPOSTA</div>
+  <pre class="resp" id="r-cadastro">Aguardando...</pre>
+</div>
+
+<!-- ═══ 2. LOGIN ══════════════════════════════════════════════ -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🔑 Login</span>
+    <span class="rf">RF02</span><span class="rf">RF33</span><span class="rf">RF34</span>
+  </div>
+  <div class="card-desc">POST /api/auth/login — Com "Lembrar de mim" retorna também o Refresh Token.</div>
+
+  <div class="grid">
+    <div class="field"><label>E-mail</label><input id="l-email" value="artista@teste.com"></div>
+    <div class="field"><label>Senha</label><input id="l-senha" type="password" value="123456"></div>
+  </div>
+
+  <label class="check-row">
+    <input type="checkbox" id="l-remember">
+    Lembrar de mim — gera Refresh Token de 30 dias (RF33)
+  </label>
+
+  <button class="btn green" onclick="login()">Entrar</button>
+
+  <div class="resp-label">RESPOSTA</div>
+  <pre class="resp" id="r-login">Aguardando...</pre>
+
+  <div id="av-login" style="display:none" class="avatar-box">
+    <img id="av-login-img" src="" alt="avatar">
+    <div>
+      <div class="av-label">✅ avatarUrl (RF34 — nunca null)</div>
+      <div class="av-url" id="av-login-url"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ 3. LOGIN COM GOOGLE ═══════════════════════════════════ -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🟢 Login com Google</span>
+    <span class="rf">RF32</span><span class="rf">RF33</span>
+  </div>
+  <div class="card-desc">POST /api/auth/google — Clique no botão do Google. O ID Token é preenchido automaticamente.</div>
+
+  <div id="g_id_onload"
+       data-client_id="617453698735-pvnr94qboe4tcmnlsnqbvb5ritjp5qhm.apps.googleusercontent.com"
+       data-callback="receberTokenGoogle"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin" data-type="standard" data-size="large"
+       data-theme="outline" data-text="sign_in_with" data-shape="rectangular">
+  </div>
+
+  <div class="divider"><span>ou cole o ID Token manualmente</span></div>
+
+  <div class="grid-1">
+    <div class="field"><label>ID Token do Google (preenchido automaticamente ao clicar no botão acima)</label>
+      <input id="g-token" placeholder="Clique no botão do Google acima...">
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="field">
+      <label>Tipo (somente 1º acesso)</label>
+      <select id="g-tipo">
+        <option value="">-- opcional --</option>
+        <option value="ARTISTA">ARTISTA</option>
+        <option value="CONTRATANTE">CONTRATANTE</option>
+      </select>
+    </div>
+    <div class="field"><label>Data Nasc. (somente 1º acesso)</label><input id="g-nasc" type="date"></div>
+    <div class="field"><label>Telefone (somente 1º acesso)</label><input id="g-tel" placeholder="11999999999"></div>
+  </div>
+
+  <label class="check-row">
+    <input type="checkbox" id="g-remember">
+    Lembrar de mim (RF33)
+  </label>
+
+  <button class="btn green" onclick="loginGoogle()">Enviar para a API</button>
+
+  <div class="resp-label">RESPOSTA</div>
+  <pre class="resp" id="r-google">Aguardando...</pre>
+</div>
+
+<!-- ═══ 4. RENOVAR TOKEN ══════════════════════════════════════ -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🔄 Renovar Access Token</span>
+    <span class="rf">RF33</span>
+  </div>
+  <div class="card-desc">POST /api/auth/refresh — Gera novo Access Token sem novo login. Requer Refresh Token.</div>
+
+  <div class="grid-1">
+    <div class="field">
+      <label>Refresh Token (auto-preenchido após login com "Lembrar de mim")</label>
+      <input id="rf-token" placeholder="Faça login com 'Lembrar de mim' para preencher automaticamente">
+    </div>
+  </div>
+
+  <button class="btn blue" onclick="renovarToken()">Renovar Token</button>
+
+  <div class="resp-label">RESPOSTA</div>
+  <pre class="resp" id="r-refresh">Aguardando...</pre>
+</div>
+
+<!-- ═══ 5. LOGOUT ═════════════════════════════════════════════ -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🚪 Logout</span>
+    <span class="rf">RF33</span>
+  </div>
+  <div class="card-desc">POST /api/auth/logout — Invalida o Refresh Token. Após isso, tentar renovar retorna 404.</div>
+
+  <div class="grid-1">
+    <div class="field">
+      <label>Refresh Token (auto-preenchido)</label>
+      <input id="out-token" placeholder="Auto-preenchido após login com 'Lembrar de mim'">
+    </div>
+  </div>
+
+  <button class="btn red" onclick="logout()">Fazer Logout</button>
+
+  <div class="resp-label">RESPOSTA</div>
+  <pre class="resp" id="r-logout">Aguardando...</pre>
+</div>
+
+<!-- ═══ 6. CRIAR PERFIL (TESTE AVATAR) ═══════════════════════ -->
+<div class="card">
+  <div class="card-header">
+    <span class="card-title">🎭 Criar Perfil de Artista</span>
+    <span class="rf">RF34</span>
+  </div>
+  <div class="card-desc">POST /api/perfis-artistas — Requer token. Observe o campo <code>avatarUrl</code> no response — nunca vem null.</div>
+
+  <div class="grid">
+    <div class="field">
+      <label>Usuario ID (auto-preenchido após login)</label>
+      <input id="p-uid" placeholder="Faça login primeiro">
+    </div>
+    <div class="field"><label>Localização</label><input id="p-loc" value="São Paulo, SP"></div>
+    <div class="field span-2"><label>Biografia</label><input id="p-bio" value="Artista apaixonado por música e arte digital."></div>
+  </div>
+
+  <button class="btn green" onclick="criarPerfil()">Criar Perfil</button>
+
+  <div class="resp-label">RESPOSTA</div>
+  <pre class="resp" id="r-perfil">Aguardando...</pre>
+
+  <div id="av-perfil" style="display:none" class="avatar-box">
+    <img id="av-perfil-img" src="" alt="avatar">
+    <div>
+      <div class="av-label">✅ avatarUrl resolvido (RF34)</div>
+      <div class="av-url" id="av-perfil-url"></div>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<!-- ═══ SDK DO GOOGLE ════════════════════════════════════════ -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+
+<script>
+// ── Estado ───────────────────────────────────────────────────
+const BASE = 'http://localhost:8080';
+
+let S = {
+  token:   localStorage.getItem('sos_token')   || '',
+  refresh: localStorage.getItem('sos_refresh') || '',
+  uid:     localStorage.getItem('sos_uid')     || ''
+};
+
+// ── Sincroniza UI com estado ─────────────────────────────────
+function sync() {
+  const set = (id, val, on) => {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    el.className   = 'badge ' + (on ? 'on' : 'off');
+  };
+
+  set('b-token',   S.token   ? 'presente ✓' : 'ausente',  !!S.token);
+  set('b-refresh', S.refresh ? 'presente ✓' : 'ausente',  !!S.refresh);
+  set('b-uid',     S.uid     || '—',                       !!S.uid);
+
+  if (S.refresh) {
+    document.getElementById('rf-token').value  = S.refresh;
+    document.getElementById('out-token').value = S.refresh;
+  }
+  if (S.uid) {
+    document.getElementById('p-uid').value = S.uid;
+  }
+}
+
+function salvar(token, refresh, uid) {
+  if (token   !== null) { S.token   = token;   token   ? localStorage.setItem('sos_token',   token)   : localStorage.removeItem('sos_token');   }
+  if (refresh !== null) { S.refresh = refresh; refresh ? localStorage.setItem('sos_refresh', refresh) : localStorage.removeItem('sos_refresh'); }
+  if (uid     !== null) { S.uid     = uid;     uid     ? localStorage.setItem('sos_uid',     uid)     : localStorage.removeItem('sos_uid');     }
+  sync();
+}
+
+function limparSessao() {
+  S = { token: '', refresh: '', uid: '' };
+  localStorage.clear();
+  sync();
+}
+
+// ── Exibe resposta ───────────────────────────────────────────
+function show(id, data, ok) {
+  const el = document.getElementById(id);
+  el.textContent = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+  el.className   = 'resp ' + (ok ? 'ok' : 'err');
+}
+
+// ── Fetch helper ─────────────────────────────────────────────
+async function api(method, path, body, withToken) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (withToken && S.token) headers['Authorization'] = 'Bearer ' + S.token;
+
+  const res  = await fetch(BASE + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  let   data;
+  try   { data = await res.json(); }
+  catch { data = { httpStatus: res.status }; }
+
+  return { ok: res.ok, status: res.status, data };
+}
+
+// ── 1. CADASTRO ──────────────────────────────────────────────
+async function cadastrar() {
+  try {
+    const r = await api('POST', '/api/auth/cadastro', {
+      nome:           document.getElementById('c-nome').value,
+      dataNascimento: document.getElementById('c-nasc').value,
+      telefone:       document.getElementById('c-tel').value,
+      email:          document.getElementById('c-email').value,
+      senha:          document.getElementById('c-senha').value,
+      tipoUsuario:    document.getElementById('c-tipo').value
+    });
+    show('r-cadastro', r.data, r.ok);
+  } catch(e) { show('r-cadastro', 'Erro de conexão: ' + e.message, false); }
+}
+
+// ── 2. LOGIN ─────────────────────────────────────────────────
+async function login() {
+  try {
+    const r = await api('POST', '/api/auth/login', {
+      email:      document.getElementById('l-email').value,
+      senha:      document.getElementById('l-senha').value,
+      rememberMe: document.getElementById('l-remember').checked
+    });
+    show('r-login', r.data, r.ok);
+
+    if (r.ok) {
+      salvar(r.data.token, r.data.refreshToken || null, String(r.data.id));
+
+      if (r.data.avatarUrl) {
+        document.getElementById('av-login').style.display  = 'flex';
+        document.getElementById('av-login-img').src        = r.data.avatarUrl;
+        document.getElementById('av-login-url').textContent = r.data.avatarUrl;
+      }
+    }
+  } catch(e) { show('r-login', 'Erro de conexão: ' + e.message, false); }
+}
+
+// ── 3. LOGIN COM GOOGLE ──────────────────────────────────────
+function receberTokenGoogle(response) {
+  document.getElementById('g-token').value = response.credential;
+}
+
+async function loginGoogle() {
+  const idToken = document.getElementById('g-token').value.trim();
+  if (!idToken) { alert('Clique no botão do Google primeiro para gerar o ID Token.'); return; }
+
+  const body = { idToken, rememberMe: document.getElementById('g-remember').checked };
+  const tipo = document.getElementById('g-tipo').value;
+  const nasc = document.getElementById('g-nasc').value;
+  const tel  = document.getElementById('g-tel').value;
+  if (tipo) body.tipoUsuario    = tipo;
+  if (nasc) body.dataNascimento = nasc;
+  if (tel)  body.telefone       = tel;
+
+  try {
+    const r = await api('POST', '/api/auth/google', body);
+    show('r-google', r.data, r.ok);
+    if (r.ok && r.data.token) salvar(r.data.token, r.data.refreshToken || null, String(r.data.id));
+  } catch(e) { show('r-google', 'Erro de conexão: ' + e.message, false); }
+}
+
+// ── 4. RENOVAR TOKEN ─────────────────────────────────────────
+async function renovarToken() {
+  const refreshToken = document.getElementById('rf-token').value.trim();
+  if (!refreshToken) { alert('Refresh Token não encontrado. Faça login com "Lembrar de mim" primeiro.'); return; }
+
+  try {
+    const r = await api('POST', '/api/auth/refresh', { refreshToken });
+    show('r-refresh', r.data, r.ok);
+    if (r.ok && r.data.token) salvar(r.data.token, null, null);
+  } catch(e) { show('r-refresh', 'Erro de conexão: ' + e.message, false); }
+}
+
+// ── 5. LOGOUT ────────────────────────────────────────────────
+async function logout() {
+  const refreshToken = document.getElementById('out-token').value.trim();
+  if (!refreshToken) { alert('Refresh Token não encontrado.'); return; }
+
+  try {
+    const r = await api('POST', '/api/auth/logout', { refreshToken });
+    show('r-logout', r.status === 204 ? '204 No Content\n\nLogout realizado com sucesso.\nRefresh Token invalidado — tente renovar para confirmar.' : r.data, r.ok);
+    if (r.ok) limparSessao();
+  } catch(e) { show('r-logout', 'Erro de conexão: ' + e.message, false); }
+}
+
+// ── 6. CRIAR PERFIL ──────────────────────────────────────────
+async function criarPerfil() {
+  if (!S.token) { alert('Faça login primeiro para obter o token.'); return; }
+
+  try {
+    const r = await api('POST', '/api/perfis-artistas', {
+      usuarioId:   Number(document.getElementById('p-uid').value),
+      biografia:   document.getElementById('p-bio').value,
+      localizacao: document.getElementById('p-loc').value
+    }, true);
+
+    show('r-perfil', r.data, r.ok);
+
+    if (r.ok && r.data.avatarUrl) {
+      document.getElementById('av-perfil').style.display   = 'flex';
+      document.getElementById('av-perfil-img').src         = r.data.avatarUrl;
+      document.getElementById('av-perfil-url').textContent = r.data.avatarUrl;
+    }
+  } catch(e) { show('r-perfil', 'Erro de conexão: ' + e.message, false); }
+}
+
+// ── Init ─────────────────────────────────────────────────────
+sync();
+</script>
+</body>
+</html>

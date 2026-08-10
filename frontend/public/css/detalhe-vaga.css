@@ -1,0 +1,424 @@
+/* ==========================================================================
+   Palco — detalhe-vaga.css
+   Detalhe da vaga (visao do proprietario), coluna lateral de vagas
+   relacionadas e modal de confirmacao de exclusao.
+   ========================================================================== */
+
+.detalhe {
+  display: grid;
+  grid-template-columns: minmax(0, 821px) minmax(0, 484px);
+  gap: 2rem;
+  align-items: start;
+  width: min(100% - 2rem, 1360px);
+  margin: 3rem auto 0;
+}
+
+/* --------------------------------------------------------------------------
+   Card principal da vaga
+   -------------------------------------------------------------------------- */
+.vaga-detalhe {
+  padding: 2rem 2.5rem;
+  background-color: #ffffff;
+  border-radius: 18px;
+  box-shadow: var(--sombra-card);
+}
+
+.vaga-detalhe__barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.vaga-detalhe__botao {
+  display: inline-flex;
+  flex: 0 0 37px;
+  align-items: center;
+  justify-content: center;
+  width: 37px;
+  height: 37px;
+  padding: 0;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--cor-branco);
+  text-decoration: none;
+  cursor: pointer;
+  background-color: #000000;
+  border: 0;
+  border-radius: 50%;
+}
+
+.vaga-detalhe__botao img {
+  display: none;
+}
+
+.vaga-detalhe__botao::before {
+  display: block;
+}
+
+.vaga-detalhe__botao[title="Voltar"]::before {
+  content: "\2190";
+  font-size: 1.35rem;
+}
+
+.vaga-detalhe__botao[title="Editar vaga"]::before {
+  content: "\270E";
+  font-size: 1.25rem;
+}
+
+.vaga-detalhe__botao[title="Excluir vaga"]::before {
+  content: "\00D7";
+  font-size: 1.75rem;
+}
+
+.vaga-detalhe__botao:hover {
+  filter: brightness(0.92);
+}
+
+.vaga-detalhe__botao:focus-visible {
+  outline: 3px solid var(--cor-magenta);
+  outline-offset: 2px;
+}
+
+.vaga-detalhe__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.vaga-detalhe__titulo {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.vaga-detalhe__usuario {
+  font-size: var(--texto-base);
+  font-weight: 300;
+}
+
+.vaga-detalhe__local {
+  font-size: 0.94rem;
+  font-weight: 300;
+}
+
+.vaga-detalhe__prazo {
+  font-size: var(--texto-sm);
+  font-weight: 200;
+}
+
+.vaga-detalhe__divisor {
+  height: 1px;
+  margin-block: 1.5rem;
+  background-color: var(--cor-linha);
+  border: none;
+}
+
+.vaga-detalhe__subtitulo {
+  margin-bottom: 0.5rem;
+  font-size: var(--texto-base);
+  font-weight: 600;
+}
+
+.vaga-detalhe__descricao {
+  font-size: var(--texto-sm);
+  line-height: 1.45;
+}
+
+/* Etiqueta secundaria (area artistica) */
+.tag-area {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 106px;
+  min-height: 38px;
+  padding: 0 1rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-magenta);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-botao);
+}
+
+/* --------------------------------------------------------------------------
+   Tabela de condicoes da vaga
+   -------------------------------------------------------------------------- */
+.vaga-detalhe__tabela {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+}
+
+.vaga-detalhe__tabela th,
+.vaga-detalhe__tabela td {
+  padding: 0.85rem 0.5rem;
+  font-size: var(--texto-base);
+}
+
+.vaga-detalhe__tabela th {
+  font-weight: 600;
+}
+
+.vaga-detalhe__tabela thead tr {
+  border-bottom: 1px solid var(--cor-linha);
+}
+
+.vaga-detalhe__tabela tbody tr {
+  border-bottom: 1px solid var(--cor-linha);
+}
+
+/* --------------------------------------------------------------------------
+   Cards de requisitos (acoes afirmativas, habilidades, pontos fortes)
+   -------------------------------------------------------------------------- */
+.requisitos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-md);
+  margin-top: 2rem;
+}
+
+.requisitos__card {
+  flex: 1 1 192px;
+  max-width: 240px;
+  padding: 1.5rem 1rem;
+  background-color: rgba(156, 0, 136, 0.04);
+  border-radius: var(--raio-sm);
+}
+
+.requisitos__titulo {
+  margin-bottom: 1.25rem;
+  font-size: var(--texto-base);
+  font-weight: 600;
+  text-align: center;
+}
+
+.requisitos__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  align-items: center;
+}
+
+.requisitos__tag {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 123px;
+  min-height: 29px;
+  padding: 0.35rem;
+  font-size: var(--texto-sm);
+  font-weight: 700;
+  background-color: #ffffff;
+  border: 1px solid var(--cor-magenta);
+  border-radius: var(--raio-sm);
+  box-shadow: var(--sombra-botao);
+}
+
+/* --------------------------------------------------------------------------
+   Coluna lateral: outras vagas
+   -------------------------------------------------------------------------- */
+.vagas-relacionadas {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.vaga-mini {
+  position: relative;
+  padding: 1.75rem 1.5rem;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-magenta);
+  border-radius: 18px;
+  box-shadow: var(--sombra-botao);
+}
+
+.vaga-mini__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.vaga-mini__titulo {
+  font-size: var(--texto-2xl);
+  font-weight: 700;
+}
+
+.vaga-mini__categoria {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 68px;
+  min-height: 25px;
+  padding: 0 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cor-magenta);
+  border: 1px solid var(--cor-magenta);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-botao);
+}
+
+.vaga-mini__local {
+  font-size: 0.94rem;
+  font-weight: 300;
+}
+
+.vaga-mini__prazo {
+  font-size: var(--texto-sm);
+  font-weight: 200;
+}
+
+.vaga-mini__resumo {
+  margin-top: 0.75rem;
+  font-size: var(--texto-xs);
+  line-height: 1.45;
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.vaga-mini__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  margin-top: 1rem;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+  letter-spacing: 0.04em;
+  background-color: rgba(255, 191, 0, 0.7);
+  border: 1px solid var(--cor-amarelo);
+  border-radius: 16px;
+  box-shadow: var(--sombra-botao);
+}
+
+/* --------------------------------------------------------------------------
+   Modal de confirmacao de exclusao
+   -------------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gap-sm);
+  background-color: rgba(10, 14, 42, 0.45);
+}
+
+.modal {
+  width: min(100%, 631px);
+  padding: 1.75rem 2rem;
+  color: var(--cor-branco);
+  background-color: var(--cor-navy);
+  border-radius: 18px;
+  box-shadow: var(--sombra-botao);
+}
+
+.modal__titulo {
+  font-size: var(--texto-lg);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.modal__titulo em {
+  font-style: normal;
+  color: var(--cor-amarelo);
+}
+
+.modal__divisor {
+  height: 1px;
+  margin-block: 1.25rem;
+  background-color: rgba(255, 255, 255, 0.25);
+  border: none;
+}
+
+.modal__instrucao {
+  margin-bottom: 0.75rem;
+  font-size: var(--texto-sm);
+}
+
+.modal__instrucao strong {
+  font-weight: 700;
+  color: var(--cor-amarelo);
+}
+
+.modal__input {
+  width: 100%;
+  min-height: 53px;
+  padding: 0 1.25rem;
+  font-size: var(--texto-base);
+  color: var(--cor-navy);
+  background-color: var(--cor-branco);
+  border: none;
+  border-radius: 18px;
+}
+
+.modal__rodape {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1.5rem;
+}
+
+.modal__alerta {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  max-width: 360px;
+  font-size: 0.63rem;
+  font-weight: 700;
+}
+
+.modal__alerta img {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+}
+
+.modal__confirmar {
+  min-width: 117px;
+  min-height: 53px;
+  padding: 0 1.25rem;
+  font-size: var(--texto-sm);
+  font-weight: 700;
+  color: var(--cor-texto);
+  background-color: var(--cor-amarelo);
+  border: 1px solid var(--cor-navy);
+  border-radius: 18px;
+}
+
+/* Botao fica inativo ate a palavra ser digitada corretamente */
+.modal__confirmar:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .detalhe {
+    grid-template-columns: 1fr;
+  }
+
+  .vaga-detalhe__titulo {
+    font-size: 2rem;
+  }
+
+  .vaga-detalhe {
+    padding: 1.5rem;
+  }
+
+  .vaga-detalhe__tabela {
+    display: block;
+    overflow-x: auto;
+  }
+}

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="pagina-login">
+
+  <!-- Navbar (estado deslogado) -->
+  <header>
+    <nav class="navbar" aria-label="Navegação principal">
+      <a href="index.html">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+
+      <ul class="navbar__menu">
+        <li><a class="navbar__link navbar__link--destaque" href="explorar.html">Explorar</a></li>
+        <li><a class="navbar__link" href="comunidade.html">Comunidade</a></li>
+        <li><a class="navbar__link" href="empresa.html">Empresa</a></li>
+      </ul>
+
+      <div class="navbar__acoes">
+        <a class="navbar__link" href="login.html" aria-current="page">Login</a>
+        <a class="navbar__link navbar__link--destaque" href="cadastro-contratante.html">Cadastrar</a>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Formulário de login -->
+  <main class="login">
+    <div class="card login__card">
+      <h1 class="login__titulo">Bem-vindo(a) a <span class="destaque-magenta">Palco</span></h1>
+
+      <form class="login__form" id="form-login" novalidate>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="email">E-mail</label>
+          <div class="campo__controle">
+            <input
+              class="campo__input"
+              type="email"
+              id="email"
+              name="email"
+              placeholder="E-mail@example.com"
+              autocomplete="email"
+              required>
+          </div>
+        </div>
+
+        <div class="campo">
+          <label class="campo__rotulo" for="senha">Senha</label>
+          <div class="campo__controle">
+            <input
+              class="campo__input campo__input--com-icone"
+              type="password"
+              id="senha"
+              name="senha"
+              placeholder="Senha"
+              autocomplete="current-password"
+              required>
+            <button
+              class="campo__olho"
+              type="button"
+              data-alvo="senha"
+              aria-label="Mostrar senha">
+              <img src="assets/icone-olho.png" alt="">
+            </button>
+          </div>
+          <a class="campo__ajuda login__esqueceu" href="recuperar-senha.html">Esqueceu a senha?</a>
+        </div>
+
+        <button class="btn btn--primario login__entrar" type="submit">Entrar</button>
+
+        <button class="btn btn--contorno login__google" type="button">Continuar com google</button>
+
+        <p class="login__cadastro">
+          Ainda não está no <span class="destaque-magenta">Palco</span>?
+          <a href="cadastro-contratante.html">Crie uma conta.</a>
+        </p>
+
+        <p class="texto-legal login__legal">
+          Ao continuar, você concorda com os
+          <a href="termos.html">Termos de Serviço do Palco</a>
+          e confirma que leu nossa
+          <a href="privacidade.html">Política de Privacidade</a>.
+          Aviso na coleta de informações.
+        </p>
+
+      </form>
+    </div>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

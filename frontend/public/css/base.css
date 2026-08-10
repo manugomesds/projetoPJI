@@ -1,0 +1,168 @@
+/* ==========================================================================
+   Palco — base.css
+   Reset, design tokens e tipografia.
+   Tokens extraidos do arquivo Figma "PJI-NOVO".
+   ========================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* --------------------------------------------------------------------------
+   1. Design tokens
+   -------------------------------------------------------------------------- */
+:root {
+  /* Cores da marca */
+  --cor-navy: #0a0e2a;
+  --cor-amarelo: #ffbf00;
+  --cor-magenta: #9c0088;
+  --cor-magenta-borda: #840774;
+
+  /* Neutros */
+  --cor-branco: #fff9ff;
+  --cor-fundo: #faf9ff;
+  --cor-texto: #000000;
+  --cor-texto-suave: #5e5252;
+  --cor-texto-claro: rgba(255, 249, 255, 0.72);
+  --cor-linha: rgba(10, 14, 42, 0.12);
+
+  /* Tipografia */
+  --fonte-display: 'Anton', 'Impact', sans-serif;
+  --fonte-corpo: 'Inter', system-ui, -apple-system, sans-serif;
+
+  --texto-xs: 0.8125rem;   /* 13px  */
+  --texto-sm: 0.875rem;    /* 14px  */
+  --texto-base: 1rem;      /* 16px  */
+  --texto-lg: 1.25rem;     /* 20px  */
+  --texto-xl: 1.5rem;      /* 24px  */
+  --texto-2xl: 2rem;       /* 32px  */
+  --texto-3xl: 2.25rem;    /* 36px  */
+
+  /* Raios */
+  --raio-sm: 12px;
+  --raio-md: 20px;
+  --raio-lg: 30px;
+  --raio-pill: 60px;
+
+  /* Sombras */
+  --sombra-campo: 0 4px 4px 0 rgba(156, 0, 136, 0.4);
+  --sombra-botao: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+  --sombra-card: 0 10px 24px -14px rgba(0, 0, 0, 0.16);
+  --sombra-navbar: 0 4px 4px 0 rgba(0, 0, 0, 0.25);
+
+  /* Espacamento */
+  --gap-xs: 0.5rem;
+  --gap-sm: 1rem;
+  --gap-md: 1.5rem;
+  --gap-lg: 2.5rem;
+
+  /* Layout */
+  --largura-max: 1238px;
+}
+
+/* --------------------------------------------------------------------------
+   2. Reset
+   -------------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100vh;
+  font-family: var(--fonte-corpo);
+  font-size: var(--texto-base);
+  line-height: 1.5;
+  color: var(--cor-texto);
+  background-color: var(--cor-fundo);
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+/* --------------------------------------------------------------------------
+   3. Tipografia
+   -------------------------------------------------------------------------- */
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.titulo-display {
+  font-family: var(--fonte-display);
+  letter-spacing: 0.015em;
+  text-transform: uppercase;
+}
+
+.destaque-magenta {
+  color: var(--cor-magenta);
+}
+
+/* --------------------------------------------------------------------------
+   4. Utilitarios
+   -------------------------------------------------------------------------- */
+.container {
+  width: 100%;
+  max-width: var(--largura-max);
+  margin-inline: auto;
+  padding-inline: var(--gap-sm);
+}
+
+/* O atributo hidden precisa vencer display:flex / display:grid */
+[hidden] {
+  display: none !important;
+}
+
+/* Visivel apenas para leitores de tela */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Foco visivel e consistente em todo o site */
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--cor-magenta);
+  outline-offset: 2px;
+}

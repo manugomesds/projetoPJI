@@ -1,0 +1,514 @@
+/* ==========================================================================
+   Palco — app.css
+   Shell da area logada: navbar com perfil, menu lateral "Explorar",
+   barra de filtros e card de vaga. Reutilizado por Dashboard, Minhas vagas,
+   Detalhe da vaga e telas de edicao.
+   ========================================================================== */
+
+.pagina-app {
+  min-height: 100vh;
+  padding-bottom: 4rem;
+  background-color: var(--cor-branco);
+}
+
+/* --------------------------------------------------------------------------
+   Navbar da area logada
+   -------------------------------------------------------------------------- */
+.app-navbar {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  width: min(100% - 2rem, 1240px);
+  margin: 45px auto 0;
+  padding: 1rem 2rem;
+  background-color: var(--cor-navy);
+  border: 1px solid #ffffff;
+  border-radius: var(--raio-pill);
+  box-shadow: var(--sombra-navbar);
+}
+
+.app-navbar__menu {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  margin-left: 1.5rem;
+}
+
+.app-navbar__acoes {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  margin-left: auto;
+}
+
+.app-navbar__icone {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+}
+
+.app-navbar__icone img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Bolinha de notificacao nao lida */
+.app-navbar__badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  width: 10px;
+  height: 10px;
+  background-color: var(--cor-magenta);
+  border-radius: 50%;
+}
+
+/* Separador vertical antes do avatar */
+.app-navbar__divisor {
+  width: 1px;
+  height: 60px;
+  background-color: rgba(255, 255, 255, 0.35);
+}
+
+.app-navbar__perfil {
+  width: 55px;
+  height: 55px;
+  object-fit: cover;
+  background-color: var(--cor-amarelo);
+  border-radius: 50%;
+  box-shadow: var(--sombra-botao);
+}
+
+/* Botao que abre o menu lateral */
+.app-navbar__hamburguer {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 30px;
+  padding: 0.25rem;
+}
+
+.app-navbar__hamburguer span {
+  height: 2px;
+  background-color: var(--cor-amarelo);
+}
+
+/* --------------------------------------------------------------------------
+   Menu lateral "Explorar" (drawer)
+   -------------------------------------------------------------------------- */
+.drawer {
+  position: fixed;
+  z-index: 50;
+  top: 0;
+  left: 0;
+  width: min(420px, 90vw);
+  height: 100vh;
+  padding: 2.5rem 2rem;
+  overflow-y: auto;
+  background-color: var(--cor-navy);
+  border-radius: 0 24px 24px 0;
+  box-shadow: 0 4px 2px rgba(0, 0, 0, 0.25);
+  transform: translateX(-100%);
+  transition: transform 0.3s ease;
+}
+
+.drawer[data-aberto="true"] {
+  transform: translateX(0);
+}
+
+.drawer__fechar {
+  position: absolute;
+  top: 1.5rem;
+  right: 1.5rem;
+  font-size: 1.5rem;
+  color: var(--cor-amarelo);
+}
+
+.drawer__titulo {
+  margin-bottom: 0.5rem;
+  font-family: var(--fonte-display);
+  font-size: var(--texto-3xl);
+  color: var(--cor-amarelo);
+  letter-spacing: 0.015em;
+}
+
+.drawer__descricao {
+  font-size: 0.84rem;
+  color: var(--cor-texto-claro);
+}
+
+.drawer__divisor {
+  height: 1px;
+  margin-block: 1.5rem;
+  background-color: rgba(255, 255, 255, 0.13);
+}
+
+.drawer__opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-sm);
+}
+
+.drawer__opcao {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.85rem 1rem;
+  background-color: rgba(255, 249, 255, 0.05);
+  border: 1px solid rgba(255, 249, 255, 0.1);
+  border-radius: 18px;
+  box-shadow: var(--sombra-card);
+  transition: background-color 0.2s ease;
+}
+
+.drawer__opcao:hover {
+  background-color: rgba(255, 249, 255, 0.12);
+}
+
+.drawer__opcao img {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+
+.drawer__opcao-nome {
+  display: block;
+  font-size: 0.94rem;
+  font-weight: 600;
+  color: var(--cor-branco);
+}
+
+.drawer__opcao-desc {
+  display: block;
+  font-size: 0.72rem;
+  color: rgba(255, 249, 255, 0.66);
+}
+
+.drawer__opcao-seta {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: rgba(255, 191, 0, 0.9);
+}
+
+.drawer__cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap-xs);
+  margin-top: 1.75rem;
+  padding: 1rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cor-navy);
+  letter-spacing: 0.04em;
+  background-color: var(--cor-amarelo);
+  border-radius: 16px;
+}
+
+/* Fundo escurecido atras do drawer */
+.drawer-overlay {
+  position: fixed;
+  z-index: 40;
+  inset: 0;
+  background-color: rgba(10, 14, 42, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   Barra de filtros com contadores
+   -------------------------------------------------------------------------- */
+.filtros {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-md);
+  width: min(100% - 2rem, 1239px);
+  margin: 3rem auto 2.5rem;
+  padding: 1rem 2.5rem;
+  overflow-x: auto;
+  background-color: #ffffff;
+  border-radius: 27px;
+  box-shadow: var(--sombra-botao), inset 0 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+.filtro {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-shrink: 0;
+  padding-bottom: 0.35rem;
+  font-size: var(--texto-lg);
+  color: var(--cor-navy);
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+}
+
+.filtro[aria-current="true"] {
+  color: var(--cor-magenta);
+  border-bottom-color: var(--cor-magenta);
+}
+
+/* Bolinha com o numero de vagas do filtro */
+.filtro__contador {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 29px;
+  height: 29px;
+  font-size: var(--texto-base);
+  background-color: rgba(255, 249, 255, 0.9);
+  border: 1px solid currentColor;
+  border-radius: 50%;
+}
+
+.filtros__mais {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 23px;
+  height: 23px;
+  margin-left: auto;
+  font-size: var(--texto-lg);
+  font-weight: 600;
+  background-color: var(--cor-amarelo);
+  border-radius: 50%;
+}
+
+/* --------------------------------------------------------------------------
+   Card de vaga
+   -------------------------------------------------------------------------- */
+.vagas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: min(100% - 2rem, 1415px);
+  margin-inline: auto;
+}
+
+.vaga-card {
+  display: grid;
+  grid-template-columns: 177px 1fr auto;
+  gap: var(--gap-md);
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background-color: #ffffff;
+  border-radius: 27px;
+  box-shadow: var(--sombra-card);
+}
+
+.vaga-card__imagem {
+  width: 177px;
+  height: 170px;
+  object-fit: cover;
+  border-radius: var(--raio-md);
+}
+
+.vaga-card__titulo-linha {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+}
+
+.vaga-card__conteudo {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.vaga-card__titulo {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+/* Etiqueta da categoria (Teatro, Danca, etc.) */
+.vaga-card__categoria {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 100px;
+  padding: 0.15rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cor-magenta);
+  border: 1px solid var(--cor-magenta);
+  border-radius: 18px;
+}
+
+.vaga-card__usuario {
+  font-size: var(--texto-base);
+  font-weight: 300;
+}
+
+.vaga-card__local {
+  font-size: 0.94rem;
+  font-weight: 300;
+}
+
+.vaga-card__prazo {
+  font-size: var(--texto-sm);
+  font-weight: 200;
+}
+
+/* Prazo vencido fica em vermelho */
+.vaga-card__prazo--vencido {
+  color: #9c0000;
+}
+
+.vaga-card__lateral {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--gap-lg);
+  min-width: 135px;
+  height: 100%;
+}
+
+.vaga-card__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.vaga-card__acao {
+  display: inline-flex;
+  flex: 0 0 37px;
+  align-items: center;
+  justify-content: center;
+  width: 37px;
+  height: 37px;
+  padding: 0;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--cor-navy);
+  text-decoration: none;
+  cursor: pointer;
+  background-color: #d9d9d9;
+  border: 0;
+  border-radius: 50%;
+}
+
+.vaga-card__acao img {
+  display: none;
+}
+
+.vaga-card__acao::before {
+  display: block;
+}
+
+.vaga-card__acao[title="Editar vaga"]::before {
+  content: "\270E";
+  font-size: 1.35rem;
+}
+
+.vaga-card__acao[title="Excluir vaga"]::before {
+  content: "\00D7";
+  font-size: 1.75rem;
+}
+
+.vaga-card__acao[title="Ver detalhes"]::before {
+  content: "\203A";
+  font-size: 2rem;
+  transform: translateY(-1px);
+}
+
+.vaga-card__acao:hover {
+  filter: brightness(0.92);
+}
+
+.vaga-card__acao:focus-visible {
+  outline: 3px solid var(--cor-magenta);
+  outline-offset: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   Selo de status da vaga
+   -------------------------------------------------------------------------- */
+.status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 104px;
+  min-height: 43px;
+  padding: 0 1rem;
+  font-size: var(--texto-base);
+  font-weight: 500;
+  border-radius: 62px;
+  white-space: nowrap;
+}
+
+.status--selecao,
+.status--concluida {
+  color: var(--cor-magenta);
+  background-color: rgba(156, 0, 136, 0.25);
+  border: 1px solid var(--cor-magenta);
+}
+
+.status--expirada {
+  color: var(--cor-navy);
+  background-color: rgba(255, 195, 16, 0.55);
+  border: 1px solid rgba(255, 191, 0, 0.9);
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 1100px) {
+  .vaga-card__titulo {
+    font-size: 2rem;
+  }
+}
+
+@media (max-width: 800px) {
+  .app-navbar {
+    flex-wrap: wrap;
+    justify-content: center;
+    border-radius: var(--raio-md);
+  }
+
+  .app-navbar__menu {
+    margin-left: 0;
+  }
+
+  .app-navbar__acoes {
+    margin-left: 0;
+  }
+
+  .app-navbar__divisor {
+    display: none;
+  }
+
+  .vaga-card {
+    grid-template-columns: 1fr;
+    text-align: left;
+  }
+
+  .vaga-card__imagem {
+    width: 100%;
+    height: 180px;
+  }
+
+  .vaga-card__lateral {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap-sm);
+    min-width: 0;
+  }
+
+  .vaga-card__titulo {
+    font-size: 1.75rem;
+  }
+
+  .filtros {
+    padding-inline: 1.25rem;
+  }
+}

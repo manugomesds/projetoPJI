@@ -1,0 +1,284 @@
+/* ==========================================================================
+   Palco — cadastro.css
+   Tela de Cadastro do Contratante.
+   ========================================================================== */
+
+.pagina-escura {
+  min-height: 100vh;
+  padding-bottom: 4rem;
+  background-color: var(--cor-navy);
+}
+
+.cadastro {
+  display: flex;
+  justify-content: center;
+  padding-block: 3rem;
+}
+
+.cadastro__card {
+  width: min(100% - 3rem, 1400px);
+  padding: 3rem 3.5rem;
+  background-color: #ffffff;
+  box-shadow: 0 8px 28px 0 rgba(255, 249, 255, 0.2);
+}
+
+.cadastro__cabecalho {
+  margin-bottom: 2.5rem;
+}
+
+.cadastro__titulo {
+  margin-bottom: 0.75rem;
+  font-size: var(--texto-3xl);
+  font-weight: 600;
+}
+
+.cadastro__subtitulo {
+  font-size: var(--texto-xl);
+  font-weight: 300;
+  line-height: 1.4;
+}
+
+/* --------------------------------------------------------------------------
+   Grade do formulario: duas colunas no desktop
+   -------------------------------------------------------------------------- */
+.cadastro__form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.75rem 3.5rem;
+  align-items: start;
+}
+
+.cadastro__termos,
+.cadastro__acoes {
+  grid-column: 1 / -1;
+}
+
+/* Fieldset precisa de reset para se comportar como os outros campos */
+.cadastro__nascimento,
+.cadastro__telefone {
+  border: none;
+}
+
+.cadastro__nascimento-grupo,
+.cadastro__telefone-grupo {
+  display: flex;
+  gap: var(--gap-sm);
+}
+
+.campo__input--curto {
+  max-width: 110px;
+}
+
+/* --------------------------------------------------------------------------
+   Selects nativos (dia / mes / ano)
+   -------------------------------------------------------------------------- */
+.campo__select {
+  min-width: 110px;
+  min-height: 44px;
+  padding: 0 2.5rem 0 1.25rem;
+  font-size: var(--texto-base);
+  font-weight: 300;
+  color: var(--cor-texto-suave);
+  background-color: transparent;
+  background-image: url('../assets/seta-select.svg');
+  background-repeat: no-repeat;
+  background-position: right 1.1rem center;
+  background-size: 14px 8px;
+  border: 1px solid var(--cor-magenta-borda);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-campo);
+  appearance: none;
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   Dropdown customizado da especificacao de perfil
+   -------------------------------------------------------------------------- */
+.seletor {
+  position: relative;
+}
+
+.seletor__gatilho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--gap-sm);
+  width: 100%;
+  min-height: 46px;
+  padding: 0 0.5rem 0 1.5rem;
+  font-size: var(--texto-xs);
+  font-weight: 300;
+  color: rgba(0, 0, 0, 0.52);
+  text-align: left;
+  background-color: #ffffff;
+  border: 1px solid var(--cor-magenta);
+  border-radius: 25px;
+  box-shadow: var(--sombra-botao);
+}
+
+.seletor__seta {
+  flex-shrink: 0;
+  width: 32px;
+  height: 33px;
+  transition: transform 0.2s ease;
+}
+
+.seletor__gatilho[aria-expanded="true"] .seletor__seta {
+  transform: rotate(180deg);
+}
+
+.seletor__lista {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  width: 370px;
+  max-width: 100%;
+  max-height: 377px;
+  padding: 1.5rem;
+  overflow-y: auto;
+  background-color: #ffffff;
+  border: 1px solid var(--cor-magenta);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-botao);
+}
+
+.seletor__opcao {
+  padding: 0.8rem 1.5rem;
+  font-size: var(--texto-base);
+  font-weight: 600;
+  border-radius: var(--raio-md);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.seletor__opcao:hover,
+.seletor__opcao:focus-visible,
+.seletor__opcao[aria-selected="true"] {
+  color: var(--cor-magenta);
+  background-color: var(--cor-amarelo);
+}
+
+/* --------------------------------------------------------------------------
+   Chip da opcao escolhida + card de explicacao
+   -------------------------------------------------------------------------- */
+.cadastro__perfil-escolha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-xs);
+  margin-top: 0.75rem;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--gap-xs);
+  align-self: flex-start;
+  min-height: 35px;
+  padding: 0 1rem;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-magenta);
+  border-radius: var(--raio-lg);
+  box-shadow: var(--sombra-botao);
+}
+
+.tag__remover {
+  font-size: 0.75rem;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.tag__remover:hover {
+  color: var(--cor-magenta);
+}
+
+.cadastro__perfil-info {
+  max-width: 331px;
+  padding: 1rem 1.5rem;
+  background-color: var(--cor-branco);
+  border: 1px solid rgba(156, 0, 136, 0.5);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-botao);
+}
+
+.cadastro__perfil-info strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: var(--texto-base);
+  font-weight: 600;
+}
+
+.cadastro__perfil-info p {
+  font-size: var(--texto-xs);
+  font-weight: 200;
+  line-height: 1.35;
+}
+
+/* --------------------------------------------------------------------------
+   Termos e botao final
+   -------------------------------------------------------------------------- */
+.cadastro__termos {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  font-size: var(--texto-base);
+  font-weight: 500;
+}
+
+.cadastro__termos a {
+  text-decoration: underline;
+}
+
+.cadastro__checkbox {
+  flex-shrink: 0;
+  width: 23px;
+  height: 23px;
+  accent-color: var(--cor-magenta);
+  border: 2px solid #000000;
+  cursor: pointer;
+}
+
+.cadastro__acoes {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.cadastro__registrar {
+  width: 310px;
+  min-height: 79px;
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .cadastro__card {
+    padding: 2rem 1.5rem;
+  }
+
+  .cadastro__form {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+
+  .cadastro__titulo {
+    font-size: var(--texto-xl);
+  }
+
+  .cadastro__subtitulo {
+    font-size: var(--texto-base);
+  }
+
+  .cadastro__nascimento-grupo {
+    flex-wrap: wrap;
+  }
+
+  .cadastro__registrar {
+    width: 100%;
+    min-height: 64px;
+  }
+}

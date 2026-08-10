@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atriz Musical — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/detalhe-vaga.css">
+</head>
+<body class="pagina-app">
+
+  <!-- ============ Menu lateral "Explorar" ============ -->
+  <div class="drawer-overlay" data-drawer-overlay hidden></div>
+
+  <aside class="drawer" id="menu-explorar" data-drawer aria-label="Explorar">
+    <button class="drawer__fechar" type="button" data-drawer-fechar aria-label="Fechar menu">&times;</button>
+
+    <h2 class="drawer__titulo">EXPLORAR</h2>
+    <p class="drawer__descricao">
+      Descubra vagas, talentos, contratantes e experiências culturais dentro da Palco.
+    </p>
+
+    <div class="drawer__divisor"></div>
+
+    <nav class="drawer__opcoes">
+      <a class="drawer__opcao" href="minhas-vagas.html">
+        <img src="assets/menu-vagas.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Vagas</span>
+          <span class="drawer__opcao-desc">Oportunidades abertas para artistas independentes.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="buscar-artistas.html">
+        <img src="assets/menu-artistas.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Artistas</span>
+          <span class="drawer__opcao-desc">Encontre talentos por área, cidade e estilo.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="contratantes.html">
+        <img src="assets/menu-contratantes.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Contratantes</span>
+          <span class="drawer__opcao-desc">Veja produtores, instituições e pessoas contratando.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="galeria-virtual.html">
+        <img src="assets/menu-galeria.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Galeria Virtual</span>
+          <span class="drawer__opcao-desc">Explore obras, exposições e apresentações digitais.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
+      <a class="drawer__opcao" href="top-da-semana.html">
+        <img src="assets/menu-top-semana.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Top da Semana</span>
+          <span class="drawer__opcao-desc">Artistas em destaque por atividade e engajamento.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+    </nav>
+
+    <a class="drawer__cta" href="explorar.html">
+      VER TUDO EM EXPLORAR <span aria-hidden="true">&rarr;</span>
+    </a>
+  </aside>
+
+  <!-- ============ Navbar ============ -->
+  <header>
+    <nav class="app-navbar" aria-label="Navegação principal">
+      <button class="app-navbar__hamburguer" type="button"
+              data-drawer-abrir aria-controls="menu-explorar" aria-expanded="false">
+        <span class="sr-only">Abrir menu Explorar</span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
+
+      <a href="dashboard-contratante.html">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+
+      <ul class="app-navbar__menu">
+        <li><a class="navbar__link navbar__link--destaque" href="explorar.html">Explorar</a></li>
+        <li><a class="navbar__link" href="comunidade.html">Comunidade</a></li>
+        <li><a class="navbar__link" href="empresa.html">Empresa</a></li>
+      </ul>
+
+      <div class="app-navbar__acoes">
+        <a class="app-navbar__icone" href="meus-salvos.html" aria-label="Favoritos">
+          <img src="assets/icone-favoritos.png" alt="">
+        </a>
+
+        <a class="app-navbar__icone" href="notificacoes.html" aria-label="Notificações">
+          <img src="assets/icone-notificacao.png" alt="">
+          <span class="app-navbar__badge" aria-hidden="true"></span>
+        </a>
+
+        <span class="app-navbar__divisor" aria-hidden="true"></span>
+
+        <a href="perfil.html" aria-label="Meu perfil">
+          <img class="app-navbar__perfil" src="assets/avatar-perfil.png" alt="">
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main>
+    <div class="detalhe">
+
+      <!-- ============ Card principal da vaga ============ -->
+      <article class="vaga-detalhe">
+
+        <div class="vaga-detalhe__barra">
+          <a class="vaga-detalhe__botao" href="minhas-vagas.html" title="Voltar">
+            <span class="sr-only">Voltar para Minhas vagas</span>
+            <img src="assets/botao-voltar.svg" alt="">
+          </a>
+          <a class="vaga-detalhe__botao" href="editar-vagas.html" title="Editar vaga">
+            <span class="sr-only">Editar vaga</span>
+            <img src="assets/botao-voltar.svg" alt="">
+          </a>
+          <button class="vaga-detalhe__botao" type="button" data-abrir-modal title="Excluir vaga">
+            <span class="sr-only">Excluir vaga</span>
+            <img src="assets/botao-voltar.svg" alt="">
+          </button>
+        </div>
+
+        <div class="vaga-detalhe__cabecalho">
+          <h1 class="vaga-detalhe__titulo">Atriz Musical</h1>
+          <span class="vaga-card__categoria">Teatro</span>
+          <span class="tag-area">Artes Cênicas</span>
+        </div>
+
+        <p class="vaga-detalhe__usuario">@academiTeatral</p>
+        <p class="vaga-detalhe__local">São Paulo, Itapetininga</p>
+        <p class="vaga-detalhe__prazo">Prazo até 05/05/2030</p>
+
+        <hr class="vaga-detalhe__divisor">
+
+        <h2 class="vaga-detalhe__subtitulo">Descrição</h2>
+        <p class="vaga-detalhe__descricao">
+          Procuramos uma atriz apaixonada por artes cênicas para integrar nosso elenco
+          de musical. É desejável experiência em atuação, canto e expressão corporal,
+          além de comprometimento, criatividade e facilidade para trabalhar em equipe.
+        </p>
+
+        <hr class="vaga-detalhe__divisor">
+
+        <table class="vaga-detalhe__tabela">
+          <thead>
+            <tr>
+              <th scope="col">Tipo de vaga</th>
+              <th scope="col">Modalidade</th>
+              <th scope="col">Remuneração</th>
+              <th scope="col">Valor</th>
+              <th scope="col">Experiência</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Apresentação</td>
+              <td>Presencial</td>
+              <td>Valor fixo</td>
+              <td>R$ 150,00</td>
+              <td>Em formação</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="requisitos">
+          <section class="requisitos__card">
+            <h3 class="requisitos__titulo">Ações afirmativas</h3>
+            <div class="requisitos__lista">
+              <span class="requisitos__tag">PCD</span>
+              <span class="requisitos__tag">Mulheres</span>
+              <span class="requisitos__tag">LGBTQIA +</span>
+            </div>
+          </section>
+
+          <section class="requisitos__card">
+            <h3 class="requisitos__titulo">Habilidades</h3>
+            <div class="requisitos__lista">
+              <span class="requisitos__tag">Inglês</span>
+              <span class="requisitos__tag">Espanhol</span>
+              <span class="requisitos__tag">Francês</span>
+            </div>
+          </section>
+
+          <section class="requisitos__card">
+            <h3 class="requisitos__titulo">Pontos fortes</h3>
+            <div class="requisitos__lista">
+              <span class="requisitos__tag">Comunicativa</span>
+            </div>
+          </section>
+        </div>
+
+      </article>
+
+      <!-- ============ Outras vagas ============ -->
+      <aside class="vagas-relacionadas" aria-label="Outras vagas">
+
+        <article class="vaga-mini">
+          <div class="vaga-mini__cabecalho">
+            <h2 class="vaga-mini__titulo">Atriz Musical</h2>
+            <span class="vaga-mini__categoria">Teatro</span>
+            <span class="tag-area">Artes Cênicas</span>
+          </div>
+          <p class="vaga-mini__local">São Paulo, Itapetininga</p>
+          <p class="vaga-mini__prazo">Prazo até 05/05/2030</p>
+          <p class="vaga-mini__resumo">
+            Procuramos por atrizes que tenham o tom de timbre: contralto e tenham...
+          </p>
+          <a class="vaga-mini__cta" href="#">VER VAGA <span aria-hidden="true">&rarr;</span></a>
+        </article>
+
+        <article class="vaga-mini">
+          <div class="vaga-mini__cabecalho">
+            <h2 class="vaga-mini__titulo">Atriz Musical</h2>
+            <span class="vaga-mini__categoria">Teatro</span>
+            <span class="tag-area">Artes Cênicas</span>
+          </div>
+          <p class="vaga-mini__local">São Paulo, Itapetininga</p>
+          <p class="vaga-mini__prazo">Prazo até 05/05/2030</p>
+          <p class="vaga-mini__resumo">
+            Procuramos por atrizes que tenham o tom de timbre: contralto e tenham...
+          </p>
+          <a class="vaga-mini__cta" href="#">VER VAGA <span aria-hidden="true">&rarr;</span></a>
+        </article>
+
+        <article class="vaga-mini">
+          <div class="vaga-mini__cabecalho">
+            <h2 class="vaga-mini__titulo">Atriz Musical</h2>
+            <span class="vaga-mini__categoria">Teatro</span>
+            <span class="tag-area">Artes Cênicas</span>
+          </div>
+          <p class="vaga-mini__local">São Paulo, Itapetininga</p>
+          <p class="vaga-mini__prazo">Prazo até 05/05/2030</p>
+          <p class="vaga-mini__resumo">
+            Procuramos por atrizes que tenham o tom de timbre: contralto e tenham...
+          </p>
+          <a class="vaga-mini__cta" href="#">VER VAGA <span aria-hidden="true">&rarr;</span></a>
+        </article>
+
+      </aside>
+    </div>
+  </main>
+
+  <!-- ============ Modal de confirmação de exclusão ============ -->
+  <div class="modal-overlay" data-modal-exclusao hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="titulo-exclusao">
+
+      <h2 class="modal__titulo" id="titulo-exclusao">
+        Tem certeza que deseja <em>excluir a sua vaga?</em>
+      </h2>
+
+      <hr class="modal__divisor">
+
+      <label class="modal__instrucao" for="confirmacao-exclusao">
+        Digite “<strong>DELETAR</strong>” para a exclusão.
+      </label>
+      <input class="modal__input" type="text" id="confirmacao-exclusao"
+             data-modal-input autocomplete="off">
+
+      <div class="modal__rodape">
+        <p class="modal__alerta">
+          <img src="assets/icone-alerta.png" alt="">
+          Esta ação não pode ser desfeita. A vaga será removida sempre.
+        </p>
+        <button class="modal__confirmar" type="button" data-modal-confirmar disabled>
+          Confirmar <span aria-hidden="true">&rarr;</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
