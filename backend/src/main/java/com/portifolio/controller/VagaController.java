@@ -1,6 +1,7 @@
 package com.portifolio.controller;
 
 import com.portifolio.dto.VagaBuscaFiltro;
+import com.portifolio.dto.VagaAtualizacaoRequest;
 import com.portifolio.dto.VagaListagemResponse;
 import com.portifolio.dto.VagaRequest;
 import com.portifolio.dto.VagaResponse;
@@ -75,7 +76,9 @@ public class VagaController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VagaResponse> atualizar(@PathVariable Long id, @Valid @RequestBody VagaRequest request) {
+    public ResponseEntity<VagaResponse> atualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody VagaAtualizacaoRequest request) {
         return ResponseEntity.ok(vagaService.atualizar(id, request));
     }
 

@@ -3,13 +3,15 @@ package com.portifolio.service;
 import com.portifolio.dto.PerfilArtistaRequest;
 import com.portifolio.dto.PerfilArtistaResponse;
 import com.portifolio.exception.ConflictException;
+import com.portifolio.exception.ForbiddenException;
 import com.portifolio.exception.ResourceNotFoundException;
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.Tag;
 import com.portifolio.model.Usuario;
+import com.portifolio.model.enums.TipoUsuario;
 import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.TagRepository;
-import com.portifolio.repository.UsuarioRepository;
+import com.portifolio.security.AuthenticatedUserResolver;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -24,61 +26,93 @@ import org.springframework.transaction.annotation.Transactional;
 public class PerfilArtistaService {
 
     private final PerfilArtistaRepository perfilArtistaRepository;
-    private final UsuarioRepository usuarioRepository;
     private final TagRepository tagRepository;
-    private final AvatarService avatarService; // RF34
+    private final AvatarService avatarService;
+    private final AuthenticatedUserResolver authenticatedUserResolver;
+    private final PerfilCompletoService perfilCompletoService;
 
     @Transactional(readOnly = true)
     public List<PerfilArtistaResponse> listarTodos() {
-        return perfilArtistaRepository.findAll().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        return perfilArtistaRepository.findAll().stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public PerfilArtistaResponse buscarPorId(Long id) {
-        PerfilArtista perfil = perfilArtistaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista nao encontrado."));
-        return toResponse(perfil);
+        return toResponse(perfilArtistaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Perfil de artista nao encontrado.")));
     }
 
     @Transactional
     public PerfilArtistaResponse criar(PerfilArtistaRequest request) {
-        if (perfilArtistaRepository.existsById(request.getUsuarioId())) {
+        Usuario usuario = exigirArtistaAtual();
+        if (perfilArtistaRepository.existsById(usuario.getId())) {
             throw new ConflictException("Perfil de artista ja cadastrado para este usuario.");
         }
-        Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         PerfilArtista perfil = new PerfilArtista();
         perfil.setUsuario(usuario);
-        preencherPerfil(perfil, request);
+        preencherPreservandoOmitidos(perfil, request);
         perfil.setUltimaAtualizacao(LocalDateTime.now());
-        return toResponse(perfilArtistaRepository.save(perfil));
+        PerfilArtista salvo = perfilArtistaRepository.save(perfil);
+        perfilCompletoService.recalcular(usuario);
+        return toResponse(salvo);
     }
 
     @Transactional
     public PerfilArtistaResponse atualizar(Long id, PerfilArtistaRequest request) {
-        PerfilArtista perfil = perfilArtistaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista nao encontrado."));
-        preencherPerfil(perfil, request);
+        Usuario usuario = exigirArtistaAtual();
+        exigirMesmoUsuario(id, usuario);
+        PerfilArtista perfil = perfilArtistaRepository.findById(usuario.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Perfil de artista nao encontrado."));
+        preencherPreservandoOmitidos(perfil, request);
         perfil.setUltimaAtualizacao(LocalDateTime.now());
-        return toResponse(perfilArtistaRepository.save(perfil));
+        PerfilArtista salvo = perfilArtistaRepository.save(perfil);
+        perfilCompletoService.recalcular(usuario);
+        return toResponse(salvo);
     }
 
     @Transactional
     public void deletar(Long id) {
-        PerfilArtista perfil = perfilArtistaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista nao encontrado."));
+        Usuario usuario = exigirArtistaAtual();
+        exigirMesmoUsuario(id, usuario);
+        PerfilArtista perfil = perfilArtistaRepository.findById(usuario.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Perfil de artista nao encontrado."));
         perfilArtistaRepository.delete(perfil);
+        perfilArtistaRepository.flush();
+        perfilCompletoService.recalcular(usuario);
     }
 
-    private void preencherPerfil(PerfilArtista perfil, PerfilArtistaRequest request) {
-        perfil.setBiografia(request.getBiografia());
-        perfil.setLocalizacao(request.getLocalizacao());
-        perfil.setUrlPortfolio(request.getUrlPortfolio());
-        perfil.setNivelMedalha(request.getNivelMedalha());
-        perfil.setScoreEngajamento(request.getScoreEngajamento());
-        perfil.setBannerUrl(request.getBannerUrl());
+    private Usuario exigirArtistaAtual() {
+        Usuario usuario = authenticatedUserResolver.usuarioAtual()
+                .orElseThrow(() -> new ForbiddenException("Autenticação obrigatória."));
+        if (usuario.getTipoUsuario() != TipoUsuario.ARTISTA) {
+            throw new ForbiddenException("Somente artistas podem alterar perfil de artista.");
+        }
+        return usuario;
+    }
+
+    private void exigirMesmoUsuario(Long id, Usuario usuario) {
+        if (!usuario.getId().equals(id)) {
+            throw new ForbiddenException("Você só pode alterar o próprio perfil.");
+        }
+    }
+
+    private void preencherPreservandoOmitidos(
+            PerfilArtista perfil, PerfilArtistaRequest request) {
+        if (request.getBiografia() != null) {
+            perfil.setBiografia(request.getBiografia());
+        }
+        if (request.getLocalizacao() != null) {
+            perfil.setLocalizacao(request.getLocalizacao());
+        }
+        if (request.getUrlPortfolio() != null) {
+            perfil.setUrlPortfolio(request.getUrlPortfolio());
+        }
+        if (request.getBannerUrl() != null) {
+            perfil.setBannerUrl(request.getBannerUrl());
+        }
         if (request.getTagIds() != null) {
             perfil.setTags(resolverTags(request.getTagIds()));
         }
@@ -96,14 +130,10 @@ public class PerfilArtistaService {
         Set<Long> tagIds = perfil.getTags().stream()
                 .map(Tag::getId)
                 .collect(Collectors.toSet());
-
-        // RF34: prioridade foto_perfil do perfil > foto do Google (usuarios.foto_perfil) > DiceBear
         String avatarUrl = avatarService.resolverUrl(
                 perfil.getUsuarioId(),
-                perfil.getUsuario().getFotoPerfil(),  // foto salva via Google (RF32)
-                perfil.getFotoPerfil()                // foto definida pelo usuario via RF08
-        );
-
+                perfil.getUsuario().getFotoPerfil(),
+                perfil.getFotoPerfil());
         return PerfilArtistaResponse.builder()
                 .usuarioId(perfil.getUsuarioId())
                 .biografia(perfil.getBiografia())

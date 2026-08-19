@@ -28,8 +28,6 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "vagas", indexes = {
@@ -79,19 +77,13 @@ public class Vaga {
     @Column(columnDefinition = "text")
     private String beneficios;
 
-    @Column(
-            name = "modelo_trabalho"
-    )
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "modelo_trabalho", nullable = false, columnDefinition = "modelo_trabalho_enum")
     private ModeloTrabalho modeloTrabalho;
 
     @Column(name = "tipo_contrato", nullable = false, length = 100)
     private String tipoContrato;
 
-    @Column(
-            name = "status"
-    )
-    @JdbcTypeCode(SqlTypes.NAMED_ENUM)
+    @Column(name = "status", columnDefinition = "status_vaga_enum")
     private StatusVaga status;
 
     @Column(name = "data_publicacao")

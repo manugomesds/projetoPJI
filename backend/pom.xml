@@ -13,7 +13,7 @@
     <groupId>com.portifolio</groupId>
     <artifactId>backend</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>backend</name>c
+    <name>backend</name>
     <description>Backend do projeto PJI</description>
 
     <properties>

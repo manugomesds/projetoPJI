@@ -3,15 +3,14 @@ package com.portifolio.service;
 import com.portifolio.dto.PerfilContratanteRequest;
 import com.portifolio.dto.PerfilContratanteResponse;
 import com.portifolio.exception.ConflictException;
-import com.portifolio.exception.ResourceNotFoundException;
 import com.portifolio.exception.ForbiddenException;
+import com.portifolio.exception.ResourceNotFoundException;
 import com.portifolio.model.PerfilContratante;
 import com.portifolio.model.Usuario;
+import com.portifolio.model.enums.TipoUsuario;
 import com.portifolio.repository.PerfilContratanteRepository;
-import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.security.AuthenticatedUserResolver;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,91 +20,102 @@ import org.springframework.transaction.annotation.Transactional;
 public class PerfilContratanteService {
 
     private final PerfilContratanteRepository perfilContratanteRepository;
-    private final UsuarioRepository usuarioRepository;
-    private final AvatarService avatarService; // RF34
+    private final AvatarService avatarService;
     private final AuthenticatedUserResolver authenticatedUserResolver;
+    private final PerfilCompletoService perfilCompletoService;
 
     @Transactional(readOnly = true)
     public List<PerfilContratanteResponse> listarTodos() {
-        return perfilContratanteRepository.findAll().stream()
-                .map(this::toResponse)
-                .collect(Collectors.toList());
+        return perfilContratanteRepository.findAll().stream().map(this::toResponse).toList();
     }
 
     @Transactional(readOnly = true)
     public PerfilContratanteResponse buscarPorId(Long id) {
-        PerfilContratante perfil = perfilContratanteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante nao encontrado."));
-        return toResponse(perfil);
+        return toResponse(perfilContratanteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Perfil de contratante nao encontrado.")));
     }
 
     @Transactional
     public PerfilContratanteResponse criar(PerfilContratanteRequest request) {
-        exigirProprioUsuario(request.getUsuarioId());
-        if (perfilContratanteRepository.existsById(request.getUsuarioId())) {
-            throw new ConflictException("Perfil de contratante ja cadastrado para este usuario.");
+        Usuario usuario = exigirContratanteAtual();
+        if (perfilContratanteRepository.existsById(usuario.getId())) {
+            throw new ConflictException(
+                    "Perfil de contratante ja cadastrado para este usuario.");
         }
-        Usuario usuario = usuarioRepository.findById(request.getUsuarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Usuario nao encontrado."));
         PerfilContratante perfil = new PerfilContratante();
         perfil.setUsuario(usuario);
-        preencherPerfil(perfil, request);
-        return toResponse(perfilContratanteRepository.save(perfil));
+        preencherPreservandoOmitidos(perfil, request);
+        PerfilContratante salvo = perfilContratanteRepository.save(perfil);
+        perfilCompletoService.recalcular(usuario);
+        return toResponse(salvo);
     }
 
     @Transactional
     public PerfilContratanteResponse atualizar(Long id, PerfilContratanteRequest request) {
-        exigirProprioUsuario(id);
-        PerfilContratante perfil = perfilContratanteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante nao encontrado."));
-        preencherPerfil(perfil, request);
+        Usuario usuario = exigirContratanteAtual();
+        exigirMesmoUsuario(id, usuario);
+        PerfilContratante perfil = perfilContratanteRepository.findById(usuario.getId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Perfil de contratante nao encontrado."));
+        preencherPreservandoOmitidos(perfil, request);
         PerfilContratante salvo = perfilContratanteRepository.save(perfil);
-        atualizarPerfilCompleto(salvo.getUsuario());
+        perfilCompletoService.recalcular(usuario);
         return toResponse(salvo);
     }
 
     @Transactional
     public void deletar(Long id) {
-        exigirProprioUsuario(id);
-        PerfilContratante perfil = perfilContratanteRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante nao encontrado."));
-        perfilContratanteRepository.delete(perfil);
-    }
-
-    private void atualizarPerfilCompleto(Usuario usuario) {
+        Usuario usuario = exigirContratanteAtual();
+        exigirMesmoUsuario(id, usuario);
         PerfilContratante perfil = perfilContratanteRepository.findById(usuario.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante nao encontrado."));
-        boolean completo = perfil.getBiografia() != null && !perfil.getBiografia().isBlank()
-                && perfil.getLocalizacao() != null && !perfil.getLocalizacao().isBlank();
-        usuario.setPerfilCompleto(completo);
-        usuarioRepository.save(usuario);
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Perfil de contratante nao encontrado."));
+        perfilContratanteRepository.delete(perfil);
+        perfilContratanteRepository.flush();
+        perfilCompletoService.recalcular(usuario);
     }
 
-    private void exigirProprioUsuario(Long usuarioId) {
-        Long atualId = authenticatedUserResolver.usuarioAtual()
-                .map(Usuario::getId)
+    private Usuario exigirContratanteAtual() {
+        Usuario usuario = authenticatedUserResolver.usuarioAtual()
                 .orElseThrow(() -> new ForbiddenException("Autenticação obrigatória."));
-        if (!atualId.equals(usuarioId)) {
+        if (usuario.getTipoUsuario() != TipoUsuario.CONTRATANTE) {
+            throw new ForbiddenException(
+                    "Somente contratantes podem alterar perfil de contratante.");
+        }
+        return usuario;
+    }
+
+    private void exigirMesmoUsuario(Long id, Usuario usuario) {
+        if (!usuario.getId().equals(id)) {
             throw new ForbiddenException("Você só pode alterar o próprio perfil.");
         }
     }
 
-    private void preencherPerfil(PerfilContratante perfil, PerfilContratanteRequest request) {
-        perfil.setNomeEmpresa(request.getNomeEmpresa());
-        perfil.setTipoPerfil(request.getTipoPerfil());
-        perfil.setBiografia(request.getBiografia());
-        perfil.setLocalizacao(request.getLocalizacao());
-        perfil.setBannerUrl(request.getBannerUrl());
+    private void preencherPreservandoOmitidos(
+            PerfilContratante perfil, PerfilContratanteRequest request) {
+        if (request.getNomeEmpresa() != null) {
+            perfil.setNomeEmpresa(request.getNomeEmpresa());
+        }
+        if (request.getTipoPerfil() != null) {
+            perfil.setTipoPerfil(request.getTipoPerfil());
+        }
+        if (request.getBiografia() != null) {
+            perfil.setBiografia(request.getBiografia());
+        }
+        if (request.getLocalizacao() != null) {
+            perfil.setLocalizacao(request.getLocalizacao());
+        }
+        if (request.getBannerUrl() != null) {
+            perfil.setBannerUrl(request.getBannerUrl());
+        }
     }
 
     private PerfilContratanteResponse toResponse(PerfilContratante perfil) {
-        // RF34: prioridade foto_perfil do perfil > foto do Google (usuarios.foto_perfil) > DiceBear
         String avatarUrl = avatarService.resolverUrl(
                 perfil.getUsuarioId(),
-                perfil.getUsuario().getFotoPerfil(),  // foto salva via Google (RF32)
-                perfil.getFotoPerfil()                // foto definida pelo usuario via RF08
-        );
-
+                perfil.getUsuario().getFotoPerfil(),
+                perfil.getFotoPerfil());
         return PerfilContratanteResponse.builder()
                 .usuarioId(perfil.getUsuarioId())
                 .nomeEmpresa(perfil.getNomeEmpresa())
