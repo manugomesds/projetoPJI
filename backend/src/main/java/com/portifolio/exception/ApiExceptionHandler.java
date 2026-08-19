@@ -33,6 +33,12 @@ public class ApiExceptionHandler {
                 .body(buildError(HttpStatus.FORBIDDEN, ex.getMessage(), List.of()));
     }
 
+    @ExceptionHandler(UnprocessableEntityException.class)
+    public ResponseEntity<ErroResposta> handleUnprocessableEntity(UnprocessableEntityException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(buildError(HttpStatus.UNPROCESSABLE_ENTITY, ex.getMessage(), List.of()));
+    }
+
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErroResposta> handleDataIntegrity(DataIntegrityViolationException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
