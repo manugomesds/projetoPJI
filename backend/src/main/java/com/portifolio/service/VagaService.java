@@ -1,6 +1,7 @@
 package com.portifolio.service;
 
 import com.portifolio.dto.VagaBuscaFiltro;
+import com.portifolio.dto.VagaAtualizacaoRequest;
 import com.portifolio.dto.VagaListagemResponse;
 import com.portifolio.dto.VagaRequest;
 import com.portifolio.dto.VagaResponse;
@@ -187,13 +188,10 @@ public class VagaService {
     }
 
     @Transactional
-    public VagaResponse atualizar(Long id, VagaRequest request) {
+    public VagaResponse atualizar(Long id, VagaAtualizacaoRequest request) {
         Vaga vaga = vagaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Vaga não encontrada."));
-        Usuario usuario = exigirProprietario(vaga);
-        if (!usuario.getId().equals(request.getContratanteId())) {
-            throw new ForbiddenException("Não é permitido transferir a propriedade da vaga.");
-        }
+        exigirProprietario(vaga);
         StatusVaga statusAtual = vaga.getStatus();
         preencherVaga(vaga, request);
         vaga.setStatus(statusAtual);
@@ -223,7 +221,7 @@ public class VagaService {
         logVagaCanceladaRepository.save(log);
     }
 
-    private void preencherVaga(Vaga vaga, VagaRequest request) {
+    private void preencherVaga(Vaga vaga, VagaAtualizacaoRequest request) {
         vaga.setTitulo(request.getTitulo());
         vaga.setDescricao(request.getDescricao());
         vaga.setRequisitos(request.getRequisitos());
