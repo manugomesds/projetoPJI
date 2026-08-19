@@ -75,7 +75,11 @@ public class AuthService {
             throw new ConflictException("Este email ja esta cadastrado.");
         }
 
-        int idade = Period.between(request.getDataNascimento(), LocalDate.now()).getYears();
+        LocalDate hoje = LocalDate.now();
+        if (request.getDataNascimento().isAfter(hoje)) {
+            throw new IllegalArgumentException("Data de nascimento não pode estar no futuro.");
+        }
+        int idade = Period.between(request.getDataNascimento(), hoje).getYears();
         boolean menorDeIdade = idade < 18;
 
         if (menorDeIdade) {
@@ -234,7 +238,11 @@ public class AuthService {
 
         // 5. Cria o usuario com os dados do Google + dados complementares do request
         // RF32: menores de 18 precisam usar cadastro convencional (campos de responsavel nao estao no fluxo Google)
-        int idade = Period.between(request.getDataNascimento(), LocalDate.now()).getYears();
+        LocalDate hoje = LocalDate.now();
+        if (request.getDataNascimento().isAfter(hoje)) {
+            throw new IllegalArgumentException("Data de nascimento não pode estar no futuro.");
+        }
+        int idade = Period.between(request.getDataNascimento(), hoje).getYears();
         if (idade < 18) {
             throw new IllegalArgumentException(
                     "Cadastro de menores de 18 anos requer responsavel legal. Use o cadastro convencional.");
