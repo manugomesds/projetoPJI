@@ -182,7 +182,7 @@ class VagaControllerRf03IntegrationTest {
         mockMvc.perform(post("/api/vagas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(corpo))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
