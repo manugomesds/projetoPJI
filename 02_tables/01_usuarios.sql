@@ -4,15 +4,11 @@ create table usuarios (
     data_nascimento date not null,
     telefone varchar(20) not null,
     email varchar(150) unique not null,
-    email_verificado boolean default false,
     senha varchar(255),
     google_id varchar(255) unique,
     foto_perfil varchar(255),
     tipo_usuario tipo_usuario_enum not null,
-	papel_sistema papel_sistema_enum not null default 'USUARIO',
     perfil_completo boolean default false,
-    token_verificacao VARCHAR(255),
-	token_verificacao_expiracao timestamp,
     token_recuperacao varchar(255),
     token_expiracao timestamp,
     data_criacao timestamp default current_timestamp
@@ -25,11 +21,8 @@ create table responsaveis_legais (
     nome_responsavel varchar(150) not null,
     telefone_responsavel varchar(20) not null,
     email_responsavel varchar(150) not null,
-    consentimento_revogado boolean default false,
     token_consentimento varchar(255),
-    data_consentimento timestamp,
-    versao_termo VARCHAR(50)
-	
+    data_consentimento timestamp
 );
 
 create table refresh_tokens (

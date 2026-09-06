@@ -27,10 +27,7 @@ create table mensagens_chat (
     texto_mensagem text,
     url_anexo varchar(255),
     lida boolean default false,
-    data_envio timestamp default current_timestamp,
-    editada BOOLEAN DEFAULT FALSE,
-    data_edicao TIMESTAMP,
-    texto_original TEXT
+    data_envio timestamp default current_timestamp
 );
 
 create index if not exists idx_notificacoes_destino on notificacoes(usuario_destino_id);
