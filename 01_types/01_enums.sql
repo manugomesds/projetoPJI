@@ -1,0 +1,15 @@
+create type tipo_usuario_enum as enum ('CONTRATANTE', 'ARTISTA');
+create type modelo_trabalho_enum as enum ('PRESENCIAL', 'REMOTO', 'HIBRIDO');
+create type status_vaga_enum as enum ('ABERTA', 'PAUSADA', 'ENCERRADA', 'CANCELADA');
+create type status_candidatura_enum as enum ('PENDENTE', 'EM ANALISE', 'APROVADO', 'REJEITADO', 'RETIRADA', 'CANCELADA_POR_VAGA');
+create type status_denuncia_enum as enum ('RECEBIDA', 'EM ANALISE', 'PROCEDENTE', 'IMPROCEDENTE');
+create type tipo_violacao_enum as enum ('PLAGIO DE IMAGEM', 'PLAGIO DE AUDIO', 'COPIA DE BIOGRAFIA', 'OUTRO');
+create type tipo_midia_enum as enum ('VIDEO', 'AUDIO', 'POST SOCIAL');
+create type privacidade_comunidade_enum as enum ('PUBLICA', 'PRIVADA');
+create type papel_comunidade_enum as enum ('MEMBRO', 'MODERADOR', 'ADMIN');
+create type tipo_galeria_enum as enum ('INDIVIDUAL', 'COMUNITARIA');
+create type status_galeria_enum as enum ('ATIVA', 'AGENDADA', 'ENCERRADA');
+create type tipo_notificacao_enum as enum ('CANDIDATURA', 'MENSAGEM', 'CONVITE', 'EDITAL', 'SALVO');
+create type tipo_conteudo_enum as enum ('VAGA', 'COMUNIDADE', 'GALERIA', 'MENSAGEM');
+create type status_moderacao_enum as enum ('APROVADO', 'BLOQUEADO', 'SOB ANALISE');
+create type tipo_alvo_salvo_enum as enum ('ARTISTA', 'OBRA', 'VAGA');
