@@ -43,7 +43,9 @@ create table itens_salvos (
     data_salvamento timestamp default current_timestamp,
     constraint salvo_unico unique (usuario_id, tipo_alvo, alvo_id)
 );
-
+ALTER TABLE moderacao_conteudo 
+ADD COLUMN IF NOT EXISTS moderador_id BIGINT REFERENCES usuarios(id),
+ADD COLUMN IF NOT EXISTS contestacao TEXT;
 -- No arquivo de moderação e denúncias
 create index if not exists idx_denuncias_plagio_denunciante on denuncias_plagio(denunciante_id);
 create index if not exists idx_denuncias_plagio_denunciado on denuncias_plagio(perfil_denunciado_id);

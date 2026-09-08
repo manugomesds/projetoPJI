@@ -45,7 +45,6 @@ create table conquistas_desbloqueadas (
 
 create table log_exclusoes_lgpd (
     id bigserial primary key,
-    usuario_id_antigo bigint not null,
     motivo_opcional text,
     data_exclusao timestamp default current_timestamp,
     comprovante_hash char(64) not null

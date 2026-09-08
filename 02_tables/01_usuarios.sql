@@ -33,5 +33,12 @@ create table refresh_tokens (
     ativo boolean not null default true,
     data_criacao timestamp default current_timestamp
 );
+ALTER TABLE usuarios 
+ADD COLUMN IF NOT EXISTS email_verificado BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS token_verificacao VARCHAR(255);
 
+-- RF27: Consentimento do Responsável Legal
+ALTER TABLE responsaveis_legais 
+ADD COLUMN IF NOT EXISTS versao_termo VARCHAR(50),
+ADD COLUMN IF NOT EXISTS consentimento_revogado BOOLEAN DEFAULT FALSE;
 create index if not exists idx_refresh_tokens_usuario on refresh_tokens(usuario_id);

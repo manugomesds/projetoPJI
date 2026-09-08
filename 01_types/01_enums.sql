@@ -13,3 +13,5 @@ create type tipo_notificacao_enum as enum ('CANDIDATURA', 'MENSAGEM', 'CONVITE',
 create type tipo_conteudo_enum as enum ('VAGA', 'COMUNIDADE', 'GALERIA', 'MENSAGEM');
 create type status_moderacao_enum as enum ('APROVADO', 'BLOQUEADO', 'SOB ANALISE');
 create type tipo_alvo_salvo_enum as enum ('ARTISTA', 'OBRA', 'VAGA');
+
+ALTER TYPE status_vaga_enum ADD VALUE IF NOT EXISTS 'RASCUNHO';

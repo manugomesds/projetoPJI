@@ -128,4 +128,18 @@ INSERT INTO conquistas_desbloqueadas (artista_id, nome_conquista, descricao_conq
 INSERT INTO log_exclusoes_lgpd (usuario_id_antigo, comprovante_hash) VALUES 
 (99, 'hashlgpd');
 
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM usuarios WHERE id = 0) THEN
+        INSERT INTO usuarios (id, nome, data_nascimento, telefone, email, tipo_usuario)
+        VALUES (0, 'Usuário Removido', '2000-01-01', '00000000000', 'anonimo@sosartistas.local', 'ARTISTA');
+        
+        INSERT INTO perfis_artistas (usuario_id, biografia) 
+        VALUES (0, 'Perfil mantido anonimamente para histórico.');
+        
+        INSERT INTO perfis_contratantes (usuario_id, nome_empresa) 
+        VALUES (0, 'Empresa Removida');
+    END IF;
+END $$;
+
 COMMIT;
