@@ -22,6 +22,7 @@ import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.security.JwtService;
+import com.portifolio.validation.PasswordPolicy;
 import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -47,6 +48,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final AvatarService avatarService;
+    private final PasswordPolicy passwordPolicy;
 
     @Value("${google.client-id}")
     private String googleClientId;
@@ -103,6 +105,7 @@ public class AuthService {
         usuario.setDataNascimento(request.getDataNascimento());
         usuario.setTelefone(request.getTelefone());
         usuario.setEmail(request.getEmail());
+        passwordPolicy.validateOrThrow(request.getSenha());
         usuario.setSenha(passwordEncoder.encode(request.getSenha()));
         usuario.setTipoUsuario(request.getTipoUsuario());
         usuario.setPerfilCompleto(false);

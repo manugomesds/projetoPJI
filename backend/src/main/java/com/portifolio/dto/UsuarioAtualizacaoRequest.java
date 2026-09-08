@@ -28,7 +28,6 @@ public class UsuarioAtualizacaoRequest {
     @Size(max = 150, message = "E-mail deve ter no máximo 150 caracteres")
     private String email;
 
-    @Size(max = 72, message = "Nova senha deve ter no máximo 72 caracteres")
     private String novaSenha;
 
     @Size(max = 72, message = "Senha atual deve ter no máximo 72 caracteres")

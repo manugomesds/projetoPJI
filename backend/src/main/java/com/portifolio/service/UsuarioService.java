@@ -10,6 +10,7 @@ import com.portifolio.exception.UnprocessableEntityException;
 import com.portifolio.model.Usuario;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.security.AuthenticatedUserResolver;
+import com.portifolio.validation.PasswordPolicy;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -28,6 +29,7 @@ public class UsuarioService {
     private final AuthenticatedUserResolver authenticatedUserResolver;
     private final PerfilCompletoService perfilCompletoService;
     private final RefreshTokenService refreshTokenService;
+    private final PasswordPolicy passwordPolicy;
 
     @Transactional(readOnly = true)
     public UsuarioResponse buscarAtual() {
@@ -86,9 +88,7 @@ public class UsuarioService {
         if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ConflictException("E-mail já cadastrado.");
         }
-        if (request.getSenha() == null || request.getSenha().isBlank()) {
-            throw new IllegalArgumentException("Senha é obrigatória.");
-        }
+        passwordPolicy.validateOrThrow(request.getSenha());
         Usuario usuario = new Usuario();
         preencherUsuarioNaCriacao(usuario, request);
         usuario.setSenha(passwordEncoder.encode(request.getSenha()));
@@ -125,7 +125,7 @@ public class UsuarioService {
     }
 
     private boolean atualizarSenhaSeSolicitada(Usuario usuario, UsuarioAtualizacaoRequest request) {
-        if (request.getNovaSenha() == null || request.getNovaSenha().isBlank()) {
+        if (request.getNovaSenha() == null || request.getNovaSenha().isEmpty()) {
             return false;
         }
         if (usuario.getSenha() == null || usuario.getSenha().isBlank()) {
@@ -138,6 +138,7 @@ public class UsuarioService {
         if (!passwordEncoder.matches(request.getSenhaAtual(), usuario.getSenha())) {
             throw new ForbiddenException("Senha atual incorreta.");
         }
+        passwordPolicy.validateOrThrow(request.getNovaSenha());
         usuario.setSenha(passwordEncoder.encode(request.getNovaSenha()));
         return true;
     }

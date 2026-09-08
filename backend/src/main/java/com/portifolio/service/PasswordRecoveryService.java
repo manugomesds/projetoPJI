@@ -6,6 +6,7 @@ import com.portifolio.dto.ResetPasswordRequest;
 import com.portifolio.exception.ResourceNotFoundException;
 import com.portifolio.model.Usuario;
 import com.portifolio.repository.UsuarioRepository;
+import com.portifolio.validation.PasswordPolicy;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -36,6 +37,7 @@ public class PasswordRecoveryService {
     private final BCryptPasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final ObjectProvider<PasswordRecoveryEmailSender> emailSenderProvider;
+    private final PasswordPolicy passwordPolicy;
 
     @Transactional
     public PasswordRecoveryResponse solicitar(ForgotPasswordRequest request) {
@@ -81,6 +83,7 @@ public class PasswordRecoveryService {
                 .filter(this::tokenEstaValido)
                 .orElseThrow(() -> new ResourceNotFoundException(MENSAGEM_TOKEN_INVALIDO));
 
+        passwordPolicy.validateOrThrow(request.getNovaSenha());
         usuario.setSenha(passwordEncoder.encode(request.getNovaSenha()));
         usuario.setTokenRecuperacao(null);
         usuario.setTokenExpiracao(null);

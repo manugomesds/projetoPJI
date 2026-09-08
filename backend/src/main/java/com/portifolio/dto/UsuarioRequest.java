@@ -30,7 +30,6 @@ public class UsuarioRequest {
     @Size(max = 150, message = "E-mail deve ter no máximo 150 caracteres")
     private String email;
 
-    @Size(max = 72, message = "Senha deve ter no máximo 72 caracteres")
     private String senha;
 
     @NotNull(message = "Tipo de usuário é obrigatório")
