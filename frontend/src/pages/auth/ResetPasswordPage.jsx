@@ -10,6 +10,7 @@ import {
   sanitizeResetUrl,
 } from '../../services/auth/passwordRecoveryService';
 import PasswordRecoveryLayout from './PasswordRecoveryLayout';
+import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 
 const TECHNICAL_ERROR = new Error('Tente novamente em instantes.');
 
@@ -31,7 +32,7 @@ export default function ResetPasswordPage() {
   function handleChange(event) {
     const { name, value } = event.target;
     setPasswords((current) => ({ ...current, [name]: value }));
-    if (status === 'mismatch') setStatus('idle');
+    if (status === 'mismatch' || status === 'policy') setStatus('idle');
   }
 
   async function handleSubmit(event) {
@@ -39,6 +40,10 @@ export default function ResetPasswordPage() {
     const form = event.currentTarget;
 
     if (!token.current || requestInFlight.current) return;
+    if (!isPasswordValid(passwords.novaSenha)) {
+      setStatus('policy');
+      return;
+    }
     if (!form.checkValidity()) {
       form.reportValidity();
       return;
@@ -58,7 +63,11 @@ export default function ResetPasswordPage() {
       setStatus('success');
       redirectToLegacyLogin();
     } catch (error) {
-      setStatus(error instanceof ApiError && [400, 404].includes(error.status) ? 'invalid' : 'error');
+      if (error instanceof ApiError && error.status === 400 && error.message === PASSWORD_POLICY_MESSAGE) {
+        setStatus('policy');
+      } else {
+        setStatus(error instanceof ApiError && [400, 404].includes(error.status) ? 'invalid' : 'error');
+      }
     } finally {
       requestInFlight.current = false;
     }
@@ -144,6 +153,12 @@ export default function ResetPasswordPage() {
             {status === 'mismatch' ? (
               <p className="auth-recovery__message auth-recovery__message--error" role="alert">
                 As senhas informadas não são iguais.
+              </p>
+            ) : null}
+
+            {status === 'policy' ? (
+              <p className="auth-recovery__message auth-recovery__message--error" role="alert">
+                {PASSWORD_POLICY_MESSAGE}
               </p>
             ) : null}
 

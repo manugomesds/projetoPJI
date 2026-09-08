@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import authService from '../../services/auth/authService';
+import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 import AuthLayout from './AuthLayout';
 
 export function calculateAge(dateOfBirth, today = new Date()) {
@@ -40,6 +41,7 @@ export default function RegistrationPage() {
     if (age === null) return 'Informe uma data de nascimento válida.';
     if (age < 0) return 'A data de nascimento não pode estar no futuro.';
     if (age < 14) return 'A idade mínima para cadastro é 14 anos.';
+    if (!isPasswordValid(form.senha)) return PASSWORD_POLICY_MESSAGE;
     if (form.senha !== form.confirmarSenha) return 'As senhas não conferem.';
     if (needsGuardian && (!form.nomeResponsavel.trim() || !form.telefoneResponsavel.trim() || !form.emailResponsavel.trim())) return 'Informe nome, telefone e e-mail do responsável legal.';
     if (!form.termos) return 'É preciso aceitar os Termos de Uso para continuar.';

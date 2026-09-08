@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import sessionService from '../../auth/sessionService';
 import AccountLayout from '../../components/account/AccountLayout';
 import { getPrivateProfile, updatePrivateProfile } from '../../services/account/accountService';
+import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 
 const EMPTY_VALUES = {
   nome: '', telefone: '', email: '', biografia: '', localizacao: '', bannerUrl: '',
@@ -83,6 +84,10 @@ export default function ProfilePage() {
     }
     if (values.novaSenha && !values.senhaAtual) {
       setState((current) => ({ ...current, error: 'Informe a senha atual para definir uma nova senha.', success: '' }));
+      return;
+    }
+    if (values.novaSenha && !isPasswordValid(values.novaSenha)) {
+      setState((current) => ({ ...current, error: PASSWORD_POLICY_MESSAGE, success: '' }));
       return;
     }
 
