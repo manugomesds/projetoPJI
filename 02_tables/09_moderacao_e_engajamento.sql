@@ -1,14 +1,16 @@
 
 create table denuncias_plagio (
     id bigserial primary key,
-    denunciante_id bigint not null references usuarios(id) on delete cascade,
-    perfil_denunciado_id bigint not null references usuarios(id) on delete cascade,
+    denunciante_id bigint references usuarios(id) on delete set null,
+    perfil_denunciado_id bigint references usuarios(id) on delete set null,
     tipo_violacao tipo_violacao_enum not null,
     descricao_detalhada text not null,
     url_prova_plagio varchar(255),
     status_denuncia status_denuncia_enum default 'RECEBIDA',
     medidas_adotadas text,
     documento_suporte_url varchar(255),
+    contestacao text,
+    data_contestacao timestamp,
     data_registro timestamp default current_timestamp,
     ultima_atualizacao timestamp default current_timestamp
 );
@@ -17,9 +19,10 @@ create table moderacao_conteudo (
     id bigserial primary key,
     tipo_conteudo tipo_conteudo_enum not null,
     conteudo_id bigint not null,
-    autor_id bigint not null references usuarios(id) on delete cascade,
-    moderador_id BIGINT REFERENCES usuarios(id),
-    contestacao TEXT
+    autor_id bigint references usuarios(id) on delete set null,
+    moderador_id bigint references usuarios(id) on delete set null,
+    contestacao text,
+    data_contestacao timestamp,
     status_moderacao status_moderacao_enum default 'SOB ANALISE',
     score_risco numeric(3,2) default 0.00,
     justificativa_acao text,
@@ -29,7 +32,7 @@ create table moderacao_conteudo (
 
 create table reportes_usuario (
     id bigserial primary key,
-    denunciante_id bigint not null references usuarios(id) on delete cascade,
+    denunciante_id bigint references usuarios(id) on delete set null,
     tipo_conteudo tipo_conteudo_enum not null,
     conteudo_id bigint not null,
     motivo_reporte varchar(150) not null,
