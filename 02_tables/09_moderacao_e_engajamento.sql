@@ -18,6 +18,8 @@ create table moderacao_conteudo (
     tipo_conteudo tipo_conteudo_enum not null,
     conteudo_id bigint not null,
     autor_id bigint not null references usuarios(id) on delete cascade,
+    moderador_id BIGINT REFERENCES usuarios(id),
+    contestacao TEXT
     status_moderacao status_moderacao_enum default 'SOB ANALISE',
     score_risco numeric(3,2) default 0.00,
     justificativa_acao text,
