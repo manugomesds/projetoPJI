@@ -1,7 +1,7 @@
 
 create table vagas (
     id bigserial primary key,
-    contratante_id bigint not null references perfis_contratantes(usuario_id) on delete cascade,
+    contratante_id bigint references perfis_contratantes(usuario_id) on delete set null,
     titulo varchar(150) not null,
     descricao text not null,
     requisitos text not null,
@@ -37,7 +37,7 @@ create table fotos_vaga (
 create table candidaturas (
     id bigserial primary key,
     vaga_id bigint not null references vagas(id) on delete cascade,
-    artista_id bigint not null references perfis_artistas(usuario_id) on delete cascade,
+    artista_id bigint references perfis_artistas(usuario_id) on delete set null,
     mensagem_apresentacao text not null,
     link_portfolio_candidatura varchar(255) not null,
     status status_candidatura_enum default 'PENDENTE',
@@ -48,7 +48,7 @@ create table candidaturas (
 create table log_vagas_canceladas (
     id bigserial primary key,
     vaga_id bigint not null references vagas(id) on delete cascade,
-    cancelado_por_id bigint not null references usuarios(id) on delete cascade,
+    cancelado_por_id bigint references usuarios(id) on delete set null,
     data_cancelamento timestamp default current_timestamp,
     motivo text
 );
