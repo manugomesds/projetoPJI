@@ -48,7 +48,7 @@ class UsuarioControllerIntegrationTest {
         cadastro.setDataNascimento(LocalDate.of(1990, 1, 1));
         cadastro.setTelefone("11999999999");
         cadastro.setEmail(email);
-        cadastro.setSenha("senha123");
+        cadastro.setSenha("Palco@2026");
         cadastro.setTipoUsuario(TipoUsuario.CONTRATANTE);
         cadastro.setTipoPerfilContratante("Pessoa Física");
 
@@ -58,7 +58,7 @@ class UsuarioControllerIntegrationTest {
 
         LoginRequest login = new LoginRequest();
         login.setEmail(email);
-        login.setSenha("senha123");
+        login.setSenha("Palco@2026");
         ResponseEntity<Map> autenticado = restTemplate.postForEntity(
                 baseUrl + "/api/auth/login", login, Map.class);
         assertThat(autenticado.getStatusCode()).isEqualTo(HttpStatus.OK);

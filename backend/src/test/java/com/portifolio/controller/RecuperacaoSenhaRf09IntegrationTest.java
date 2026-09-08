@@ -7,6 +7,7 @@ import com.portifolio.model.enums.TipoUsuario;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.service.PasswordRecoveryEmailSender;
 import com.portifolio.service.PasswordRecoveryService;
+import com.portifolio.validation.PasswordPolicy;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDate;
@@ -48,8 +49,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class RecuperacaoSenhaRf09IntegrationTest {
 
     private static final String CONSTRAINT_ROLLBACK = "rf09_forcar_rollback_refresh";
-    private static final String SENHA_ANTIGA = "senha-antiga";
-    private static final String SENHA_NOVA = "senha-nova";
+    private static final String SENHA_ANTIGA = "Antiga@2026";
+    private static final String SENHA_NOVA = "Nova@2026";
 
     @Container
     @ServiceConnection
@@ -162,6 +163,39 @@ class RecuperacaoSenhaRf09IntegrationTest {
         redefinir(token, "outra-senha").andExpect(status().isNotFound());
         login(usuario.getEmail(), SENHA_ANTIGA, false).andExpect(status().isUnauthorized());
         login(usuario.getEmail(), SENHA_NOVA, false).andExpect(status().isOk());
+    }
+
+    @Test
+    void senhaInvalidaNaoAlteraHashConsomeTokenOuRevogaSessaoEPermiteNovaTentativa()
+            throws Exception {
+        Usuario usuario = novoUsuarioLocal("politica@rf09.test");
+        JsonNode login = corpo(login(usuario.getEmail(), SENHA_ANTIGA, true)
+                .andExpect(status().isOk()).andReturn());
+        String refreshToken = login.get("refreshToken").asText();
+        solicitar(usuario.getEmail());
+        String token = emailSender.ultimoToken;
+        Usuario antes = usuarioRepository.findById(usuario.getId()).orElseThrow();
+        String hashAnterior = antes.getSenha();
+        String tokenHash = antes.getTokenRecuperacao();
+        LocalDateTime expiracao = antes.getTokenExpiracao();
+
+        redefinir(token, "artista123")
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.MESSAGE));
+
+        Usuario aposFalha = usuarioRepository.findById(usuario.getId()).orElseThrow();
+        assertThat(aposFalha.getSenha()).isEqualTo(hashAnterior);
+        assertThat(aposFalha.getTokenRecuperacao()).isEqualTo(tokenHash);
+        assertThat(aposFalha.getTokenExpiracao()).isEqualTo(expiracao);
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("refreshToken", refreshToken))))
+                .andExpect(status().isOk());
+
+        redefinir(token, SENHA_NOVA).andExpect(status().isOk());
+        assertThat(passwordEncoder.matches(
+                SENHA_NOVA, usuarioRepository.findById(usuario.getId()).orElseThrow().getSenha()))
+                .isTrue();
     }
 
     @Test

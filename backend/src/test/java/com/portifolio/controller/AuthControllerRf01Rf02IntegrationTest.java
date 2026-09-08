@@ -3,6 +3,7 @@ package com.portifolio.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portifolio.model.Usuario;
 import com.portifolio.repository.UsuarioRepository;
+import com.portifolio.validation.PasswordPolicy;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class AuthControllerRf01Rf02IntegrationTest {
+
+    private static final String SENHA_VALIDA = "Palco@2026";
 
     @Container
     @ServiceConnection
@@ -124,7 +127,7 @@ class AuthControllerRf01Rf02IntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(Map.of(
                                 "email", cadastro.get("email"),
-                                "senha", "senha123",
+                                "senha", SENHA_VALIDA,
                                 "rememberMe", false))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").isNotEmpty())
@@ -132,8 +135,37 @@ class AuthControllerRf01Rf02IntegrationTest {
                 .andExpect(jsonPath("$.tipoUsuario").value("ARTISTA"));
 
         Usuario salvo = usuarioRepository.findByEmail((String) cadastro.get("email")).orElseThrow();
-        assertThat(salvo.getSenha()).isNotEqualTo("senha123");
-        assertThat(passwordEncoder.matches("senha123", salvo.getSenha())).isTrue();
+        assertThat(salvo.getSenha()).isNotEqualTo(SENHA_VALIDA);
+        assertThat(passwordEncoder.matches(SENHA_VALIDA, salvo.getSenha())).isTrue();
+    }
+
+    @Test
+    void cadastroRejeitaCadaCategoriaDeSenhaInvalidaSemPersistirUsuarioOuHash()
+            throws Exception {
+        String[] invalidas = {
+            "Pa@1234",
+            "Aa1!" + "x".repeat(69),
+            "artista123",
+            "PALCO@2026",
+            "PalcoPalco!",
+            "Palco2026",
+            "        ",
+            "Palco 2026",
+            "Pálco2026"
+        };
+
+        for (String senha : invalidas) {
+            Map<String, Object> payload = cadastroBase("ARTISTA", LocalDate.now().minusYears(30));
+            payload.put("senha", senha);
+
+            mockMvc.perform(post("/api/auth/cadastro")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(payload)))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.MESSAGE));
+
+            assertThat(usuarioRepository.findByEmail((String) payload.get("email"))).isEmpty();
+        }
     }
 
     @Test
@@ -159,7 +191,7 @@ class AuthControllerRf01Rf02IntegrationTest {
         payload.put("dataNascimento", nascimento.toString());
         payload.put("telefone", "11999999999");
         payload.put("email", tipoUsuario.toLowerCase() + "-" + UUID.randomUUID() + "@palco.test");
-        payload.put("senha", "senha123");
+        payload.put("senha", SENHA_VALIDA);
         payload.put("tipoUsuario", tipoUsuario);
         return payload;
     }

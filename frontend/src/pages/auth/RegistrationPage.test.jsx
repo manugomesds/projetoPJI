@@ -2,6 +2,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import authService from '../../services/auth/authService';
 import RegistrationPage, { calculateAge } from './RegistrationPage';
+import { PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 
 jest.mock('../../services/auth/authService', () => ({
   __esModule: true,
@@ -32,8 +33,8 @@ function fillCommon({ age = 30, role = 'ARTISTA', email = 'pessoa@palco.test' } 
   fireEvent.change(screen.getByLabelText('Telefone'), { target: { value: '11999999999' } });
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value: email } });
   fireEvent.change(screen.getByLabelText('Tipo de usuário'), { target: { value: role } });
-  fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'senha123' } });
-  fireEvent.change(screen.getByLabelText('Confirme sua senha'), { target: { value: 'senha123' } });
+  fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'Palco@2026' } });
+  fireEvent.change(screen.getByLabelText('Confirme sua senha'), { target: { value: 'Palco@2026' } });
   fireEvent.click(screen.getByRole('checkbox'));
 }
 
@@ -121,6 +122,18 @@ test('campos obrigatórios e aceite de termos são validados', () => {
   expect(screen.getByRole('link', { name: 'Política de Privacidade' })).not.toHaveAttribute('href');
   fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
   expect(screen.getByRole('alert')).toHaveTextContent('campos obrigatórios');
+  expect(authService.cadastrar).not.toHaveBeenCalled();
+});
+
+test('senha fora da política mostra a mensagem oficial e bloqueia a API', () => {
+  renderRegistration();
+  fillCommon();
+  fireEvent.change(screen.getByLabelText('Senha'), { target: { value: 'artista123' } });
+  fireEvent.change(screen.getByLabelText('Confirme sua senha'), { target: { value: 'artista123' } });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+
+  expect(screen.getByRole('alert')).toHaveTextContent(PASSWORD_POLICY_MESSAGE);
   expect(authService.cadastrar).not.toHaveBeenCalled();
 });
 

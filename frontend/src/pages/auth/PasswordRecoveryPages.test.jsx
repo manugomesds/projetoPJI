@@ -4,6 +4,7 @@ import apiClient from '../../services/api/apiClient';
 import * as passwordRecoveryService from '../../services/auth/passwordRecoveryService';
 import ForgotPasswordPage from './ForgotPasswordPage';
 import ResetPasswordPage from './ResetPasswordPage';
+import { PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 
 jest.mock('../../services/api/apiClient', () => ({
   __esModule: true,
@@ -24,7 +25,7 @@ function fillEmail(value = 'artista@palco.test') {
   fireEvent.change(screen.getByLabelText('E-mail'), { target: { value } });
 }
 
-function fillPasswords(value = 'senha-nova') {
+function fillPasswords(value = 'Nova@2026') {
   fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value } });
   fireEvent.change(screen.getByLabelText('Confirmar nova senha'), { target: { value } });
 }
@@ -144,7 +145,7 @@ test('redefinição captura o fragmento, higieniza a URL e envia token e senha n
   await waitFor(() =>
     expect(apiClient.post).toHaveBeenCalledWith(
       '/auth/reset-password',
-      { token, novaSenha: 'senha-nova' },
+      { token, novaSenha: 'Nova@2026' },
       { token: null }
     )
   );
@@ -180,15 +181,26 @@ test('ausência de token impede o submit', () => {
 test('confirmação divergente bloqueia a API e informa o erro', () => {
   window.history.replaceState(null, '', '/redefinir-senha#token=TOKEN_VALIDO');
   render(<ResetPasswordPage />);
-  fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'senha-um' } });
+  fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'Senha@Um1' } });
   fireEvent.change(screen.getByLabelText('Confirmar nova senha'), {
-    target: { value: 'senha-dois' },
+    target: { value: 'Senha@Dois2' },
   });
 
   fireEvent.click(screen.getByRole('button', { name: 'Redefinir senha' }));
 
   expect(apiClient.post).not.toHaveBeenCalled();
   expect(screen.getByRole('alert')).toHaveTextContent('não são iguais');
+});
+
+test('senha fora da política mostra a mensagem oficial e não chama a API', () => {
+  window.history.replaceState(null, '', '/redefinir-senha#token=TOKEN_VALIDO');
+  render(<ResetPasswordPage />);
+  fillPasswords('artista123');
+
+  fireEvent.click(screen.getByRole('button', { name: 'Redefinir senha' }));
+
+  expect(screen.getByRole('alert')).toHaveTextContent(PASSWORD_POLICY_MESSAGE);
+  expect(apiClient.post).not.toHaveBeenCalled();
 });
 
 test('redefinição anuncia loading e evita submit duplicado', async () => {

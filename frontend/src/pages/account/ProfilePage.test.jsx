@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import sessionService from '../../auth/sessionService';
 import { getPrivateProfile, updatePrivateProfile } from '../../services/account/accountService';
 import ProfilePage from './ProfilePage';
+import { PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 
 jest.mock('../../components/account/AccountLayout', () => function Layout({ children }) { return children; });
 jest.mock('../../services/account/accountService', () => ({ getPrivateProfile: jest.fn(), updatePrivateProfile: jest.fn() }));
@@ -85,6 +86,19 @@ test('senha exige atual, é limpa após sucesso e nunca é persistida', async ()
   expect(screen.getByLabelText('Nova senha')).toHaveValue('');
   expect(window.sessionStorage.getItem('palco.sessao')).not.toContain('Atual123!');
   expect(window.sessionStorage.getItem('palco.sessao')).not.toContain('NovaSenha123!');
+});
+
+test('nova senha inválida mostra a política e não envia a alteração', async () => {
+  getPrivateProfile.mockResolvedValue(artistResult);
+  renderPage();
+  await screen.findByLabelText('Nova senha');
+  fireEvent.change(screen.getByLabelText('Senha atual'), { target: { value: 'Atual123!' } });
+  fireEvent.change(screen.getByLabelText('Nova senha'), { target: { value: 'artista123' } });
+
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar perfil' }));
+
+  expect(screen.getByRole('alert')).toHaveTextContent(PASSWORD_POLICY_MESSAGE);
+  expect(updatePrivateProfile).not.toHaveBeenCalled();
 });
 
 test('erro contextual mantém formulário utilizável e remove mensagem interna 500', async () => {

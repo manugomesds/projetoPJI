@@ -25,6 +25,7 @@ import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.security.JwtService;
 import com.portifolio.service.RefreshTokenService;
+import com.portifolio.validation.PasswordPolicy;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -510,6 +511,49 @@ class PerfilEdicaoRf08IntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json(Map.of("refreshToken", refreshToken))))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void senhaNovaInvalidaNaoAlteraDadosHashNemRevogaSessoes() throws Exception {
+        PerfilArtista artista = novoArtista("senha-invalida-rf08@teste.com");
+        String hashAnterior = artista.getUsuario().getSenha();
+        refreshTokenService.gerarRefreshToken(artista.getUsuario());
+        Map<String, Object> payload = dadosUsuario(artista.getUsuario());
+        payload.put("nome", "Nome que deve sofrer rollback");
+        payload.put("senhaAtual", "SenhaAtual123!");
+        payload.put("novaSenha", "artista123");
+
+        mockMvc.perform(put("/api/usuarios/me")
+                        .header("Authorization", bearer(artista.getUsuario()))
+                        .contentType(MediaType.APPLICATION_JSON).content(json(payload)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.MESSAGE));
+
+        Usuario persistido = usuarioRepository.findById(artista.getUsuarioId()).orElseThrow();
+        assertThat(persistido.getNome()).isEqualTo("Usuário RF08");
+        assertThat(persistido.getSenha()).isEqualTo(hashAnterior);
+        assertThat(refreshTokenRepository.findAll()).allMatch(token -> token.getAtivo());
+    }
+
+    @Test
+    void postUsuariosTambemRejeitaSenhaForaDaPolitica() throws Exception {
+        PerfilArtista autenticado = novoArtista("criador-rf08@teste.com");
+        String emailNovo = "bypass-politica-rf08@teste.com";
+        Map<String, Object> payload = new java.util.LinkedHashMap<>();
+        payload.put("nome", "Tentativa de bypass");
+        payload.put("dataNascimento", "1990-01-01");
+        payload.put("telefone", "11999999999");
+        payload.put("email", emailNovo);
+        payload.put("senha", "artista123");
+        payload.put("tipoUsuario", "ARTISTA");
+
+        mockMvc.perform(post("/api/usuarios")
+                        .header("Authorization", bearer(autenticado.getUsuario()))
+                        .contentType(MediaType.APPLICATION_JSON).content(json(payload)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.MESSAGE));
+
+        assertThat(usuarioRepository.findByEmail(emailNovo)).isEmpty();
     }
 
     @Test
