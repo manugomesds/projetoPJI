@@ -9,8 +9,10 @@ create table usuarios (
     google_id varchar(255) unique,
     foto_perfil varchar(255),
     tipo_usuario tipo_usuario_enum not null,
+	papel_sistema papel_sistema_enum not null default 'USUARIO',
     perfil_completo boolean default false,
     token_verificacao VARCHAR(255),
+	token_verificacao_expiracao timestamp,
     token_recuperacao varchar(255),
     token_expiracao timestamp,
     data_criacao timestamp default current_timestamp
