@@ -30,7 +30,7 @@ create table mensagens_chat (
     data_envio timestamp default current_timestamp,
     editada BOOLEAN DEFAULT FALSE,
     data_edicao TIMESTAMP,
-    texto_original TEXTS
+    texto_original TEXT
 );
 
 create index if not exists idx_notificacoes_destino on notificacoes(usuario_destino_id);
