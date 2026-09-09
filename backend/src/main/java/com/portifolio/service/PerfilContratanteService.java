@@ -33,6 +33,7 @@ public class PerfilContratanteService {
 
     @Transactional(readOnly = true)
     public PerfilContratanteResponse buscarPorId(Long id) {
+        exigirContratanteAtual(id);
         PerfilContratante perfil = perfilContratanteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Perfil de contratante nao encontrado."));
         return toResponse(perfil);

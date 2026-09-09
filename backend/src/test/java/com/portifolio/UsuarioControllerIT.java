@@ -17,11 +17,13 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpClientErrorException;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -39,7 +41,7 @@ class UsuarioControllerIntegrationTest {
     private final RestTemplate restTemplate = new RestTemplate();
 
     @Test
-    void deveExecutarCrudDaPropriaConta() {
+    void devePreservarCadastroLeituraEEdicaoSemHardDelete() {
         String email = "teste-" + UUID.randomUUID() + "@example.com";
         String baseUrl = "http://localhost:" + port;
 
@@ -81,9 +83,12 @@ class UsuarioControllerIntegrationTest {
                 new HttpEntity<>(atualizacao, headers), Map.class);
         assertThat(atualizado.getBody().get("nome")).isEqualTo("Usuário Atualizado");
 
-        ResponseEntity<Void> excluido = restTemplate.exchange(
+        assertThatThrownBy(() -> restTemplate.exchange(
                 baseUrl + "/api/usuarios/me", HttpMethod.DELETE,
-                new HttpEntity<>(headers), Void.class);
-        assertThat(excluido.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+                new HttpEntity<>(headers), Void.class))
+                .isInstanceOf(HttpClientErrorException.Forbidden.class);
+        ResponseEntity<Map> preservado = restTemplate.exchange(
+                baseUrl + "/api/usuarios/me", HttpMethod.GET, new HttpEntity<>(headers), Map.class);
+        assertThat(preservado.getBody().get("nome")).isEqualTo("Usuário Atualizado");
     }
 }

@@ -450,7 +450,7 @@ class PerfilEdicaoRf08IntegrationTest {
     }
 
     @Test
-    void responsesDeOutroUsuarioNaoExibemDadosPrivados() throws Exception {
+    void consultaGenericaDeOutroUsuarioEhBloqueada() throws Exception {
         PerfilArtista consultado = novoArtista("privado-consultado-rf08@teste.com");
         PerfilContratante consulente = novoContratante("privado-consulente-rf08@teste.com");
         consultado.getUsuario().setNomeResponsavel("Responsável privado");
@@ -460,8 +460,7 @@ class PerfilEdicaoRf08IntegrationTest {
 
         mockMvc.perform(get("/api/usuarios/{id}", consultado.getUsuarioId())
                         .header("Authorization", bearer(consulente.getUsuario())))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nome").value("Usuário RF08"))
+                .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.email").doesNotExist())
                 .andExpect(jsonPath("$.telefone").doesNotExist())
                 .andExpect(jsonPath("$.dataNascimento").doesNotExist())
@@ -536,7 +535,7 @@ class PerfilEdicaoRf08IntegrationTest {
     }
 
     @Test
-    void postUsuariosTambemRejeitaSenhaForaDaPolitica() throws Exception {
+    void postUsuariosEhBloqueadoAntesDaValidacaoDeSenha() throws Exception {
         PerfilArtista autenticado = novoArtista("criador-rf08@teste.com");
         String emailNovo = "bypass-politica-rf08@teste.com";
         Map<String, Object> payload = new java.util.LinkedHashMap<>();
@@ -550,8 +549,7 @@ class PerfilEdicaoRf08IntegrationTest {
         mockMvc.perform(post("/api/usuarios")
                         .header("Authorization", bearer(autenticado.getUsuario()))
                         .contentType(MediaType.APPLICATION_JSON).content(json(payload)))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.MESSAGE));
+                .andExpect(status().isForbidden());
 
         assertThat(usuarioRepository.findByEmail(emailNovo)).isEmpty();
     }

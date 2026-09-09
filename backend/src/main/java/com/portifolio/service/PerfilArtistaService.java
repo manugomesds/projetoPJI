@@ -39,6 +39,7 @@ public class PerfilArtistaService {
 
     @Transactional(readOnly = true)
     public PerfilArtistaResponse buscarPorId(Long id) {
+        exigirArtistaAtual(id);
         PerfilArtista perfil = perfilArtistaRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Perfil de artista nao encontrado."));
         return toResponse(perfil);

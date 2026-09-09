@@ -75,12 +75,8 @@ public class UsuarioService {
 
     @Transactional(readOnly = true)
     public UsuarioResponse buscarPorId(Long id) {
-        Usuario usuario = usuarioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
-        return authenticatedUserResolver.usuarioAtual()
-                .filter(atual -> atual.getId().equals(id))
-                .map(ignorado -> toResponseCompleto(usuario))
-                .orElseGet(() -> toResponsePublico(usuario));
+        // Dados de terceiros pertencem ao contrato público RF10, inclusive a política de menores.
+        return toResponseCompleto(exigirProprioUsuario(id));
     }
 
     @Transactional

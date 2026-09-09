@@ -57,6 +57,27 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/perfis/publicos/*/*").permitAll()
                         // O handshake nao carrega JWT. A autenticacao ocorre no frame STOMP CONNECT.
                         .requestMatchers(HttpMethod.GET, "/ws", "/ws/**").permitAll()
+                        // Não há administração global no MVP. Cadastro convencional só por /auth/cadastro.
+                        .requestMatchers(HttpMethod.POST,
+                                "/api/usuarios", "/api/usuarios/**",
+                                "/api/tags", "/api/tags/**").denyAll()
+                        .requestMatchers(HttpMethod.PUT, "/api/tags", "/api/tags/**").denyAll()
+                        .requestMatchers(HttpMethod.PATCH, "/api/tags", "/api/tags/**").denyAll()
+                        // RF22 ainda não orquestra anonimização/retenção: não expor hard deletes em cascata.
+                        .requestMatchers(HttpMethod.DELETE,
+                                "/api/usuarios", "/api/usuarios/**",
+                                "/api/perfis-artistas", "/api/perfis-artistas/**",
+                                "/api/perfis-contratantes", "/api/perfis-contratantes/**",
+                                "/api/tags", "/api/tags/**").denyAll()
+                        // Terceiros consultam exclusivamente o contrato público RF10; não há diretório privado.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/usuarios", "/api/usuarios/",
+                                "/api/perfis-artistas", "/api/perfis-artistas/",
+                                "/api/perfis-contratantes", "/api/perfis-contratantes/").denyAll()
+                        .requestMatchers(HttpMethod.HEAD,
+                                "/api/usuarios", "/api/usuarios/",
+                                "/api/perfis-artistas", "/api/perfis-artistas/",
+                                "/api/perfis-contratantes", "/api/perfis-contratantes/").denyAll()
                         // APIs nao listadas acima preservam o requisito de autenticacao.
                         .requestMatchers("/api/**").authenticated()
                         // Somente a interface e os recursos estaticos sao publicos.
