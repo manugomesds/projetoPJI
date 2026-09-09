@@ -4,24 +4,27 @@ create table usuarios (
     data_nascimento date not null,
     telefone varchar(20) not null,
     email varchar(150) unique not null,
+    email_verificado boolean default false,
     senha varchar(255),
     google_id varchar(255) unique,
     foto_perfil varchar(255),
     tipo_usuario tipo_usuario_enum not null,
     perfil_completo boolean default false,
+    token_verificacao VARCHAR(255),
     token_recuperacao varchar(255),
     token_expiracao timestamp,
     data_criacao timestamp default current_timestamp
 );
 
--- Tabela normalizada para dados de responsáveis legais (RF27)
 create table responsaveis_legais (
     id bigserial primary key,
     usuario_id bigint not null unique references usuarios(id) on delete cascade,
     nome_responsavel varchar(150) not null,
     telefone_responsavel varchar(20) not null,
     email_responsavel varchar(150) not null,
+    consentimento_revogado boolean default false;
     token_consentimento varchar(255),
+    versao_termo VARCHAR(50),
     data_consentimento timestamp
 );
 
@@ -33,12 +36,5 @@ create table refresh_tokens (
     ativo boolean not null default true,
     data_criacao timestamp default current_timestamp
 );
-ALTER TABLE usuarios 
-ADD COLUMN IF NOT EXISTS email_verificado BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS token_verificacao VARCHAR(255);
 
--- RF27: Consentimento do Responsável Legal
-ALTER TABLE responsaveis_legais 
-ADD COLUMN IF NOT EXISTS versao_termo VARCHAR(50),
-ADD COLUMN IF NOT EXISTS consentimento_revogado BOOLEAN DEFAULT FALSE;
 create index if not exists idx_refresh_tokens_usuario on refresh_tokens(usuario_id);
