@@ -1,0 +1,181 @@
+.rf05-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  gap: clamp(1rem, 3vw, 2rem);
+  align-items: start;
+  width: 100%;
+}
+
+.rf05-detail-layout__main {
+  min-width: 0;
+}
+
+.rf05-detail-layout .vaga-publica {
+  max-width: none;
+}
+
+.rf05-owner-actions,
+.rf05-recommendations {
+  min-width: 0;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(156, 0, 136, 0.2);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-card);
+}
+
+.rf05-owner-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: space-between;
+  margin: 1rem 0 2rem;
+}
+
+.rf05-owner-actions h2,
+.rf05-recommendations h2 {
+  margin: 0.2rem 0 0;
+  overflow-wrap: anywhere;
+}
+
+.rf05-owner-actions__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.rf05-owner-actions__links .btn-dash--perigo {
+  color: #7b1530;
+  background: #fff;
+  border: 1px solid #b72b4d;
+}
+
+.rf05-recommendations > header > p:last-child {
+  margin: 0.5rem 0 0;
+  color: var(--cor-texto-suave);
+}
+
+.rf05-recommendations__state {
+  margin-top: 1rem;
+  padding: 1rem;
+  overflow-wrap: anywhere;
+  color: var(--cor-texto-suave);
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-sm);
+}
+
+.rf05-recommendations__state--error {
+  color: var(--cor-magenta);
+  border-color: var(--cor-magenta-borda);
+}
+
+.rf05-recommendations__list {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.rf05-artist-card {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: 1rem;
+  background: var(--cor-branco);
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-sm);
+}
+
+.rf05-artist-card p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.rf05-artist-card__identity {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  min-width: 0;
+}
+
+.rf05-artist-card__identity > div {
+  min-width: 0;
+}
+
+.rf05-artist-card__identity h3 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.rf05-artist-card__identity p,
+.rf05-artist-card__bio {
+  color: var(--cor-texto-suave);
+}
+
+.rf05-artist-card__avatar {
+  flex: 0 0 3rem;
+  width: 3rem;
+  height: 3rem;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.rf05-artist-card__avatar--fallback {
+  display: grid;
+  place-items: center;
+  color: var(--cor-branco);
+  background: var(--cor-magenta);
+  font-weight: 800;
+}
+
+.rf05-artist-card__match {
+  color: var(--cor-magenta);
+  font-weight: 800;
+}
+
+.rf05-artist-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.rf05-artist-card__tags span {
+  padding: 0.25rem 0.55rem;
+  background: rgba(156, 0, 136, 0.08);
+  border-radius: var(--raio-pill);
+  font-size: var(--texto-sm);
+}
+
+.rf05-recommendations__list--vacancies .vaga-busca-card {
+  grid-template-columns: 1fr;
+  min-width: 0;
+}
+
+.rf05-recommendations__list--vacancies .vaga-busca-card__imagem {
+  height: 9rem;
+  min-height: 0;
+}
+
+.rf05-recommendations__list--vacancies .vaga-busca-card__conteudo {
+  min-width: 0;
+  padding: 1rem;
+}
+
+@media (max-width: 960px) {
+  .rf05-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .rf05-owner-actions__links,
+  .rf05-owner-actions__links a {
+    width: 100%;
+  }
+
+  .rf05-owner-actions__links a {
+    justify-content: center;
+    text-align: center;
+  }
+}

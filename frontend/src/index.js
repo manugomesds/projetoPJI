@@ -4,6 +4,7 @@ import App from './app/App';
 import './styles/foundation.css';
 import './styles/password-recovery.css';
 import './styles/rf03-react.css';
+import './styles/rf05-react.css';
 import './styles/candidatura-react.css';
 import './styles/auth-react.css';
 import './styles/vacancy-management.css';

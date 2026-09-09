@@ -6,11 +6,41 @@ import ErrorState from '../../components/common/ErrorState';
 import LoadingState from '../../components/common/LoadingState';
 import NotFound from '../../components/common/NotFound';
 import VagaDetails from '../../components/vagas/VagaDetails';
+import VagaRecommendations from '../../components/vagas/VagaRecommendations';
 import ApiError from '../../services/api/ApiError';
 import apiClient from '../../services/api/apiClient';
 import { getVagaDetails } from '../../services/vagas/vagaService';
 
 const VALID_ID = /^[1-9]\d*$/;
+
+function OwnerActions({ vaga }) {
+  const editable = vaga.status === 'ABERTA' || vaga.status === 'PAUSADA';
+  const encodedId = encodeURIComponent(vaga.id);
+
+  return (
+    <section className="rf05-owner-actions" aria-labelledby="rf05-owner-actions-title">
+      <div>
+        <p className="dashboard__sobrelinha">Ações da sua vaga</p>
+        <h2 id="rf05-owner-actions-title">Gerenciar oportunidade</h2>
+      </div>
+      <div className="rf05-owner-actions__links">
+        <a className="btn-dash btn-dash--primario" href={`/vagas/${encodedId}/gerenciar`}>
+          Gerenciar vaga
+        </a>
+        {editable ? (
+          <>
+            <a className="btn-dash btn-dash--secundario" href={`/vagas/${encodedId}/editar`}>
+              Editar vaga
+            </a>
+            <a className="btn-dash btn-dash--perigo" href={`/vagas/${encodedId}/gerenciar#cancelar`}>
+              Cancelar vaga
+            </a>
+          </>
+        ) : null}
+      </div>
+    </section>
+  );
+}
 
 function VagaPageHeader() {
   async function handleLogout() {
@@ -126,11 +156,19 @@ export default function VagaDetailPage() {
       </ErrorState>
     );
   } else {
+    const isOwner = state.vaga.propriaDoContratante === true;
     content = (
-      <>
-        <VagaDetails vaga={state.vaga} />
-        <CandidaturaAction vaga={state.vaga} session={sessionService.getSession()} />
-      </>
+      <div className="rf05-detail-layout">
+        <div className="rf05-detail-layout__main">
+          <VagaDetails vaga={state.vaga} />
+          {isOwner ? (
+            <OwnerActions vaga={state.vaga} />
+          ) : (
+            <CandidaturaAction vaga={state.vaga} session={sessionService.getSession()} />
+          )}
+        </div>
+        <VagaRecommendations vaga={state.vaga} />
+      </div>
     );
   }
 
