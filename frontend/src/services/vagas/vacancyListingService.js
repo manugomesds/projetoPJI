@@ -66,3 +66,12 @@ export function getVacancyPage({ filters = {}, cursor, cursorCanceladas, size = 
 
   return requestsInFlight.get(key);
 }
+
+export function getSimilarVacancies(vacancyId, { size = 3 } = {}) {
+  const requestedSize = Number(size);
+  const normalizedSize = Number.isFinite(requestedSize)
+    ? Math.min(50, Math.max(1, Math.trunc(requestedSize)))
+    : 3;
+  const path = `/vagas/${encodeURIComponent(vacancyId)}/similares?size=${normalizedSize}`;
+  return requestPublicFeed(path);
+}

@@ -4,6 +4,7 @@ import BackToTopButton from '../../components/common/BackToTopButton';
 import VacancyCard from '../../components/vagas/VacancyCard';
 import {
   buildVacancyParams,
+  getSimilarVacancies,
   getVacancyPage,
   VACANCY_FILTER_FIELDS,
 } from '../../services/vagas/vacancyListingService';
@@ -19,6 +20,8 @@ const EMPTY_FEED = {
   loading: false,
   error: '',
 };
+
+const EMPTY_SIMILARS = { status: 'idle', referenceId: null, items: [] };
 
 function filtersFromParams(searchParams) {
   const filters = {};
@@ -133,6 +136,23 @@ function FilterForm({ draft, onChange, onSubmit, onClear }) {
   );
 }
 
+function SimilarVacancies({ vacancies }) {
+  return (
+    <section className="vagas-similares-react" aria-labelledby="titulo-vagas-similares">
+      <div className="vagas-similares-react__cabecalho">
+        <p>Relacionadas por tags</p>
+        <h2 id="titulo-vagas-similares">Vagas Similares</h2>
+        <p>Com base nas tags da primeira oportunidade exibida.</p>
+      </div>
+      <div className="vagas-similares-react__lista">
+        {vacancies.map((vacancy, index) => (
+          <VacancyCard key={vacancy.id} vacancy={vacancy} index={index} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export default function VacancySearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const searchKey = searchParams.toString();
@@ -142,6 +162,7 @@ export default function VacancySearchPage() {
   );
   const [draft, setDraft] = useState(appliedFilters);
   const [feed, setFeed] = useState(EMPTY_FEED);
+  const [similars, setSimilars] = useState(EMPTY_SIMILARS);
   const [validationError, setValidationError] = useState('');
   const [refreshKey, setRefreshKey] = useState(0);
   const feedRef = useRef(EMPTY_FEED);
@@ -221,6 +242,34 @@ export default function VacancySearchPage() {
     loadMore({ reset: true, generation });
   }, [appliedFilters, loadMore, refreshKey]);
 
+  const referenceVacancyId = feed.open[0]?.id;
+
+  useEffect(() => {
+    if (referenceVacancyId === null || referenceVacancyId === undefined) {
+      setSimilars(EMPTY_SIMILARS);
+      return undefined;
+    }
+
+    let active = true;
+    setSimilars({ status: 'loading', referenceId: referenceVacancyId, items: [] });
+    getSimilarVacancies(referenceVacancyId, { size: 3 })
+      .then((response) => {
+        if (!active) return;
+        const items = (Array.isArray(response?.content) ? response.content : [])
+          .filter((item) => item?.status === 'ABERTA'
+            && String(item.id) !== String(referenceVacancyId))
+          .slice(0, 3);
+        setSimilars({ status: 'success', referenceId: referenceVacancyId, items });
+      })
+      .catch(() => {
+        if (active) setSimilars({ status: 'error', referenceId: referenceVacancyId, items: [] });
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [referenceVacancyId]);
+
   useEffect(() => {
     const sentinel = sentinelRef.current;
     if (!sentinel || feed.error || (!feed.hasMore && !feed.hasMoreCanceladas)) return undefined;
@@ -273,6 +322,10 @@ export default function VacancySearchPage() {
   const incrementalLoading = feed.loading && hasResults;
   const empty = !feed.loading && !feed.error && !hasResults;
   const finished = hasResults && !feed.loading && !feed.error && !feed.hasMore && !feed.hasMoreCanceladas;
+  const visibleSimilars = similars.status === 'success'
+    && String(similars.referenceId) === String(referenceVacancyId)
+    ? similars.items
+    : [];
 
   return (
     <>
@@ -313,6 +366,8 @@ export default function VacancySearchPage() {
             </div>
           ) : null}
 
+          {visibleSimilars.length ? <SimilarVacancies vacancies={visibleSimilars} /> : null}
+
           <div className="vagas-lista">
             {feed.open.map((vacancy, index) => (
               <VacancyCard key={vacancy.id} vacancy={vacancy} index={index} />
@@ -352,4 +407,4 @@ export default function VacancySearchPage() {
   );
 }
 
-export { EMPTY_FEED, PAGE_SIZE, filtersFromParams, uniqueById };
+export { EMPTY_FEED, EMPTY_SIMILARS, PAGE_SIZE, filtersFromParams, uniqueById };
