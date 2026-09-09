@@ -8,7 +8,7 @@ BEGIN
     -- =========================================================================
     -- 1. RETER (Obrigação legal / Comprovante sem PII)
     -- =========================================================================
-    INSERT INTO log_exclusoes_lgpd (usuario_id_antigo, motivo_opcional, comprovante_hash)
+    INSERT INTO log_exclusoes_lgpd (motivo_opcional, comprovante_hash)
     VALUES (p_usuario_id, p_motivo, p_comprovante_hash);
 
     -- =========================================================================
