@@ -27,13 +27,12 @@ create table mensagens_chat (
     texto_mensagem text,
     url_anexo varchar(255),
     lida boolean default false,
-    data_envio timestamp default current_timestamp
+    editada boolean default false,
+    data_edicao timestamp,
+    texto_original text,
+    data_envio timestamp default current_timestamp,
 );
--- RF35: Histórico e Edição de Mensagens
-ALTER TABLE mensagens_chat 
-ADD COLUMN IF NOT EXISTS editada BOOLEAN DEFAULT FALSE,
-ADD COLUMN IF NOT EXISTS data_edicao TIMESTAMP,
-ADD COLUMN IF NOT EXISTS texto_original TEXT; 
+
 
 create index if not exists idx_notificacoes_destino on notificacoes(usuario_destino_id);
 create index if not exists idx_participantes_chat_usuario on participantes_chat(usuario_id);
