@@ -1,13 +1,25 @@
 import apiClient from '../api/apiClient';
-import { createCandidatura } from './candidaturaService';
+import { createCandidatura, withdrawCandidatura, analyzeCandidatura } from './candidaturaService';
 
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
-  default: { post: jest.fn() },
+  default: { post: jest.fn(), delete: jest.fn(), put: jest.fn() },
 }));
 
 beforeEach(() => {
   apiClient.post.mockReset();
+});
+
+test('retirada envia somente o identificador da candidatura na rota existente', async () => {
+  await withdrawCandidatura(9);
+  expect(apiClient.delete).toHaveBeenCalledWith('/candidaturas/9');
+});
+
+test('análise usa a rota existente e os vínculos retornados pela API sem ownerId', async () => {
+  await analyzeCandidatura('42', { candidaturaId: 9, artistaId: 5, mensagemApresentacao: 'Mensagem', linkPortfolioCandidatura: 'https://example.com', ownerId: 999 }, 'EM_ANALISE');
+  expect(apiClient.put).toHaveBeenCalledWith('/candidaturas/9', {
+    vagaId: 42, artistaId: 5, mensagemApresentacao: 'Mensagem', linkPortfolioCandidatura: 'https://example.com', status: 'EM_ANALISE',
+  });
 });
 
 test('envia somente os campos oficiais e converte vagaId para número', async () => {

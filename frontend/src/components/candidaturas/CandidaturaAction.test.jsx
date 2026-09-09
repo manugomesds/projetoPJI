@@ -1,10 +1,11 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import ApiError from '../../services/api/ApiError';
-import { createCandidatura } from '../../services/candidaturas/candidaturaService';
+import { createCandidatura, withdrawCandidatura } from '../../services/candidaturas/candidaturaService';
 import CandidaturaAction, { LINK_MAX_LENGTH, MESSAGE_MAX_LENGTH } from './CandidaturaAction';
 
 jest.mock('../../services/candidaturas/candidaturaService', () => ({
   createCandidatura: jest.fn(),
+  withdrawCandidatura: jest.fn(),
 }));
 
 const vaga = {
@@ -34,6 +35,7 @@ function openAndFillForm() {
 
 beforeEach(() => {
   createCandidatura.mockReset();
+  withdrawCandidatura.mockReset();
 });
 
 test('visitante anônimo recebe link real para o login legado', () => {
@@ -179,4 +181,29 @@ test('mensagem de erro não confiável é renderizada somente como texto', async
   expect(await screen.findByText(untrusted)).toBeInTheDocument();
   expect(container.querySelector('script')).not.toBeInTheDocument();
   expect(window.comprometido).toBeUndefined();
+});
+
+test.each(['PENDENTE', 'EM_ANALISE', 'REJEITADO'])('retira candidatura %s e mantém histórico', async (status) => {
+  withdrawCandidatura.mockResolvedValue(null);
+  renderAction({ vagaAtual: { ...vaga, minhaCandidaturaId: 91, statusMinhaCandidatura: status } });
+  fireEvent.click(screen.getByRole('button', { name: 'Retirar candidatura' }));
+  expect(await screen.findByText('Candidatura retirada. Seu histórico foi preservado.')).toBeInTheDocument();
+  expect(withdrawCandidatura).toHaveBeenCalledWith(91);
+  expect(screen.getByText('Retirada')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Candidatar-se' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Retirar candidatura' })).not.toBeInTheDocument();
+});
+
+test.each(['APROVADO', 'RETIRADA', 'CANCELADA_POR_VAGA'])('estado %s não oferece retirada', (status) => {
+  renderAction({ vagaAtual: { ...vaga, minhaCandidaturaId: 91, statusMinhaCandidatura: status } });
+  expect(screen.queryByRole('button', { name: 'Retirar candidatura' })).not.toBeInTheDocument();
+});
+
+test('erro na retirada preserva status e permite tentar novamente', async () => {
+  withdrawCandidatura.mockRejectedValue(new ApiError({ status: 422, message: 'Transição inválida.' }));
+  renderAction({ vagaAtual: { ...vaga, minhaCandidaturaId: 91, statusMinhaCandidatura: 'PENDENTE' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Retirar candidatura' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Transição inválida.');
+  expect(screen.getByText('Pendente')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Retirar candidatura' })).toBeEnabled();
 });

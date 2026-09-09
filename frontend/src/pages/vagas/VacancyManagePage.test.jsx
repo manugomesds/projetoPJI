@@ -7,6 +7,9 @@ import {
   getRelatedVacancies,
 } from '../../services/vagas/vacancyManagementService';
 import VacancyManagePage from './VacancyManagePage';
+import { getSuggestedArtists } from '../../services/vagas/vagaService';
+
+jest.mock('../../services/vagas/vagaService', () => ({ getSuggestedArtists: jest.fn() }));
 
 jest.mock('../../components/vagas/ContractorVacancyLayout', () => function Layout({ children }) { return children; });
 jest.mock('../../services/vagas/vacancyManagementService', () => ({
@@ -28,12 +31,21 @@ function renderManage(path = '/vagas/5/gerenciar') {
 }
 
 beforeEach(() => {
+  getSuggestedArtists.mockReset().mockResolvedValue({ content: [], hasNext: false });
   cancelVacancy.mockReset();
   changeVacancyStatus.mockReset();
   getManagedVacancy.mockReset();
   getRelatedVacancies.mockReset();
   getManagedVacancy.mockResolvedValue(vacancy);
   getRelatedVacancies.mockResolvedValue({ content: [] });
+});
+
+test('não proprietário não carrega nem recebe controles de análise', async () => {
+  getManagedVacancy.mockResolvedValue({ ...vacancy, propriaDoContratante: false });
+  renderManage();
+  expect(await screen.findByRole('heading', { name: 'Acesso negado' })).toBeInTheDocument();
+  expect(getSuggestedArtists).not.toHaveBeenCalled();
+  expect(screen.queryByRole('heading', { name: 'Candidaturas recebidas' })).not.toBeInTheDocument();
 });
 
 test('ABERTA permite suspender e atualiza a matriz para PAUSADA/reabrir', async () => {

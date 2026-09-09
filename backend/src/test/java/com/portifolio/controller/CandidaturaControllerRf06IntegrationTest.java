@@ -32,6 +32,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.any;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
@@ -60,7 +65,8 @@ class CandidaturaControllerRf06IntegrationTest {
     @Autowired PerfilArtistaRepository perfilArtistaRepository;
     @Autowired PerfilContratanteRepository perfilContratanteRepository;
     @Autowired VagaRepository vagaRepository;
-    @Autowired CandidaturaRepository candidaturaRepository;
+    @MockitoSpyBean CandidaturaRepository candidaturaRepository;
+    @MockitoSpyBean com.portifolio.service.NotificacaoPersistenceService notificacaoPersistenceService;
     @Autowired JwtService jwtService;
 
     @AfterEach
@@ -382,6 +388,95 @@ class CandidaturaControllerRf06IntegrationTest {
         mockMvc.perform(delete("/api/candidaturas/{id}", candidatura.getId())
                         .header("Authorization", bearer(artista.getUsuario())))
                 .andExpect(status().isUnprocessableEntity());
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = StatusCandidatura.class, names = {"PENDENTE", "EM_ANALISE", "REJEITADO"})
+    void retiradaPreservaCamposNotificaDonoUmaVezEImpedeRecandidatura(StatusCandidatura inicial) throws Exception {
+        PerfilContratante dono = novoContratante("dono-retirada-ciclo@teste.com");
+        PerfilArtista artista = novoArtista("artista-retirada-ciclo@teste.com", true);
+        Candidatura candidatura = novaCandidatura(novaVaga(dono, StatusVaga.ABERTA), artista, inicial);
+        mockMvc.perform(delete("/api/candidaturas/{id}", candidatura.getId())
+                        .header("Authorization", bearer(artista.getUsuario())))
+                .andExpect(status().isNoContent());
+        Candidatura salva = candidaturaRepository.findById(candidatura.getId()).orElseThrow();
+        assertThat(salva.getStatus()).isEqualTo(StatusCandidatura.RETIRADA);
+        assertThat(salva.getMensagemApresentacao()).isEqualTo(candidatura.getMensagemApresentacao());
+        assertThat(salva.getLinkPortfolioCandidatura()).isEqualTo(candidatura.getLinkPortfolioCandidatura());
+        assertThat(jdbcTemplate.queryForObject("select status::text from candidaturas where id = ?", String.class, salva.getId())).isEqualTo("retirada");
+        assertThat(jdbcTemplate.queryForList("select usuario_destino_id from notificacoes", Long.class)).containsExactly(dono.getUsuarioId());
+        mockMvc.perform(delete("/api/candidaturas/{id}", candidatura.getId())
+                        .header("Authorization", bearer(artista.getUsuario())))
+                .andExpect(status().isUnprocessableEntity());
+        mockMvc.perform(post("/api/candidaturas").header("Authorization", bearer(artista.getUsuario()))
+                        .contentType(MediaType.APPLICATION_JSON).content(corpoCriacao(candidatura.getVaga().getId(), null)))
+                .andExpect(status().isConflict());
+        assertThat(jdbcTemplate.queryForObject("select count(*) from notificacoes", Long.class)).isEqualTo(1L);
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = StatusCandidatura.class, names = {"EM_ANALISE", "APROVADO", "REJEITADO"})
+    void analisePersisteNomeOficialDoBancoENotificaArtistaUmaVez(StatusCandidatura destino) throws Exception {
+        PerfilContratante dono = novoContratante("dono-notificacao@teste.com");
+        PerfilArtista artista = novoArtista("artista-notificacao@teste.com", true);
+        Candidatura candidatura = novaCandidatura(novaVaga(dono, StatusVaga.ABERTA), artista, StatusCandidatura.PENDENTE);
+        atualizarStatus(candidatura, dono.getUsuario(), destino).andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("select status::text from candidaturas where id = ?", String.class, candidatura.getId())).isEqualTo(destino.getDatabaseValue());
+        assertThat(jdbcTemplate.queryForList("select usuario_destino_id from notificacoes", Long.class)).containsExactly(artista.getUsuarioId());
+        assertThat(jdbcTemplate.queryForObject("select link_contexto from notificacoes", String.class)).isEqualTo("/vagas/" + candidatura.getVaga().getId());
+        atualizarStatus(candidatura, dono.getUsuario(), destino).andExpect(status().isUnprocessableEntity());
+        assertThat(jdbcTemplate.queryForObject("select count(*) from notificacoes", Long.class)).isEqualTo(1L);
+    }
+
+    @Test
+    void retiradaViaPutTambemNotificaSemAlterarConteudo() throws Exception {
+        PerfilContratante dono = novoContratante("dono-put@teste.com");
+        PerfilArtista artista = novoArtista("artista-put@teste.com", true);
+        Candidatura candidatura = novaCandidatura(novaVaga(dono, StatusVaga.ABERTA), artista, StatusCandidatura.PENDENTE);
+        atualizarStatus(candidatura, artista.getUsuario(), StatusCandidatura.RETIRADA)
+                .andExpect(status().isOk()).andExpect(jsonPath("$.mensagemApresentacao").value(candidatura.getMensagemApresentacao()));
+        assertThat(jdbcTemplate.queryForList("select usuario_destino_id from notificacoes", Long.class)).containsExactly(dono.getUsuarioId());
+    }
+
+    @Test
+    void contratanteNaoRetiraEOperacoesInexistentesRetornam404() throws Exception {
+        PerfilContratante dono = novoContratante("dono-inexistente@teste.com");
+        PerfilArtista artista = novoArtista("artista-inexistente@teste.com", true);
+        Candidatura candidatura = novaCandidatura(novaVaga(dono, StatusVaga.ABERTA), artista, StatusCandidatura.PENDENTE);
+        mockMvc.perform(delete("/api/candidaturas/{id}", candidatura.getId()).header("Authorization", bearer(dono.getUsuario())))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(delete("/api/candidaturas/999999").header("Authorization", bearer(artista.getUsuario())))
+                .andExpect(status().isNotFound());
+        candidatura.setId(999999L);
+        atualizarStatus(candidatura, dono.getUsuario(), StatusCandidatura.EM_ANALISE).andExpect(status().isNotFound());
+        assertThat(jdbcTemplate.queryForObject("select count(*) from notificacoes", Long.class)).isZero();
+    }
+
+    @Test
+    void constraintRealTrataDuplicidadeMesmoSePreConsultaNaoEncontrar() throws Exception {
+        PerfilContratante dono = novoContratante("dono-constraint@teste.com");
+        PerfilArtista artista = novoArtista("artista-constraint@teste.com", true);
+        Vaga vaga = novaVaga(dono, StatusVaga.ABERTA);
+        novaCandidatura(vaga, artista, StatusCandidatura.PENDENTE);
+        doReturn(false).when(candidaturaRepository).existsByVagaIdAndArtistaUsuarioId(vaga.getId(), artista.getUsuarioId());
+        mockMvc.perform(post("/api/candidaturas").header("Authorization", bearer(artista.getUsuario()))
+                        .contentType(MediaType.APPLICATION_JSON).content(corpoCriacao(vaga.getId(), null)))
+                .andExpect(status().isConflict()).andExpect(jsonPath("$.mensagem").value("Já existe candidatura para esta vaga e artista."));
+        assertThat(candidaturaRepository.count()).isEqualTo(1L);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from notificacoes", Long.class)).isZero();
+    }
+
+    @Test
+    void falhaDeNotificacaoDesfazAnaliseSemAlterarSchema() throws Exception {
+        PerfilContratante dono = novoContratante("dono-rollback@teste.com");
+        PerfilArtista artista = novoArtista("artista-rollback@teste.com", true);
+        Candidatura candidatura = novaCandidatura(novaVaga(dono, StatusVaga.ABERTA), artista, StatusCandidatura.PENDENTE);
+        com.portifolio.service.NotificacaoPersistenceService alvo =
+                org.springframework.test.util.AopTestUtils.getUltimateTargetObject(notificacaoPersistenceService);
+        doThrow(new IllegalArgumentException("Falha sintética de persistência")).when(alvo).persistirNaTransacaoAtual(any());
+        atualizarStatus(candidatura, dono.getUsuario(), StatusCandidatura.EM_ANALISE).andExpect(status().isBadRequest());
+        assertThat(candidaturaRepository.findById(candidatura.getId()).orElseThrow().getStatus()).isEqualTo(StatusCandidatura.PENDENTE);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from notificacoes", Long.class)).isZero();
     }
 
     private Usuario novoUsuario(String email, TipoUsuario tipo) {
