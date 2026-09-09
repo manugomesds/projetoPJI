@@ -125,8 +125,8 @@ INSERT INTO historico_medalhas (artista_id, nivel_antigo, nivel_novo, motivo_pro
 INSERT INTO conquistas_desbloqueadas (artista_id, nome_conquista, descricao_conquista) VALUES 
 (1, 'Iniciante', 'Primeiro login');
 
-INSERT INTO log_exclusoes_lgpd (usuario_id_antigo, comprovante_hash) VALUES 
-(99, 'hashlgpd');
+INSERT INTO log_exclusoes_lgpd (comprovante_hash) VALUES 
+('hashlgpd');
 
 DO $$
 BEGIN
