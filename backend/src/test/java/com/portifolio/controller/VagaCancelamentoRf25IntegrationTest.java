@@ -3,6 +3,12 @@ package com.portifolio.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portifolio.model.Candidatura;
+import com.portifolio.model.LogVagaCancelada;
+import com.portifolio.model.Notificacao;
+import com.portifolio.dto.NotificacaoResponse;
+import com.portifolio.realtime.NotificacaoSseService;
+import com.portifolio.repository.LogVagaCanceladaRepository;
+import com.portifolio.repository.NotificacaoRepository;
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
 import com.portifolio.model.Usuario;
@@ -22,10 +28,12 @@ import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -38,6 +46,8 @@ import org.springframework.boot.testcontainers.service.connection.ServiceConnect
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.MvcResult;
@@ -46,6 +56,13 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -58,7 +75,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 class VagaCancelamentoRf25IntegrationTest {
 
-    private static final String CONSTRAINT_ROLLBACK = "rf25_forcar_rollback";
     private static final String MOTIVO_PADRAO = "Encerramento do projeto artístico.";
 
     @Container
@@ -75,13 +91,16 @@ class VagaCancelamentoRf25IntegrationTest {
     @Autowired VagaRepository vagaRepository;
     @Autowired CandidaturaRepository candidaturaRepository;
     @Autowired JwtService jwtService;
+    @Autowired DataSource dataSource;
+    @MockitoSpyBean LogVagaCanceladaRepository logRepository;
+    @MockitoSpyBean NotificacaoRepository notificacaoRepository;
+    @MockitoSpyBean SimpMessagingTemplate messagingTemplate;
+    @MockitoSpyBean NotificacaoSseService sseService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @AfterEach
     void limparBanco() {
-        jdbcTemplate.execute("ALTER TABLE log_vagas_canceladas DROP CONSTRAINT IF EXISTS "
-                + CONSTRAINT_ROLLBACK);
         jdbcTemplate.execute("TRUNCATE log_vagas_canceladas, candidaturas, vagas, "
                 + "perfis_artistas, perfis_contratantes, usuarios RESTART IDENTITY CASCADE");
     }
@@ -250,6 +269,16 @@ class VagaCancelamentoRf25IntegrationTest {
         assertThat(jdbcTemplate.queryForObject(
                 "select count(*) from candidaturas where vaga_id = ?",
                 Integer.class, vaga.getId())).isEqualTo(StatusCandidatura.values().length);
+        assertThat(quantidadeLogs(vaga)).isOne();
+        assertThat(notificacaoRepository.findAll()).hasSize(StatusCandidatura.values().length)
+                .allSatisfy(notificacao -> {
+                    assertThat(notificacao.getLida()).isFalse();
+                    assertThat(notificacao.getMensagem()).contains("cancelada");
+                    assertThat(notificacao.getLink()).isEqualTo("detalhe-vaga.html?id=" + vaga.getId());
+                });
+        assertThat(jdbcTemplate.queryForObject(
+                "select count(distinct usuario_destino_id) from notificacoes", Integer.class))
+                .isEqualTo(StatusCandidatura.values().length);
     }
 
     @Test
@@ -258,18 +287,131 @@ class VagaCancelamentoRf25IntegrationTest {
         Vaga vaga = novaVaga(dono, StatusVaga.ABERTA);
         Candidatura candidatura = novaCandidatura(
                 vaga, novoArtista("candidato-rollback@rf25.test"), StatusCandidatura.PENDENTE);
-        jdbcTemplate.execute("ALTER TABLE log_vagas_canceladas ADD CONSTRAINT "
-                + CONSTRAINT_ROLLBACK + " CHECK (false)");
+        doAnswer(invocation -> {
+            logRepository.saveAndFlush(invocation.<LogVagaCancelada>getArgument(0));
+            throw new IllegalStateException("Falha simulada na persistência do log");
+        }).when(logRepository).save(any(LogVagaCancelada.class));
 
-        cancelar(vaga, dono.getUsuario())
-                .andExpect(status().isConflict());
-
-        jdbcTemplate.execute("ALTER TABLE log_vagas_canceladas DROP CONSTRAINT "
-                + CONSTRAINT_ROLLBACK);
+        assertThatThrownBy(() -> cancelar(vaga, dono.getUsuario()))
+                .hasRootCauseInstanceOf(IllegalStateException.class);
         assertThat(statusPersistido(vaga)).isEqualTo(StatusVaga.ABERTA);
         assertThat(candidaturaRepository.findById(candidatura.getId()).orElseThrow().getStatus())
                 .isEqualTo(StatusCandidatura.PENDENTE);
         assertThat(quantidadeLogs(vaga)).isZero();
+        assertThat(notificacaoRepository.count()).isZero();
+        verificarSemEntrega();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = StatusVaga.class, names = {"ABERTA", "PAUSADA"})
+    void falhaNaSegundaNotificacaoDesfazTodoCancelamento(StatusVaga estado) throws Exception {
+        PerfilContratante dono = novoContratante("dono-atomicidade@rf28.test");
+        Vaga vaga = novaVaga(dono, estado);
+        Candidatura primeira = novaCandidatura(vaga, novoArtista("primeiro@rf28.test"),
+                StatusCandidatura.PENDENTE);
+        Candidatura segunda = novaCandidatura(vaga, novoArtista("segundo@rf28.test"),
+                StatusCandidatura.EM_ANALISE);
+        doAnswer(invocation -> {
+            List<Notificacao> notificacoes = invocation.getArgument(0);
+            assertThat(notificacoes).hasSize(2);
+            notificacaoRepository.saveAndFlush(notificacoes.getFirst());
+            assertThat(notificacaoRepository.count()).isOne();
+            assertThat(quantidadeLogs(vaga)).isOne();
+            throw new IllegalStateException("Falha simulada ao persistir a segunda notificação");
+        }).when(notificacaoRepository).saveAllAndFlush(any());
+
+        assertThatThrownBy(() -> cancelar(vaga, dono.getUsuario()))
+                .hasRootCauseInstanceOf(IllegalStateException.class);
+
+        assertThat(statusPersistido(vaga)).isEqualTo(estado);
+        assertThat(candidaturaRepository.findById(primeira.getId()).orElseThrow().getStatus())
+                .isEqualTo(StatusCandidatura.PENDENTE);
+        assertThat(candidaturaRepository.findById(segunda.getId()).orElseThrow().getStatus())
+                .isEqualTo(StatusCandidatura.EM_ANALISE);
+        assertThat(quantidadeLogs(vaga)).isZero();
+        assertThat(notificacaoRepository.count()).isZero();
+        verificarSemEntrega();
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"STOMP", "SSE"})
+    void falhaDeTransporteAposCommitPreservaCancelamentoENotificacao(String transporte) throws Exception {
+        PerfilContratante dono = novoContratante("dono-transporte@rf28.test");
+        PerfilArtista artista = novoArtista("destino-transporte@rf28.test");
+        Vaga vaga = novaVaga(dono, StatusVaga.ABERTA);
+        novaCandidatura(vaga, artista, StatusCandidatura.PENDENTE);
+        if ("STOMP".equals(transporte)) {
+            doAnswer(invocation -> {
+                verificarCommitPorConexaoIndependente(vaga);
+                throw new IllegalStateException("STOMP indisponível");
+            }).when(messagingTemplate).convertAndSendToUser(
+                    anyString(), anyString(), any(NotificacaoResponse.class));
+        } else {
+            doAnswer(invocation -> {
+                verificarCommitPorConexaoIndependente(vaga);
+                throw new IllegalStateException("SSE indisponível");
+            }).when(sseService).entregar(anyLong(), any(NotificacaoResponse.class));
+        }
+
+        cancelar(vaga, dono.getUsuario()).andExpect(status().isNoContent());
+
+        verificarCommitPorConexaoIndependente(vaga);
+        verificarNotificacaoRecuperavel(artista);
+        verify(messagingTemplate).convertAndSendToUser(
+                anyString(), anyString(), any(NotificacaoResponse.class));
+        verify(sseService).entregar(anyLong(), any(NotificacaoResponse.class));
+    }
+
+    @Test
+    void candidatoOfflineRecuperaNotificacaoPersistidaDepois() throws Exception {
+        PerfilContratante dono = novoContratante("dono-offline@rf28.test");
+        PerfilArtista artista = novoArtista("offline@rf28.test");
+        Vaga vaga = novaVaga(dono, StatusVaga.PAUSADA);
+        novaCandidatura(vaga, artista, StatusCandidatura.EM_ANALISE);
+
+        cancelar(vaga, dono.getUsuario()).andExpect(status().isNoContent());
+
+        verificarCommitPorConexaoIndependente(vaga);
+        verificarNotificacaoRecuperavel(artista);
+    }
+
+    private void verificarNotificacaoRecuperavel(PerfilArtista artista) throws Exception {
+        mockMvc.perform(get("/api/notificacoes")
+                        .header("Authorization", bearer(artista.getUsuario())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.content.length()").value(1))
+                .andExpect(jsonPath("$.content[0].lida").value(false))
+                .andExpect(jsonPath("$.content[0].mensagem").value(
+                        org.hamcrest.Matchers.containsString("cancelada")));
+    }
+
+    private void verificarSemEntrega() {
+        verify(messagingTemplate, never()).convertAndSendToUser(
+                anyString(), anyString(), any(NotificacaoResponse.class));
+        verify(sseService, never()).entregar(anyLong(), any(NotificacaoResponse.class));
+    }
+
+    private void verificarCommitPorConexaoIndependente(Vaga vaga) throws Exception {
+        // Outra conexão só enxerga os quatro registros depois do commit real no PostgreSQL.
+        try (var conexao = dataSource.getConnection();
+                var consulta = conexao.prepareStatement("""
+                        select v.status,
+                               (select count(*) from candidaturas c where c.vaga_id = v.id
+                                    and c.status = ?),
+                               (select count(*) from log_vagas_canceladas l where l.vaga_id = v.id),
+                               (select count(*) from notificacoes n where n.lida = false)
+                        from vagas v where v.id = ?
+                        """)) {
+            consulta.setString(1, StatusCandidatura.CANCELADA_POR_VAGA.getDatabaseValue());
+            consulta.setLong(2, vaga.getId());
+            try (var resultado = consulta.executeQuery()) {
+                assertThat(resultado.next()).isTrue();
+                assertThat(resultado.getString(1)).isEqualTo(StatusVaga.CANCELADA.getDatabaseValue());
+                assertThat(resultado.getInt(2)).isOne();
+                assertThat(resultado.getInt(3)).isOne();
+                assertThat(resultado.getInt(4)).isOne();
+            }
+        }
     }
 
     @Test
