@@ -7,3 +7,17 @@ export function createCandidatura({ vagaId, mensagemApresentacao, linkPortfolioC
     linkPortfolioCandidatura,
   });
 }
+
+export function withdrawCandidatura(id) {
+  return apiClient.delete(`/candidaturas/${encodeURIComponent(id)}`);
+}
+
+export function analyzeCandidatura(vagaId, candidatura, status) {
+  return apiClient.put(`/candidaturas/${encodeURIComponent(candidatura.candidaturaId)}`, {
+    vagaId: Number(vagaId),
+    artistaId: candidatura.artistaId,
+    mensagemApresentacao: candidatura.mensagemApresentacao,
+    linkPortfolioCandidatura: candidatura.linkPortfolioCandidatura,
+    status,
+  });
+}

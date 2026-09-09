@@ -1,11 +1,11 @@
 import { useRef, useState } from 'react';
 import ApiError from '../../services/api/ApiError';
-import { createCandidatura } from '../../services/candidaturas/candidaturaService';
+import { createCandidatura, withdrawCandidatura } from '../../services/candidaturas/candidaturaService';
 
 export const MESSAGE_MAX_LENGTH = 2000;
 export const LINK_MAX_LENGTH = 255;
 
-const STATUS_LABELS = {
+export const STATUS_LABELS = {
   PENDENTE: 'Pendente',
   EM_ANALISE: 'Em análise',
   APROVADO: 'Aprovada',
@@ -26,14 +26,40 @@ function applicationError(error) {
   };
 }
 
-function ExistingApplication({ status }) {
+function ExistingApplication({ id, status, session }) {
+  const [withdrawn, setWithdrawn] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const pending = useRef(false);
+  const currentStatus = withdrawn ? 'RETIRADA' : status;
+  const eligible = id && session?.token && session.tipoUsuario === 'ARTISTA'
+    && ['PENDENTE', 'EM_ANALISE', 'REJEITADO'].includes(currentStatus);
+
+  async function withdraw() {
+    if (pending.current) return;
+    pending.current = true;
+    setLoading(true);
+    setError('');
+    try {
+      await withdrawCandidatura(id);
+      setWithdrawn(true);
+    } catch (failure) {
+      setError(failure instanceof ApiError ? failure.message : 'Não foi possível retirar sua candidatura. Tente novamente.');
+    } finally {
+      pending.current = false;
+      setLoading(false);
+    }
+  }
   return (
     <section className="candidatura candidatura--sucesso" aria-labelledby="candidatura-titulo">
       <p className="dashboard__sobrelinha">Candidatura registrada</p>
       <h2 id="candidatura-titulo">Você já se candidatou</h2>
       <p>
-        Status atual: <strong>{STATUS_LABELS[status] || status || 'Registrada'}</strong>
+        Status atual: <strong>{STATUS_LABELS[currentStatus] || currentStatus || 'Registrada'}</strong>
       </p>
+      {withdrawn ? <p role="status">Candidatura retirada. Seu histórico foi preservado.</p> : null}
+      {error ? <p role="alert">{error}</p> : null}
+      {eligible ? <button className="btn-dash btn-dash--secundario" type="button" disabled={loading} onClick={withdraw}>{loading ? 'Retirando…' : 'Retirar candidatura'}</button> : null}
     </section>
   );
 }
@@ -55,7 +81,7 @@ export default function CandidaturaAction({ vaga, session }) {
   const existingStatus = candidatura?.status || vaga.statusMinhaCandidatura;
 
   if (hasExistingApplication) {
-    return <ExistingApplication status={existingStatus} />;
+    return <ExistingApplication id={candidatura?.id || vaga.minhaCandidaturaId} status={existingStatus} session={session} />;
   }
 
   if (vaga.status !== 'ABERTA') {

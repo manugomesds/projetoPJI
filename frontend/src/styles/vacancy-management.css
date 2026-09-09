@@ -491,3 +491,5 @@
     text-align: center;
   }
 }
+.candidatura-review { display: grid; gap: 1rem; margin-top: 1.5rem; min-width: 0; }
+.candidatura-review p { overflow-wrap: anywhere; }
