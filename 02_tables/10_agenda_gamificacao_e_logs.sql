@@ -12,7 +12,6 @@ create table agenda_artista (
     necessidades_tecnicas text,
     exibir_publico boolean default false,
     
-    -- Restrição padrão mantida (validação de conflito de horários tratada na regra de negócio/aplicação)
     constraint sem_conflito_horario unique (artista_id, data_hora_inicio)
 );
 
