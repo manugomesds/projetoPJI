@@ -124,9 +124,14 @@ test('exibe loading inicial, erro recuperável e estado vazio', async () => {
 });
 
 test('pagina incrementalmente com cursor independente e elimina duplicatas', async () => {
-  apiClient.get
-    .mockResolvedValueOnce(page({ content: [vacancy], nextCursor: 5, hasMore: true }))
-    .mockResolvedValueOnce(page({ content: [vacancy, { ...vacancy, id: 6, titulo: 'Segunda vaga' }] }));
+  let feedRequest = 0;
+  apiClient.get.mockImplementation((path) => {
+    if (path.includes('/similares')) return Promise.resolve(page());
+    feedRequest += 1;
+    return Promise.resolve(feedRequest === 1
+      ? page({ content: [vacancy], nextCursor: 5, hasMore: true })
+      : page({ content: [vacancy, { ...vacancy, id: 6, titulo: 'Segunda vaga' }] }));
+  });
   renderSearch();
 
   await screen.findByRole('heading', { name: vacancy.titulo });
@@ -134,9 +139,50 @@ test('pagina incrementalmente com cursor independente e elimina duplicatas', asy
   act(() => observerCallbacks[observerCallbacks.length - 1]([{ isIntersecting: true }]));
 
   expect(await screen.findByRole('heading', { name: 'Segunda vaga' })).toBeInTheDocument();
-  expect(apiClient.get).toHaveBeenLastCalledWith('/vagas?cursor=5&size=20');
+  expect(apiClient.get).toHaveBeenCalledWith('/vagas?cursor=5&size=20');
   expect(screen.getAllByRole('heading', { name: vacancy.titulo })).toHaveLength(1);
   expect(screen.getByText('Você chegou ao fim das vagas disponíveis.')).toBeInTheDocument();
+});
+
+test('renderiza Vagas Similares pelo contexto da primeira vaga aberta', async () => {
+  const similar = { ...vacancy, id: 6, titulo: 'Direção de arte', status: 'ABERTA' };
+  apiClient.get.mockImplementation((path) => Promise.resolve(
+    path.includes('/similares') ? page({ content: [similar] }) : page({ content: [{ ...vacancy, status: 'ABERTA' }] })
+  ));
+
+  renderSearch();
+
+  expect(await screen.findByRole('heading', { name: 'Vagas Similares' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: similar.titulo })).toBeInTheDocument();
+  expect(apiClient.get).toHaveBeenCalledWith('/vagas/5/similares?size=3');
+});
+
+test('não renderiza carrossel vazio nem aceita origem ou status não aberto', async () => {
+  apiClient.get.mockImplementation((path) => Promise.resolve(path.includes('/similares')
+    ? page({ content: [
+      { ...vacancy, status: 'ABERTA' },
+      { ...vacancy, id: 7, titulo: 'Vaga pausada', status: 'PAUSADA' },
+    ] })
+    : page({ content: [{ ...vacancy, status: 'ABERTA' }] })));
+
+  renderSearch();
+
+  await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/vagas/5/similares?size=3'));
+  expect(screen.queryByRole('heading', { name: 'Vagas Similares' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Vaga pausada' })).not.toBeInTheDocument();
+});
+
+test('falha de similares não inutiliza o feed principal', async () => {
+  apiClient.get.mockImplementation((path) => path.includes('/similares')
+    ? Promise.reject(new Error('Falha isolada'))
+    : Promise.resolve(page({ content: [{ ...vacancy, status: 'ABERTA' }] })));
+
+  renderSearch();
+
+  expect(await screen.findByRole('heading', { name: vacancy.titulo })).toBeInTheDocument();
+  await waitFor(() => expect(apiClient.get).toHaveBeenCalledWith('/vagas/5/similares?size=3'));
+  expect(screen.queryByRole('heading', { name: 'Vagas Similares' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('alert')).not.toBeInTheDocument();
 });
 
 test('mostra cancelada somente no bloco contextual retornado e sem ação de candidatura', async () => {

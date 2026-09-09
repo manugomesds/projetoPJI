@@ -1,7 +1,7 @@
 import { SESSION_STORAGE_KEY } from '../../auth/sessionService';
 import ApiError from '../api/ApiError';
 import apiClient from '../api/apiClient';
-import { buildVacancyParams, getVacancyPage } from './vacancyListingService';
+import { buildVacancyParams, getSimilarVacancies, getVacancyPage } from './vacancyListingService';
 
 jest.mock('../api/apiClient', () => ({
   __esModule: true,
@@ -53,4 +53,12 @@ test('preserva JWT opcional e refaz como anônimo se a sessão estiver expirada'
     '/vagas?cidade=Recife&size=20',
     { token: null }
   );
+});
+
+test('consulta similares pelo endpoint público existente com limite normalizado', async () => {
+  apiClient.get.mockResolvedValue({ content: [] });
+
+  await getSimilarVacancies(17, { size: 99 });
+
+  expect(apiClient.get).toHaveBeenCalledWith('/vagas/17/similares?size=50');
 });
