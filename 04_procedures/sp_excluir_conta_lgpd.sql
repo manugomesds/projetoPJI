@@ -59,7 +59,7 @@ BEGIN
     DELETE FROM itens_salvos WHERE usuario_id = p_usuario_id;
 
     IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'visualizacoes_perfil') THEN
-        DELETE FROM visualizacoes_perfil WHERE perfil_id = p_usuario_id OR visitante_id = p_usuario_id;
+        DELETE FROM visualizacoes_perfil WHERE perfil_id = perfil_visitado_id = p_usuario_id;
     END IF;
 
     -- Agenda, Gamificação e Rankings
