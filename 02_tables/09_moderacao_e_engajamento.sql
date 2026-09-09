@@ -18,7 +18,9 @@ create table moderacao_conteudo (
     tipo_conteudo tipo_conteudo_enum not null,
     conteudo_id bigint not null,
     autor_id bigint not null references usuarios(id) on delete cascade,
+    moderador_id bigint references usuarios(id),
     status_moderacao status_moderacao_enum default 'SOB ANALISE',
+    contestacao text;
     score_risco numeric(3,2) default 0.00,
     justificativa_acao text,
     data_analise timestamp,
@@ -43,10 +45,7 @@ create table itens_salvos (
     data_salvamento timestamp default current_timestamp,
     constraint salvo_unico unique (usuario_id, tipo_alvo, alvo_id)
 );
-ALTER TABLE moderacao_conteudo 
-ADD COLUMN IF NOT EXISTS moderador_id BIGINT REFERENCES usuarios(id),
-ADD COLUMN IF NOT EXISTS contestacao TEXT;
--- No arquivo de moderação e denúncias
+
 create index if not exists idx_denuncias_plagio_denunciante on denuncias_plagio(denunciante_id);
 create index if not exists idx_denuncias_plagio_denunciado on denuncias_plagio(perfil_denunciado_id);
 create index if not exists idx_moderacao_conteudo_autor on moderacao_conteudo(autor_id);
