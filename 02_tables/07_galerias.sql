@@ -26,7 +26,7 @@ create table interacoes_galeria (
     comentario text,
     data_interacao timestamp default current_timestamp
 );
--- No arquivo de galerias
+
 create index if not exists idx_galerias_virtuais_dono on galerias_virtuais(dono_id);
 create index if not exists idx_galerias_virtuais_comunidade on galerias_virtuais(comunidade_id);
 create index if not exists idx_itens_galeria_arquivo on itens_galeria(arquivo_id);
