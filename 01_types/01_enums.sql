@@ -1,6 +1,6 @@
 create type tipo_usuario_enum as enum ('CONTRATANTE', 'ARTISTA');
 create type modelo_trabalho_enum as enum ('PRESENCIAL', 'REMOTO', 'HIBRIDO');
-create type status_vaga_enum as enum ('ABERTA', 'PAUSADA', 'ENCERRADA', 'CANCELADA');
+create type status_vaga_enum as enum ('ABERTA', 'PAUSADA', 'ENCERRADA', 'CANCELADA', 'RASCUNHO');
 create type status_candidatura_enum as enum ('PENDENTE', 'EM ANALISE', 'APROVADO', 'REJEITADO', 'RETIRADA', 'CANCELADA_POR_VAGA');
 create type status_denuncia_enum as enum ('RECEBIDA', 'EM ANALISE', 'PROCEDENTE', 'IMPROCEDENTE');
 create type tipo_violacao_enum as enum ('PLAGIO DE IMAGEM', 'PLAGIO DE AUDIO', 'COPIA DE BIOGRAFIA', 'OUTRO');
@@ -14,4 +14,3 @@ create type tipo_conteudo_enum as enum ('VAGA', 'COMUNIDADE', 'GALERIA', 'MENSAG
 create type status_moderacao_enum as enum ('APROVADO', 'BLOQUEADO', 'SOB ANALISE');
 create type tipo_alvo_salvo_enum as enum ('ARTISTA', 'OBRA', 'VAGA');
 
-ALTER TYPE status_vaga_enum ADD VALUE IF NOT EXISTS 'RASCUNHO';
