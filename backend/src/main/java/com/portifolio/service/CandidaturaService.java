@@ -46,7 +46,8 @@ public class CandidaturaService {
     private static final int TAMANHO_PADRAO = 20;
     private static final int TAMANHO_MAXIMO = 50;
     private static final Set<StatusCandidatura> STATUS_RETIRAVEIS =
-            EnumSet.of(StatusCandidatura.PENDENTE, StatusCandidatura.EM_ANALISE);
+            EnumSet.of(StatusCandidatura.PENDENTE, StatusCandidatura.EM_ANALISE,
+                    StatusCandidatura.REJEITADO);
 
     private final CandidaturaRepository candidaturaRepository;
     private final VagaRepository vagaRepository;
@@ -54,6 +55,7 @@ public class CandidaturaService {
     private final AuthenticatedUserResolver authenticatedUserResolver;
     private final AvatarService avatarService;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificacaoPersistenceService notificacaoPersistenceService;
 
     @Transactional(readOnly = true)
     public List<CandidaturaResponse> listarDasMinhasVagas() {
@@ -181,7 +183,18 @@ public class CandidaturaService {
         candidatura.setLinkPortfolioCandidatura(request.getLinkPortfolioCandidatura());
         candidatura.setStatus(StatusCandidatura.PENDENTE);
         candidatura.setDataCandidatura(LocalDateTime.now());
-        Candidatura salva = candidaturaRepository.save(candidatura);
+        Candidatura salva;
+        try {
+            salva = candidaturaRepository.saveAndFlush(candidatura);
+        } catch (org.springframework.dao.DataIntegrityViolationException erro) {
+            for (Throwable causa = erro; causa != null; causa = causa.getCause()) {
+                if (causa instanceof org.hibernate.exception.ConstraintViolationException constraint
+                        && "candidatura_unica".equals(constraint.getConstraintName())) {
+                    throw new ConflictException("Já existe candidatura para esta vaga e artista.");
+                }
+            }
+            throw erro;
+        }
         eventPublisher.publishEvent(new NotificacaoEvento(
                 Set.of(vaga.getContratante().getUsuarioId()),
                 TipoNotificacao.CANDIDATURA,
@@ -219,7 +232,9 @@ public class CandidaturaService {
             candidatura.setStatus(destino);
         }
 
-        return toResponse(candidaturaRepository.save(candidatura));
+        Candidatura salva = candidaturaRepository.save(candidatura);
+        notificarAlteracao(salva);
+        return toResponse(salva);
     }
 
     private StatusCandidatura exigirStatus(CandidaturaRequest request) {
@@ -244,6 +259,28 @@ public class CandidaturaService {
         }
         retirar(candidatura);
         candidaturaRepository.save(candidatura);
+        notificarAlteracao(candidatura);
+    }
+
+    private void notificarAlteracao(Candidatura candidatura) {
+        boolean retirada = candidatura.getStatus() == StatusCandidatura.RETIRADA;
+        Long destinatario = retirada
+                ? candidatura.getVaga().getContratante().getUsuarioId()
+                : candidatura.getArtista().getUsuarioId();
+        String status = switch (candidatura.getStatus()) {
+            case EM_ANALISE -> "Em análise";
+            case APROVADO -> "Aprovada";
+            case REJEITADO -> "Rejeitada";
+            case RETIRADA -> "Retirada";
+            default -> candidatura.getStatus().name();
+        };
+        NotificacaoEvento evento = new NotificacaoEvento(Set.of(destinatario),
+                TipoNotificacao.CANDIDATURA,
+                "Candidatura à vaga \"" + candidatura.getVaga().getTitulo()
+                        + "\": " + status + ".",
+                "/vagas/" + candidatura.getVaga().getId() + (retirada ? "/gerenciar" : ""));
+        notificacaoPersistenceService.persistirNaTransacaoAtual(evento)
+                .forEach(eventPublisher::publishEvent);
     }
 
     private void retirar(Candidatura candidatura) {
