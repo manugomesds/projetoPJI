@@ -63,6 +63,7 @@ public class VagaService {
     private final AuthenticatedUserResolver authenticatedUserResolver;
     private final AvatarService avatarService;
     private final ApplicationEventPublisher eventPublisher;
+    private final NotificacaoPersistenceService notificacaoPersistenceService;
 
     // RF03 — Listagem e busca paginada (cursor-based) de vagas ABERTAS. Endpoint público.
     // RF03 Fase 2 — se o artista autenticado tiver candidaturas em vagas CANCELADA,
@@ -396,11 +397,18 @@ public class VagaService {
         if (destinatarios.isEmpty()) {
             return;
         }
-        eventPublisher.publishEvent(new NotificacaoEvento(
+        NotificacaoEvento evento = new NotificacaoEvento(
                 destinatarios,
                 TipoNotificacao.CANDIDATURA,
                 mensagem,
-                "detalhe-vaga.html?id=" + vaga.getId()));
+                "detalhe-vaga.html?id=" + vaga.getId());
+        if (vaga.getStatus() == StatusVaga.CANCELADA) {
+            // RF28: registros obrigatórios participam do rollback; só a entrega aguarda o commit.
+            notificacaoPersistenceService.persistirNaTransacaoAtual(evento)
+                    .forEach(eventPublisher::publishEvent);
+        } else {
+            eventPublisher.publishEvent(evento);
+        }
     }
 
     private String validarCancelamento(VagaCancelamentoRequest request) {

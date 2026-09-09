@@ -14,7 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class VagaServiceTamanhoTest {
 
     private final VagaService service = new VagaService(
-            null, null, null, null, null, null, null, null);
+            null, null, null, null, null, null, null, null, null);
 
     @ParameterizedTest
     @CsvSource({

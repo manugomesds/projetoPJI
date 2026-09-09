@@ -28,15 +28,20 @@ public class NotificacaoEventoListener {
         }
 
         for (NotificacaoPersistida persistida : persistidas) {
-            try {
-                realtimeGateway.entregar(
-                        persistida.usuarioId(),
-                        persistida.email(),
-                        persistida.notificacao());
-            } catch (RuntimeException erro) {
-                log.warn("Falha isolada na entrega em tempo real da notificacao {}.",
-                        persistida.notificacao().getId());
-            }
+            entregar(persistida);
+        }
+    }
+
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void entregar(NotificacaoPersistida persistida) {
+        try {
+            realtimeGateway.entregar(
+                    persistida.usuarioId(),
+                    persistida.email(),
+                    persistida.notificacao());
+        } catch (RuntimeException erro) {
+            log.warn("Falha isolada na entrega em tempo real da notificacao {}.",
+                    persistida.notificacao().getId());
         }
     }
 }
