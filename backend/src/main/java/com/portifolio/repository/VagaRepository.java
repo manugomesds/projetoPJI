@@ -2,7 +2,10 @@ package com.portifolio.repository;
 
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.StatusVaga;
+import com.portifolio.repository.projection.VagaPrazoProjection;
 import com.portifolio.repository.projection.VagaRecomendadaProjection;
+import jakarta.persistence.LockModeType;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -11,12 +14,46 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface VagaRepository extends JpaRepository<Vaga, Long>, JpaSpecificationExecutor<Vaga> {
 
     List<Vaga> findByTituloContainingIgnoreCase(String titulo);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select v from Vaga v where v.id = :id")
+    Optional<Vaga> findByIdForUpdate(@Param("id") Long id);
+
+    @Query("""
+            select v.id as id, v.titulo as titulo
+            from Vaga v
+            where v.status in :statusElegiveis
+              and v.dataLimiteCandidatura is not null
+              and v.dataLimiteCandidatura <= :hoje
+            order by v.id
+            """)
+    List<VagaPrazoProjection> findElegiveisParaEncerramento(
+            @Param("statusElegiveis") Set<StatusVaga> statusElegiveis,
+            @Param("hoje") LocalDate hoje,
+            Pageable pageable);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update Vaga v
+               set v.status = :statusEncerrado
+             where v.id = :id
+               and v.status in :statusElegiveis
+               and v.dataLimiteCandidatura is not null
+               and v.dataLimiteCandidatura <= :hoje
+            """)
+    int encerrarSeElegivelEVencida(
+            @Param("id") Long id,
+            @Param("hoje") LocalDate hoje,
+            @Param("statusElegiveis") Set<StatusVaga> statusElegiveis,
+            @Param("statusEncerrado") StatusVaga statusEncerrado);
 
     // RNF05: carrega tags (ManyToMany) e contratante junto, evitando N+1.
     // Usado APÓS a paginação (conjunto de IDs já delimitado) — nunca combine

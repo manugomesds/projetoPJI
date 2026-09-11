@@ -22,6 +22,18 @@ public interface CandidaturaRepository extends JpaRepository<Candidatura, Long> 
             Long artistaId, Long contratanteId);
     Optional<Candidatura> findByVagaIdAndArtistaUsuarioId(Long vagaId, Long usuarioId);
 
+    @Query("""
+            select c.artista.usuarioId
+            from Candidatura c
+            where c.vaga.id = :vagaId
+              and (:cursor is null or c.artista.usuarioId > :cursor)
+            order by c.artista.usuarioId
+            """)
+    List<Long> findArtistaUsuarioIdsByVagaIdAposCursor(
+            @Param("vagaId") Long vagaId,
+            @Param("cursor") Long cursor,
+            Pageable pageable);
+
     @EntityGraph(attributePaths = {"vaga", "artista"})
     Page<Candidatura> findByArtistaUsuarioId(Long usuarioId, Pageable pageable);
 

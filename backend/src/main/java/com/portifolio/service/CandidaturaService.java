@@ -56,6 +56,7 @@ public class CandidaturaService {
     private final AvatarService avatarService;
     private final ApplicationEventPublisher eventPublisher;
     private final NotificacaoPersistenceService notificacaoPersistenceService;
+    private final VagaPrazoPolicy vagaPrazoPolicy;
 
     @Transactional(readOnly = true)
     public List<CandidaturaResponse> listarDasMinhasVagas() {
@@ -160,11 +161,15 @@ public class CandidaturaService {
         Usuario usuario = exigirUsuarioAtual();
         exigirTipo(usuario, TipoUsuario.ARTISTA, "Somente artistas podem se candidatar.");
 
-        Vaga vaga = vagaRepository.findById(request.getVagaId())
+        Vaga vaga = vagaRepository.findByIdForUpdate(request.getVagaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Vaga não encontrada."));
         if (vaga.getStatus() != StatusVaga.ABERTA) {
             throw new UnprocessableEntityException(
                     "A vaga não aceita candidaturas porque está com status " + vaga.getStatus() + ".");
+        }
+        if (vagaPrazoPolicy.estaVencida(vaga)) {
+            throw new UnprocessableEntityException(
+                    "A vaga não aceita mais candidaturas porque a data limite foi atingida.");
         }
         if (!Boolean.TRUE.equals(usuario.getPerfilCompleto())) {
             throw new UnprocessableEntityException("Complete seu perfil antes de se candidatar.");

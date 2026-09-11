@@ -54,6 +54,7 @@ public class VagaService {
 
     private static final int TAMANHO_PADRAO = 20;
     private static final int TAMANHO_MAXIMO = 50;
+    private static final int LOTE_NOTIFICACOES_STATUS = 100;
 
     private final VagaRepository vagaRepository;
     private final PerfilContratanteRepository perfilContratanteRepository;
@@ -384,9 +385,30 @@ public class VagaService {
             default -> null;
         };
         if (mensagem != null) {
-            publicarParaCandidatos(
-                    vaga, candidaturaRepository.findByVagaId(vaga.getId()), mensagem);
+            publicarParaCandidatosDaVaga(vaga.getId(), mensagem);
         }
+    }
+
+    public void publicarEncerramentoAutomatico(Long vagaId, String titulo) {
+        publicarParaCandidatosDaVaga(
+                vagaId, "A vaga \"" + titulo + "\" foi encerrada.");
+    }
+
+    private void publicarParaCandidatosDaVaga(Long vagaId, String mensagem) {
+        Long cursor = null;
+        do {
+            List<Long> destinatarios = candidaturaRepository
+                    .findArtistaUsuarioIdsByVagaIdAposCursor(
+                            vagaId, cursor, PageRequest.of(0, LOTE_NOTIFICACOES_STATUS));
+            if (destinatarios.isEmpty()) {
+                return;
+            }
+            publicarParaDestinatarios(vagaId, Set.copyOf(destinatarios), mensagem);
+            cursor = destinatarios.getLast();
+            if (destinatarios.size() < LOTE_NOTIFICACOES_STATUS) {
+                return;
+            }
+        } while (true);
     }
 
     private void publicarParaCandidatos(
@@ -394,6 +416,16 @@ public class VagaService {
         Set<Long> destinatarios = candidaturas.stream()
                 .map(candidatura -> candidatura.getArtista().getUsuarioId())
                 .collect(Collectors.toSet());
+        publicarParaDestinatarios(vaga.getId(), destinatarios, mensagem, vaga.getStatus());
+    }
+
+    private void publicarParaDestinatarios(
+            Long vagaId, Set<Long> destinatarios, String mensagem) {
+        publicarParaDestinatarios(vagaId, destinatarios, mensagem, null);
+    }
+
+    private void publicarParaDestinatarios(
+            Long vagaId, Set<Long> destinatarios, String mensagem, StatusVaga status) {
         if (destinatarios.isEmpty()) {
             return;
         }
@@ -401,8 +433,8 @@ public class VagaService {
                 destinatarios,
                 TipoNotificacao.CANDIDATURA,
                 mensagem,
-                "detalhe-vaga.html?id=" + vaga.getId());
-        if (vaga.getStatus() == StatusVaga.CANCELADA) {
+                "detalhe-vaga.html?id=" + vagaId);
+        if (status == StatusVaga.CANCELADA) {
             // RF28: registros obrigatórios participam do rollback; só a entrega aguarda o commit.
             notificacaoPersistenceService.persistirNaTransacaoAtual(evento)
                     .forEach(eventPublisher::publishEvent);
