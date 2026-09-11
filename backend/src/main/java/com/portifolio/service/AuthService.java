@@ -105,8 +105,7 @@ public class AuthService {
         usuario.setDataNascimento(request.getDataNascimento());
         usuario.setTelefone(request.getTelefone());
         usuario.setEmail(request.getEmail());
-        passwordPolicy.validateOrThrow(request.getSenha());
-        usuario.setSenha(passwordEncoder.encode(request.getSenha()));
+        usuario.setSenha(passwordPolicy.encode(request.getSenha()));
         usuario.setTipoUsuario(request.getTipoUsuario());
         usuario.setPerfilCompleto(false);
         usuario.setDataCriacao(LocalDateTime.now());

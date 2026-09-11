@@ -2,6 +2,8 @@ package com.portifolio.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portifolio.model.Usuario;
+import com.portifolio.repository.PerfilArtistaRepository;
+import com.portifolio.repository.PerfilContratanteRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.validation.PasswordPolicy;
 import java.time.LocalDate;
@@ -45,6 +47,12 @@ class AuthControllerRf01Rf02IntegrationTest {
 
     @Autowired
     UsuarioRepository usuarioRepository;
+
+    @Autowired
+    PerfilArtistaRepository perfilArtistaRepository;
+
+    @Autowired
+    PerfilContratanteRepository perfilContratanteRepository;
 
     @Autowired
     PasswordEncoder passwordEncoder;
@@ -157,6 +165,9 @@ class AuthControllerRf01Rf02IntegrationTest {
         for (String senha : invalidas) {
             Map<String, Object> payload = cadastroBase("ARTISTA", LocalDate.now().minusYears(30));
             payload.put("senha", senha);
+            long usuariosAntes = usuarioRepository.count();
+            long artistasAntes = perfilArtistaRepository.count();
+            long contratantesAntes = perfilContratanteRepository.count();
 
             mockMvc.perform(post("/api/auth/cadastro")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -165,7 +176,33 @@ class AuthControllerRf01Rf02IntegrationTest {
                     .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.MESSAGE));
 
             assertThat(usuarioRepository.findByEmail((String) payload.get("email"))).isEmpty();
+            assertThat(usuarioRepository.count()).isEqualTo(usuariosAntes);
+            assertThat(perfilArtistaRepository.count()).isEqualTo(artistasAntes);
+            assertThat(perfilContratanteRepository.count()).isEqualTo(contratantesAntes);
         }
+    }
+
+    @Test
+    void cadastroTrataLimiteTecnicoDoBCryptSemPersistenciaParcialOuVazamento()
+            throws Exception {
+        Map<String, Object> payload = cadastroBase("ARTISTA", LocalDate.now().minusYears(30));
+        payload.put("senha", "Aa1!" + "á".repeat(35));
+        long usuariosAntes = usuarioRepository.count();
+        long artistasAntes = perfilArtistaRepository.count();
+        long contratantesAntes = perfilContratanteRepository.count();
+
+        String resposta = mockMvc.perform(post("/api/auth/cadastro")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(payload)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.BCRYPT_LIMIT_MESSAGE))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(resposta).doesNotContain("BCrypt", "72 bytes", "password cannot");
+        assertThat(usuarioRepository.findByEmail((String) payload.get("email"))).isEmpty();
+        assertThat(usuarioRepository.count()).isEqualTo(usuariosAntes);
+        assertThat(perfilArtistaRepository.count()).isEqualTo(artistasAntes);
+        assertThat(perfilContratanteRepository.count()).isEqualTo(contratantesAntes);
     }
 
     @Test

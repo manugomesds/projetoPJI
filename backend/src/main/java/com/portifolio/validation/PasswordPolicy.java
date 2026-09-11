@@ -1,5 +1,8 @@
 package com.portifolio.validation;
 
+import com.portifolio.exception.UnprocessableEntityException;
+import java.nio.charset.StandardCharsets;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -8,6 +11,17 @@ public class PasswordPolicy {
     public static final String MESSAGE =
             "A senha deve ter entre 8 e 72 caracteres e conter ao menos uma letra maiúscula, "
                     + "uma letra minúscula, um número e um caractere especial.";
+    public static final String BCRYPT_LIMIT_MESSAGE =
+            "A senha atende à política funcional, mas não pode ser processada com segurança "
+                    + "pelo mecanismo de proteção atual.";
+
+    private static final int BCRYPT_MAX_BYTES = 72;
+
+    private final BCryptPasswordEncoder passwordEncoder;
+
+    public PasswordPolicy(BCryptPasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
+    }
 
     public boolean isValid(String password) {
         if (password == null) {
@@ -54,6 +68,18 @@ public class PasswordPolicy {
     public void validateOrThrow(String password) {
         if (!isValid(password)) {
             throw new IllegalArgumentException(MESSAGE);
+        }
+    }
+
+    public String encode(String password) {
+        validateOrThrow(password);
+        if (password.getBytes(StandardCharsets.UTF_8).length > BCRYPT_MAX_BYTES) {
+            throw new UnprocessableEntityException(BCRYPT_LIMIT_MESSAGE);
+        }
+        try {
+            return passwordEncoder.encode(password);
+        } catch (IllegalArgumentException ex) {
+            throw new UnprocessableEntityException(BCRYPT_LIMIT_MESSAGE);
         }
     }
 }

@@ -17,7 +17,6 @@ import java.util.HexFormat;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +33,6 @@ public class PasswordRecoveryService {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     private final UsuarioRepository usuarioRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final ObjectProvider<PasswordRecoveryEmailSender> emailSenderProvider;
     private final PasswordPolicy passwordPolicy;
@@ -83,8 +81,7 @@ public class PasswordRecoveryService {
                 .filter(this::tokenEstaValido)
                 .orElseThrow(() -> new ResourceNotFoundException(MENSAGEM_TOKEN_INVALIDO));
 
-        passwordPolicy.validateOrThrow(request.getNovaSenha());
-        usuario.setSenha(passwordEncoder.encode(request.getNovaSenha()));
+        usuario.setSenha(passwordPolicy.encode(request.getNovaSenha()));
         usuario.setTokenRecuperacao(null);
         usuario.setTokenExpiracao(null);
         usuarioRepository.save(usuario);

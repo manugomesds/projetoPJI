@@ -85,10 +85,9 @@ public class UsuarioService {
         if (usuarioRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new ConflictException("E-mail já cadastrado.");
         }
-        passwordPolicy.validateOrThrow(request.getSenha());
         Usuario usuario = new Usuario();
         preencherUsuarioNaCriacao(usuario, request);
-        usuario.setSenha(passwordEncoder.encode(request.getSenha()));
+        usuario.setSenha(passwordPolicy.encode(request.getSenha()));
         usuario.setPerfilCompleto(false);
         usuario.setDataCriacao(LocalDateTime.now());
         return toResponseCompleto(usuarioRepository.save(usuario));
@@ -141,8 +140,7 @@ public class UsuarioService {
         if (!passwordEncoder.matches(request.getSenhaAtual(), usuario.getSenha())) {
             throw new ForbiddenException("Senha atual incorreta.");
         }
-        passwordPolicy.validateOrThrow(request.getNovaSenha());
-        usuario.setSenha(passwordEncoder.encode(request.getNovaSenha()));
+        usuario.setSenha(passwordPolicy.encode(request.getNovaSenha()));
         return true;
     }
 

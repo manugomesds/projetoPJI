@@ -535,6 +535,30 @@ class PerfilEdicaoRf08IntegrationTest {
     }
 
     @Test
+    void limiteTecnicoDoBCryptNaoAlteraDadosHashNemRevogaSessoes() throws Exception {
+        PerfilArtista artista = novoArtista("senha-bcrypt-rf08@teste.com");
+        String hashAnterior = artista.getUsuario().getSenha();
+        refreshTokenService.gerarRefreshToken(artista.getUsuario());
+        Map<String, Object> payload = dadosUsuario(artista.getUsuario());
+        payload.put("nome", "Nome que deve sofrer rollback técnico");
+        payload.put("senhaAtual", "SenhaAtual123!");
+        payload.put("novaSenha", "Aa1!" + "á".repeat(35));
+
+        String resposta = mockMvc.perform(put("/api/usuarios/me")
+                        .header("Authorization", bearer(artista.getUsuario()))
+                        .contentType(MediaType.APPLICATION_JSON).content(json(payload)))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.BCRYPT_LIMIT_MESSAGE))
+                .andReturn().getResponse().getContentAsString();
+
+        Usuario persistido = usuarioRepository.findById(artista.getUsuarioId()).orElseThrow();
+        assertThat(resposta).doesNotContain("BCrypt", "72 bytes", "password cannot");
+        assertThat(persistido.getNome()).isEqualTo("Usuário RF08");
+        assertThat(persistido.getSenha()).isEqualTo(hashAnterior);
+        assertThat(refreshTokenRepository.findAll()).allMatch(token -> token.getAtivo());
+    }
+
+    @Test
     void postUsuariosEhBloqueadoAntesDaValidacaoDeSenha() throws Exception {
         PerfilArtista autenticado = novoArtista("criador-rf08@teste.com");
         String emailNovo = "bypass-politica-rf08@teste.com";

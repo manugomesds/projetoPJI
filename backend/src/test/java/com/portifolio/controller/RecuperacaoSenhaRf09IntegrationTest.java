@@ -199,6 +199,41 @@ class RecuperacaoSenhaRf09IntegrationTest {
     }
 
     @Test
+    void limiteTecnicoDoBCryptPreservaHashTokenESessaoEPermiteReusarMesmoToken()
+            throws Exception {
+        Usuario usuario = novoUsuarioLocal("bcrypt@rf09.test");
+        JsonNode login = corpo(login(usuario.getEmail(), SENHA_ANTIGA, true)
+                .andExpect(status().isOk()).andReturn());
+        String refreshToken = login.get("refreshToken").asText();
+        solicitar(usuario.getEmail());
+        String token = emailSender.ultimoToken;
+        Usuario antes = usuarioRepository.findById(usuario.getId()).orElseThrow();
+        String hashAnterior = antes.getSenha();
+        String tokenHash = antes.getTokenRecuperacao();
+        LocalDateTime expiracao = antes.getTokenExpiracao();
+
+        String resposta = redefinir(token, "Aa1!" + "á".repeat(35))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(jsonPath("$.mensagem").value(PasswordPolicy.BCRYPT_LIMIT_MESSAGE))
+                .andReturn().getResponse().getContentAsString();
+
+        Usuario aposFalha = usuarioRepository.findById(usuario.getId()).orElseThrow();
+        assertThat(resposta).doesNotContain("BCrypt", "72 bytes", "password cannot", token);
+        assertThat(aposFalha.getSenha()).isEqualTo(hashAnterior);
+        assertThat(aposFalha.getTokenRecuperacao()).isEqualTo(tokenHash);
+        assertThat(aposFalha.getTokenExpiracao()).isEqualTo(expiracao);
+        mockMvc.perform(post("/api/auth/refresh")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(json(Map.of("refreshToken", refreshToken))))
+                .andExpect(status().isOk());
+
+        redefinir(token, SENHA_NOVA).andExpect(status().isOk());
+        assertThat(passwordEncoder.matches(
+                SENHA_NOVA, usuarioRepository.findById(usuario.getId()).orElseThrow().getSenha()))
+                .isTrue();
+    }
+
+    @Test
     void tokenInvalidoEExpiradoDevemTerMesmoErroSemAlterarSenha() throws Exception {
         Usuario usuario = novoUsuarioLocal("expirado@rf09.test");
         usuario.setTokenRecuperacao(hash("token-expirado"));
