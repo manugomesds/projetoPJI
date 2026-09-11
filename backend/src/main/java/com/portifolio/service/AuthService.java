@@ -1,9 +1,5 @@
 package com.portifolio.service;
 
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
-import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.gson.GsonFactory;
 import com.portifolio.dto.CadastroRequest;
 import com.portifolio.dto.CadastroResponse;
 import com.portifolio.dto.GoogleAuthRequest;
@@ -22,17 +18,17 @@ import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.security.JwtService;
+import com.portifolio.service.google.GoogleLinkLock;
+import com.portifolio.service.google.GoogleTokenClaims;
+import com.portifolio.service.google.GoogleTokenVerifier;
 import com.portifolio.validation.PasswordPolicy;
-import jakarta.annotation.PostConstruct;
-import java.io.IOException;
-import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,22 +45,8 @@ public class AuthService {
     private final RefreshTokenService refreshTokenService;
     private final AvatarService avatarService;
     private final PasswordPolicy passwordPolicy;
-
-    @Value("${google.client-id}")
-    private String googleClientId;
-
-    // Instancia criada uma vez no startup (evita hit na JWK endpoint do Google a cada chamada)
-    private GoogleIdTokenVerifier googleVerifier;
-
-    @PostConstruct
-    public void init() {
-        googleVerifier = new GoogleIdTokenVerifier.Builder(
-                new NetHttpTransport(),
-                GsonFactory.getDefaultInstance()
-        )
-                .setAudience(Collections.singletonList(googleClientId))
-                .build();
-    }
+    private final GoogleTokenVerifier googleTokenVerifier;
+    private final GoogleLinkLock googleLinkLock;
 
     // ──────────────────────────────────────────────────────────
     // RF01 — Cadastro convencional (sem alteracao de logica)
@@ -196,34 +178,45 @@ public class AuthService {
     public GoogleAuthResponse loginComGoogle(GoogleAuthRequest request) {
 
         // 1. Valida o ID Token com a chave publica do Google
-        GoogleIdToken.Payload payload = validarTokenGoogle(request.getIdToken());
+        GoogleTokenClaims claims = googleTokenVerifier.verificar(request.getIdToken());
 
-        String googleId = payload.getSubject();
-        String email    = payload.getEmail();
-        String nome     = (String) payload.get("name");
-        String foto     = (String) payload.get("picture");
+        String googleId = claims.subject();
+        String email = claims.email();
+        String nome = claims.nome();
+        String foto = claims.foto();
         validarDadosGoogleNoSchema(googleId, email, nome, foto);
+        googleLinkLock.bloquear(email, googleId);
 
-        // 2. Busca usuario por googleId (retorno) ou por email (vinculacao de conta existente)
-        Optional<Usuario> usuarioOpt = usuarioRepository.findByGoogleId(googleId);
-        if (usuarioOpt.isEmpty()) {
-            usuarioOpt = usuarioRepository.findByEmail(email);
-        }
+        // 2. Resolve os dois identificadores antes de vincular para detectar conflitos.
+        Optional<Usuario> usuarioPorGoogle = usuarioRepository.findByGoogleId(googleId);
+        Optional<Usuario> usuarioPorEmail = usuarioRepository.findByEmailIgnoreCase(email);
 
         // 3. Usuario ja existe — faz login direto
-        if (usuarioOpt.isPresent()) {
-            Usuario usuario = usuarioOpt.get();
-
-            // Vincula o googleId se o usuario cadastrou convencionalmente antes
+        if (usuarioPorGoogle.isPresent()) {
+            Usuario usuario = usuarioPorGoogle.get();
+            if (usuarioPorEmail.isPresent()
+                    && !Objects.equals(usuario.getId(), usuarioPorEmail.get().getId())) {
+                throw falhaGoogle();
+            }
+            return autenticarUsuario(usuario, request.getRememberMe());
+        }
+        if (usuarioPorEmail.isPresent()) {
+            Usuario usuario = usuarioPorEmail.get();
+            if (usuario.getGoogleId() != null
+                    && !usuario.getGoogleId().equals(googleId)) {
+                throw falhaGoogle();
+            }
             if (usuario.getGoogleId() == null) {
                 usuario.setGoogleId(googleId);
-                // RF34 Opcao B: salva foto do Google apenas se nao tiver foto propria
                 if (usuario.getFotoPerfil() == null) {
                     usuario.setFotoPerfil(foto);
                 }
-                usuarioRepository.save(usuario);
+                try {
+                    usuarioRepository.saveAndFlush(usuario);
+                } catch (DataIntegrityViolationException ex) {
+                    throw falhaGoogle();
+                }
             }
-
             return autenticarUsuario(usuario, request.getRememberMe());
         }
 
@@ -267,9 +260,13 @@ public class AuthService {
         novoUsuario.setPerfilCompleto(false);
         novoUsuario.setDataCriacao(LocalDateTime.now());
 
-        Usuario salvo = usuarioRepository.save(novoUsuario);
-        criarPerfilInicial(salvo, null);
-        return autenticarUsuario(salvo, request.getRememberMe());
+        try {
+            Usuario salvo = usuarioRepository.saveAndFlush(novoUsuario);
+            criarPerfilInicial(salvo, null);
+            return autenticarUsuario(salvo, request.getRememberMe());
+        } catch (DataIntegrityViolationException ex) {
+            throw falhaGoogle();
+        }
     }
 
     // ──────────────────────────────────────────────────────────
@@ -321,28 +318,20 @@ public class AuthService {
 
     private void validarDadosGoogleNoSchema(String googleId, String email, String nome, String foto) {
         if (googleId == null || googleId.isBlank() || googleId.length() > 255) {
-            throw new IllegalArgumentException("Identificador da conta Google é inválido.");
+            throw falhaGoogle();
         }
         if (email == null || email.isBlank() || email.length() > 150) {
-            throw new IllegalArgumentException("E-mail retornado pelo Google é inválido para o cadastro.");
+            throw falhaGoogle();
         }
         if (nome == null || nome.isBlank() || nome.length() > 150) {
-            throw new IllegalArgumentException("Nome retornado pelo Google é inválido para o cadastro.");
+            throw falhaGoogle();
         }
         if (foto != null && foto.length() > 255) {
-            throw new IllegalArgumentException("URL da foto retornada pelo Google excede 255 caracteres.");
+            throw falhaGoogle();
         }
     }
 
-    private GoogleIdToken.Payload validarTokenGoogle(String rawToken) {
-        try {
-            GoogleIdToken idToken = googleVerifier.verify(rawToken);
-            if (idToken == null) {
-                throw new IllegalArgumentException("Token do Google invalido ou expirado.");
-            }
-            return idToken.getPayload();
-        } catch (GeneralSecurityException | IOException e) {
-            throw new IllegalArgumentException("Falha ao validar token do Google.");
-        }
+    private UnauthorizedException falhaGoogle() {
+        return new UnauthorizedException(GoogleTokenVerifier.MENSAGEM_ERRO);
     }
 }

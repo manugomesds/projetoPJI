@@ -8,6 +8,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     Optional<Usuario> findByEmail(String email);
 
+    Optional<Usuario> findByEmailIgnoreCase(String email);
+
     Optional<Usuario> findByTokenRecuperacao(String tokenRecuperacao);
 
     // RF32: busca por conta Google vinculada

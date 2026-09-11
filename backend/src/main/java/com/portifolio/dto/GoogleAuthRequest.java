@@ -1,7 +1,6 @@
 package com.portifolio.dto;
 
 import com.portifolio.model.enums.TipoUsuario;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
 import lombok.Getter;
@@ -12,7 +11,6 @@ import lombok.Setter;
 @Setter
 public class GoogleAuthRequest {
 
-    @NotBlank(message = "ID Token do Google e obrigatorio")
     private String idToken;
 
     // Campos opcionais — obrigatorios apenas no PRIMEIRO acesso (usuario novo)
