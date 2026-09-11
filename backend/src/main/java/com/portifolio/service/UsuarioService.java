@@ -62,7 +62,8 @@ public class UsuarioService {
 
     @Transactional
     public void deletarAtual() {
-        usuarioRepository.delete(usuarioAtual());
+        usuarioAtual();
+        throw exclusaoDeContaIndisponivel();
     }
 
     /** Lista compatível, sem expor e-mail, telefone, nascimento ou responsável. */
@@ -117,7 +118,13 @@ public class UsuarioService {
 
     @Transactional
     public void deletar(Long id) {
-        usuarioRepository.delete(exigirProprioUsuario(id));
+        exigirProprioUsuario(id);
+        throw exclusaoDeContaIndisponivel();
+    }
+
+    private UnprocessableEntityException exclusaoDeContaIndisponivel() {
+        return new UnprocessableEntityException(
+                "Exclusão de conta temporariamente indisponível até a implementação segura do RF22.");
     }
 
     private boolean atualizarSenhaSeSolicitada(Usuario usuario, UsuarioAtualizacaoRequest request) {
