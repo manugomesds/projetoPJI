@@ -1,44 +1,53 @@
-CREATE TABLE denuncias_plagio (
-    id BIGSERIAL PRIMARY KEY,
-    denunciante_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    perfil_denunciado_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    tipo_violacao tipo_violacao_enum NOT NULL,
-    descricao_detalhada TEXT NOT NULL,
-    url_prova_plagio VARCHAR(255),
-    status_denuncia status_denuncia_enum DEFAULT 'recebida',
-    medidas_adotadas TEXT,
-    documento_suporte_url VARCHAR(255),
-    data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ultima_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+create table denuncias_plagio (
+    id bigserial primary key,
+    denunciante_id bigint not null references usuarios(id) on delete cascade,
+    perfil_denunciado_id bigint not null references usuarios(id) on delete cascade,
+    tipo_violacao tipo_violacao_enum not null,
+    descricao_detalhada text not null,
+    url_prova_plagio varchar(255),
+    status_denuncia status_denuncia_enum default 'RECEBIDA',
+    medidas_adotadas text,
+    documento_suporte_url varchar(255),
+    data_registro timestamp default current_timestamp,
+    ultima_atualizacao timestamp default current_timestamp
 );
 
-CREATE TABLE moderacao_conteudo (
-    id BIGSERIAL PRIMARY KEY,
-    tipo_conteudo tipo_conteudo_enum NOT NULL,
-    conteudo_id BIGINT NOT NULL,
-    autor_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    status_moderacao status_moderacao_enum DEFAULT 'sob analise',
-    score_risco NUMERIC(3,2) DEFAULT 0.00,
-    justificativa_acao TEXT,
-    data_analise TIMESTAMP,
-    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+create table moderacao_conteudo (
+    id bigserial primary key,
+    tipo_conteudo tipo_conteudo_enum not null,
+    conteudo_id bigint not null,
+    moderador_id bigint references usuarios(id),
+    contestacao text,
+    autor_id bigint not null references usuarios(id) on delete cascade,
+    status_moderacao status_moderacao_enum default 'SOB_ANALISE',
+    score_risco numeric(3,2) default 0.00,
+    justificativa_acao text,
+    data_analise timestamp,
+    data_criacao timestamp default current_timestamp
 );
 
-CREATE TABLE reportes_usuario (
-    id BIGSERIAL PRIMARY KEY,
-    denunciante_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    tipo_conteudo tipo_conteudo_enum NOT NULL,
-    conteudo_id BIGINT NOT NULL,
-    motivo_reporte VARCHAR(150) NOT NULL,
-    descricao_adicional TEXT,
-    data_reporte TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+create table reportes_usuario (
+    id bigserial primary key,
+    denunciante_id bigint not null references usuarios(id) on delete cascade,
+    tipo_conteudo tipo_conteudo_enum not null,
+    conteudo_id bigint not null,
+    motivo_reporte varchar(150) not null,
+    descricao_adicional text,
+    data_reporte timestamp default current_timestamp
 );
 
-CREATE TABLE itens_salvos (
-    id BIGSERIAL PRIMARY KEY,
-    usuario_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    tipo_alvo tipo_alvo_salvo_enum NOT NULL,
-    alvo_id BIGINT NOT NULL,
-    data_salvamento TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT salvo_unico UNIQUE (usuario_id, tipo_alvo, alvo_id)
+create table itens_salvos (
+    id bigserial primary key,
+    usuario_id bigint not null references usuarios(id) on delete cascade,
+    tipo_alvo tipo_alvo_salvo_enum not null,
+    alvo_id bigint not null,
+    data_salvamento timestamp default current_timestamp,
+    constraint salvo_unico unique (usuario_id, tipo_alvo, alvo_id)
 );
+
+create index if not exists idx_denuncias_plagio_denunciante on denuncias_plagio(denunciante_id);
+create index if not exists idx_denuncias_plagio_denunciado on denuncias_plagio(perfil_denunciado_id);
+create index if not exists idx_moderacao_conteudo_autor on moderacao_conteudo(autor_id);
+create index if not exists idx_reportes_usuario_denunciante on reportes_usuario(denunciante_id);
+create index if not exists idx_itens_salvos_usuario on itens_salvos(usuario_id);

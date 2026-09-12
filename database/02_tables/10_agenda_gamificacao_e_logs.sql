@@ -1,50 +1,54 @@
-CREATE TABLE agenda_artista (
-    id BIGSERIAL PRIMARY KEY,
-    artista_id BIGINT NOT NULL REFERENCES perfis_artistas(usuario_id) ON DELETE CASCADE,
-    titulo_compromisso VARCHAR(150) NOT NULL,
-    descricao_compromisso TEXT,
-    tipo_compromisso VARCHAR(50) NOT NULL,
-    data_hora_inicio TIMESTAMP NOT NULL,
-    data_hora_fim TIMESTAMP NOT NULL,
-    localizacao_logistica VARCHAR(255) NOT NULL,
-    contato_responsavel VARCHAR(150),
-    cache_valor NUMERIC(10,2),
-    necessidades_tecnicas TEXT,
-    exibir_publico BOOLEAN DEFAULT FALSE,
-    CONSTRAINT sem_conflito_horario UNIQUE (artista_id, data_hora_inicio)
+create table agenda_artista (
+    id bigserial primary key,
+    artista_id bigint not null references perfis_artistas(usuario_id) on delete cascade,
+    titulo_compromisso varchar(150) not null,
+    descricao_compromisso text,
+    tipo_compromisso varchar(50) not null,
+    data_hora_inicio timestamp not null,
+    data_hora_fim timestamp not null,
+    localizacao_logistica varchar(255) not null,
+    contato_responsavel varchar(150),
+    cache_valor numeric(10,2),
+    necessidades_tecnicas text,
+    exibir_publico boolean default false,
+
 );
 
-CREATE TABLE ranking_top_da_semana (
-    id BIGSERIAL PRIMARY KEY,
-    artista_id BIGINT NOT NULL REFERENCES perfis_artistas(usuario_id) ON DELETE CASCADE,
-    score_semanal NUMERIC(10,2) NOT NULL,
-    data_inicio_ciclo DATE NOT NULL,
-    data_fim_ciclo DATE NOT NULL,
-    posicao_ranking INTEGER NOT NULL,
-    data_calculo TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+create table ranking_top_da_semana (
+    id bigserial primary key,
+    artista_id bigint not null references perfis_artistas(usuario_id) on delete cascade,
+    score_semanal numeric(10,2) not null,
+    data_inicio_ciclo date not null,
+    data_fim_ciclo date not null,
+    posicao_ranking integer not null,
+    data_calculo timestamp default current_timestamp
 );
 
-CREATE TABLE historico_medalhas (
-    id BIGSERIAL PRIMARY KEY,
-    artista_id BIGINT NOT NULL REFERENCES perfis_artistas(usuario_id) ON DELETE CASCADE,
-    nivel_antigo INTEGER CHECK (nivel_antigo BETWEEN 1 AND 5),
-    nivel_novo INTEGER NOT NULL CHECK (nivel_novo BETWEEN 1 AND 5),
-    motivo_progressao VARCHAR(255),
-    data_mudanca TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+create table historico_medalhas (
+    id bigserial primary key,
+    artista_id bigint not null references perfis_artistas(usuario_id) on delete cascade,
+    nivel_antigo integer check (nivel_antigo between 1 and 5),
+    nivel_novo integer not null check (nivel_novo between 1 and 5),
+    motivo_progressao varchar(255),
+    data_mudanca timestamp default current_timestamp
 );
 
-CREATE TABLE conquistas_desbloqueadas (
-    id BIGSERIAL PRIMARY KEY,
-    artista_id BIGINT NOT NULL REFERENCES perfis_artistas(usuario_id) ON DELETE CASCADE,
-    nome_conquista VARCHAR(100) NOT NULL,
-    descricao_conquista TEXT NOT NULL,
-    data_desbloqueio TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+create table conquistas_desbloqueadas (
+    id bigserial primary key,
+    artista_id bigint not null references perfis_artistas(usuario_id) on delete cascade,
+    nome_conquista varchar(100) not null,
+    descricao_conquista text not null,
+    data_desbloqueio timestamp default current_timestamp
 );
 
-CREATE TABLE log_exclusoes_lgpd (
-    id BIGSERIAL PRIMARY KEY,
-    usuario_id_antigo BIGINT NOT NULL,
-    motivo_opcional TEXT,
-    data_exclusao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    comprovante_hash CHAR(64) NOT NULL
+create table log_exclusoes_lgpd (
+    id bigserial primary key,
+    motivo_opcional text,
+    data_exclusao timestamp default current_timestamp,
+    comprovante_hash char(64) not null
 );
+
+create index if not exists idx_agenda_artista_id on agenda_artista(artista_id);
+create index if not exists idx_ranking_top_semana_artista on ranking_top_da_semana(artista_id);
+create index if not exists idx_historico_medalhas_artista on historico_medalhas(artista_id);
+create index if not exists idx_conquistas_artista on conquistas_desbloqueadas(artista_id);

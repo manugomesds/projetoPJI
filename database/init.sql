@@ -1,31 +1,41 @@
--- =============================================================================
--- SCRIPT MESTRE DE INICIALIZAÇÃO DO BANCO DE DADOS (init.sql)
--- Ordem obrigatória: Enums -> Tabelas -> Funções -> Procedures
--- =============================================================================
 
-\echo '--------------------------------------------------'
-\echo '1. Criando ENUMs e Tipos Customizados...'
-\echo '--------------------------------------------------'
-\i 01_types/01_enums.sql
+\i '01_types/01_enums.sql' 
 
-\echo '--------------------------------------------------'
-\echo '2. Criando Tabelas e Estruturas...'
-\echo '--------------------------------------------------'
-\i 02_tables/01_tables.sql
+\i '02_tables/01_usuarios.sql'
+\i '02_tables/02_perfis.sql'
+\i '02_tables/03_tags.sql'
+\i '02_tables/04_vagas.sql'
+\i '02_tables/05_portfolio_e_midias.sql'
+\i '02_tables/06_comunidades_e_editais.sql'
+\i '02_tables/07_galerias.sql'
+\i '02_tables/08_chat_e_notificacoes.sql'
+\i '02_tables/09_moderacao_e_engajamento.sql'
+\i '02_tables/10_agenda_gamificacao_e_logs.sql'
 
-\echo '--------------------------------------------------'
-\echo '3. Criando Funções (Cálculos e Consultas)...'
-\echo '--------------------------------------------------'
-\i 03_functions/01_fn_calcular_idade.sql
-\i 03_functions/02_fn_consultas_e_dashboards.sql
 
-\echo '--------------------------------------------------'
-\echo '4. Criando Stored Procedures (Escrita)...'
-\echo '--------------------------------------------------'
-\i 04_procedures/01_sp_cadastrar_usuario.sql
-\i 04_procedures/02_sp_realizar_candidatura.sql
-\i 04_procedures/03_sp_autenticacao_e_senha.sql
+\i '03_functions/fn_buscar_vagas.sql'
+\i '03_functions/fn_calcular_engajamento_perfil.sql'
+\i '03_functions/fn_filtrar_banco_talentos.sql'
+\i '03_functions/fn_moderar_conteudo.sql'
+\i '03_functions/fn_sugerir_artistas_vaga.sql'
+\i '03_functions/fn_verificar_perfil_completo.sql'
+\i '03_functions/fn_verificar_status_moderacao.sql'
 
-\echo '=================================================='
-\echo '  BANCO DE DADOS INICIALIZADO COM SUCESSO! '
-\echo '=================================================='
+\i '04_procedures/sp_atualizar_perfil.sql'
+\i '04_procedures/sp_atualizar_vaga.sql'
+\i '04_procedures/sp_cadastrar_usuario.sql'
+\i '04_procedures/sp_cancelar_vaga.sql'
+\i '04_procedures/sp_enviar_candidatura.sql'
+\i '04_procedures/sp_excluir_conta_lgpd.sql'
+\i '04_procedures/sp_publicar_vaga.sql'
+\i '04_procedures/sp_redefinir_senha.sql'
+\i '04_procedures/sp_salvar_item.sql'
+\i '04_procedures/sp_solicitar_recuperacao_senha.sql'
+
+\i '06_triggers/trg_moderacao_automatica.sql'
+\i '06_triggers/trg_perfil_completo.sql'
+\i '06_triggers/trg_timestamps.sql'
+
+\i 'seed.sql'
+
+\echo 'Banco de dados configurado por completo com sucesso!'

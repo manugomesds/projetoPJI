@@ -1,27 +1,34 @@
-CREATE TABLE galerias_virtuais (
-    id BIGSERIAL PRIMARY KEY,
-    dono_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    comunidade_id BIGINT REFERENCES comunidades(id) ON DELETE CASCADE,
-    titulo VARCHAR(150) NOT NULL,
-    descricao TEXT NOT NULL,
-    categoria VARCHAR(100) NOT NULL,
-    tipo_galeria tipo_galeria_enum NOT NULL,
-    status status_galeria_enum DEFAULT 'ativa',
-    data_inicio_agendada TIMESTAMP,
-    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+create table galerias_virtuais (
+    id bigserial primary key,
+    dono_id bigint not null references usuarios(id) on delete cascade,
+    comunidade_id bigint references comunidades(id) on delete cascade,
+    titulo varchar(150) not null,
+    descricao text not null,
+    categoria varchar(100) not null,
+    tipo_galeria tipo_galeria_enum not null,
+    status status_galeria_enum default 'ATIVA',
+    data_inicio_agendada timestamp,
+    data_criacao timestamp default current_timestamp
 );
 
-CREATE TABLE itens_galeria (
-    galeria_id BIGINT REFERENCES galerias_virtuais(id) ON DELETE CASCADE,
-    arquivo_id BIGINT REFERENCES portfolio_arquivos(id) ON DELETE CASCADE,
-    PRIMARY KEY (galeria_id, arquivo_id)
+create table itens_galeria (
+    galeria_id bigint references galerias_virtuais(id) on delete cascade,
+    arquivo_id bigint references portfolio_arquivos(id) on delete cascade,
+    primary key (galeria_id, arquivo_id)
 );
 
-CREATE TABLE interacoes_galeria (
-    id BIGSERIAL PRIMARY KEY,
-    usuario_id BIGINT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    arquivo_id BIGINT NOT NULL REFERENCES portfolio_arquivos(id) ON DELETE CASCADE,
-    curtiu BOOLEAN DEFAULT FALSE,
-    comentario TEXT,
-    data_interacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+create table interacoes_galeria (
+    id bigserial primary key,
+    usuario_id bigint not null references usuarios(id) on delete cascade,
+    arquivo_id bigint not null references portfolio_arquivos(id) on delete cascade,
+    curtiu boolean default false,
+    comentario text,
+    data_interacao timestamp default current_timestamp
 );
+-- No arquivo de galerias
+create index if not exists idx_galerias_virtuais_dono on galerias_virtuais(dono_id);
+create index if not exists idx_galerias_virtuais_comunidade on galerias_virtuais(comunidade_id);
+create index if not exists idx_itens_galeria_arquivo on itens_galeria(arquivo_id);
+create index if not exists idx_interacoes_galeria_usuario on interacoes_galeria(usuario_id);
+create index if not exists idx_interacoes_galeria_arquivo on interacoes_galeria(arquivo_id);
