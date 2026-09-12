@@ -1,4 +1,4 @@
-
+﻿
 
 create table portfolio_arquivos (
     id bigserial primary key,
@@ -7,7 +7,7 @@ create table portfolio_arquivos (
     nome_original varchar(150) not null,
     tamanho_bytes integer not null,
     tipo_mime varchar(50) not null,
-    data_upload timestamp default current_timestamp,
+    data_upload timestamp default current_timestamp
 );
 
 create table embeds_externos (

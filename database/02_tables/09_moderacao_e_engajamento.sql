@@ -1,4 +1,4 @@
-
+﻿
 create table denuncias_plagio (
     id bigserial primary key,
     denunciante_id bigint not null references usuarios(id) on delete cascade,
@@ -20,7 +20,7 @@ create table moderacao_conteudo (
     moderador_id bigint references usuarios(id),
     contestacao text,
     autor_id bigint not null references usuarios(id) on delete cascade,
-    status_moderacao status_moderacao_enum default 'SOB_ANALISE',
+    status_moderacao status_moderacao_enum default 'SOB ANALISE',
     score_risco numeric(3,2) default 0.00,
     justificativa_acao text,
     data_analise timestamp,
