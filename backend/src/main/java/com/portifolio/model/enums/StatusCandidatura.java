@@ -3,12 +3,12 @@ package com.portifolio.model.enums;
 import java.util.Arrays;
 
 public enum StatusCandidatura implements DatabaseEnum {
-    PENDENTE("pendente"),
-    EM_ANALISE("em analise"),
-    APROVADO("aprovado"),
-    REJEITADO("rejeitado"),
-    RETIRADA("retirada"),
-    CANCELADA_POR_VAGA("cancelada_por_vaga");
+    PENDENTE("PENDENTE"),
+    EM_ANALISE("EM_ANALISE"),
+    ACEITA("ACEITA"),
+    REJEITADA("REJEITADA"),
+    RETIRADA("RETIRADA"),
+    CANCELADA_POR_VAGA("CANCELADA_POR_VAGA");
 
     private final String databaseValue;
 

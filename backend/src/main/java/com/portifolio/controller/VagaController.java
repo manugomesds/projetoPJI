@@ -48,11 +48,16 @@ public class VagaController {
             @RequestParam(required = false) BigDecimal faixaSalarialMin,
             @RequestParam(required = false) BigDecimal faixaSalarialMax,
             @RequestParam(required = false) String areaAtuacao,
+            @RequestParam(required = false) Set<Long> funcaoIds,
             @RequestParam(required = false) Set<Long> tagIds,
             @RequestParam(required = false) Long cursor,
             @RequestParam(required = false) Long cursorCanceladas,
             @RequestParam(required = false) Integer size
     ) {
+        if (tagIds != null) {
+            throw new com.portifolio.exception.UnprocessableEntityException(
+                    "O filtro tagIds foi substituído por funcaoIds do catálogo oficial.");
+        }
         VagaBuscaFiltro filtro = new VagaBuscaFiltro();
         filtro.setTitulo(titulo);
         filtro.setEmpresa(empresa);
@@ -63,7 +68,7 @@ public class VagaController {
         filtro.setFaixaSalarialMin(faixaSalarialMin);
         filtro.setFaixaSalarialMax(faixaSalarialMax);
         filtro.setAreaAtuacao(areaAtuacao);
-        filtro.setTagIds(tagIds);
+        filtro.setFuncaoIds(funcaoIds);
         filtro.setCursor(cursor);
         filtro.setCursorCanceladas(cursorCanceladas);
         filtro.setSize(size);

@@ -32,7 +32,7 @@ class UsuarioControllerIntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @LocalServerPort

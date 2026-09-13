@@ -13,8 +13,8 @@ public class GoogleAuthRequest {
 
     private String idToken;
 
-    // Campos opcionais — obrigatorios apenas no PRIMEIRO acesso (usuario novo)
-    // Se nao enviados e usuario nao existe, o backend retorna status AGUARDANDO_DADOS
+    // Campos exigidos pelo schema para persistir a conta provisória.
+    // Não constituem conclusão cadastral nem permitem acesso normal.
     private TipoUsuario tipoUsuario;
     private LocalDate dataNascimento;
 
@@ -23,4 +23,5 @@ public class GoogleAuthRequest {
 
     // RF33: lembrar de mim tambem disponivel no login Google
     private Boolean rememberMe = false;
+    private com.portifolio.model.enums.TipoPerfilArtistico tipoPerfilArtistico;
 }

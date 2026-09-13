@@ -31,14 +31,18 @@ public class VagaAtualizacaoRequest {
     @NotBlank(message = "Requisitos são obrigatórios")
     private String requisitos;
 
-    @NotNull(message = "Remuneração é obrigatória")
     @DecimalMin(value = "0.00", message = "Remuneração não pode ser negativa")
     @Digits(integer = 8, fraction = 2, message = "Remuneração deve respeitar numeric(10,2)")
-    private BigDecimal remuneraValor;
+    private BigDecimal valorMinimo;
 
-    @NotBlank(message = "Forma de pagamento é obrigatória")
-    @Size(max = 100, message = "Forma de pagamento deve ter no máximo 100 caracteres")
-    private String formaPagamento;
+    @DecimalMin("0.00") @Digits(integer = 8, fraction = 2)
+    private BigDecimal valorMaximo;
+
+    @NotNull @Positive
+    private Short areaId;
+
+    @NotNull
+    private com.portifolio.model.enums.FormaRemuneracao formaRemuneracao;
 
     @NotBlank(message = "Cidade é obrigatória")
     @Size(max = 100, message = "Cidade deve ter no máximo 100 caracteres")
@@ -59,19 +63,22 @@ public class VagaAtualizacaoRequest {
     @Size(max = 100, message = "Tipo de contrato deve ter no máximo 100 caracteres")
     private String tipoContrato;
 
-    private Set<@NotNull(message = "ID de tag não pode ser nulo")
-            @Positive(message = "ID de tag deve ser positivo") Long> tagIds;
+    private Set<@NotNull(message = "ID de funcao não pode ser nulo")
+            @Positive(message = "ID de funcao deve ser positivo") Long> funcaoIds;
 
-    @Size(max = 100, message = "Categoria deve ter no máximo 100 caracteres")
-    private String categoria;
 
     @Size(max = 100, message = "Experiência deve ter no máximo 100 caracteres")
     private String experiencia;
 
     private LocalDate dataLimiteCandidatura;
 
-    @Size(max = 30, message = "Abrangência deve ter no máximo 30 caracteres")
-    private String abrangencia;
+    @NotNull
+    private com.portifolio.model.enums.Abrangencia abrangencia;
 
     private List<@Size(max = 500, message = "URL da foto deve ter no máximo 500 caracteres") String> fotos;
+
+    @com.fasterxml.jackson.annotation.JsonSetter("tagIds")
+    public void rejeitarTagsLegadas(Object ignored) {
+        throw new IllegalArgumentException("tagIds foi substituído por funcaoIds do catálogo oficial.");
+    }
 }

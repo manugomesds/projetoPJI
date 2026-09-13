@@ -102,11 +102,11 @@ public class PerfilContratanteService {
     }
 
     private PerfilContratanteResponse toResponse(PerfilContratante perfil) {
-        // RF34: prioridade foto_perfil do perfil > foto do Google (usuarios.foto_perfil) > DiceBear
+        // Avatar centralizado em usuarios.foto_perfil_url; fallback DiceBear.
         String avatarUrl = avatarService.resolverUrl(
                 perfil.getUsuarioId(),
-                perfil.getUsuario().getFotoPerfil(),  // foto salva via Google (RF32)
-                perfil.getFotoPerfil()                // foto definida pelo usuario via RF08
+                perfil.getUsuario().getFotoPerfil(),
+                null
         );
 
         return PerfilContratanteResponse.builder()

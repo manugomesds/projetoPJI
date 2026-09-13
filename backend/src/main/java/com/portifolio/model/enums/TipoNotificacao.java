@@ -3,11 +3,11 @@ package com.portifolio.model.enums;
 import java.util.Arrays;
 
 public enum TipoNotificacao implements DatabaseEnum {
-    CANDIDATURA("candidatura"),
-    MENSAGEM("mensagem"),
-    CONVITE("convite"),
-    EDITAL("edital"),
-    SALVO("salvo");
+    CANDIDATURA("CANDIDATURA"),
+    MENSAGEM("MENSAGEM"),
+    CONVITE("CONVITE"),
+    EDITAL("EDITAL"),
+    SALVO("SALVO");
 
     private final String databaseValue;
 

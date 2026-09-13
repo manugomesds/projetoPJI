@@ -37,7 +37,7 @@ class AuthControllerRf01Rf02IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired
@@ -56,6 +56,51 @@ class AuthControllerRf01Rf02IntegrationTest {
 
     @Autowired
     PasswordEncoder passwordEncoder;
+
+    @Autowired
+    org.springframework.jdbc.core.JdbcTemplate jdbc;
+
+    @Test
+    void artistaNasceComUmaAreaPrincipalSemRaioFuncoesOuEspecializacoes() throws Exception {
+        Map<String, Object> payload = cadastroBase("ARTISTA", LocalDate.now().minusYears(25));
+        cadastrar(payload);
+        Usuario salvo = usuarioRepository.findByEmail((String) payload.get("email")).orElseThrow();
+        assertThat(salvo.getStatusConta()).isEqualTo(com.portifolio.model.enums.StatusConta.PENDENTE_VERIFICACAO_EMAIL);
+        assertThat(salvo.getEmailVerificado()).isFalse();
+        assertThat(perfilArtistaRepository.findById(salvo.getId()).orElseThrow().getRaioAtuacao()).isNull();
+        assertThat(jdbc.queryForObject("select count(*) from perfil_artista_area where perfil_artista_id=?", Integer.class, salvo.getId())).isOne();
+        assertThat(jdbc.queryForObject("select area_id from perfil_artista_area where perfil_artista_id=? and principal", Short.class, salvo.getId())).isEqualTo((short) 1);
+        assertThat(jdbc.queryForObject("select count(*) from perfil_artista_funcao where perfil_artista_id=?", Integer.class, salvo.getId())).isZero();
+        assertThat(jdbc.queryForObject("select count(*) from perfil_artista_especializacao where perfil_artista_id=?", Integer.class, salvo.getId())).isZero();
+    }
+
+    @Test
+    void areaAusenteInexistenteOuMultiplaNaoPersisteCadastroParcial() throws Exception {
+        for (Object area : new Object[]{null, 32000, java.util.List.of(1, 2)}) {
+            Map<String, Object> payload = cadastroBase("ARTISTA", LocalDate.now().minusYears(25));
+            if (area == null) payload.remove("areaPrincipalId");
+            else payload.put("areaPrincipalId", area);
+            long usuariosAntes = usuarioRepository.count();
+            long perfisAntes = perfilArtistaRepository.count();
+            mockMvc.perform(post("/api/auth/cadastro").contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(payload)))
+                    .andExpect(status().isBadRequest());
+            assertThat(usuarioRepository.findByEmail((String) payload.get("email"))).isEmpty();
+            assertThat(usuarioRepository.count()).isEqualTo(usuariosAntes);
+            assertThat(perfilArtistaRepository.count()).isEqualTo(perfisAntes);
+        }
+    }
+
+    @Test
+    void novosPapeisDoEnumNaoPermitemAutocadastroPrivilegiado() throws Exception {
+        for (String tipo : new String[]{"ADMIN", "MODERADOR"}) {
+            Map<String, Object> payload = cadastroBase(tipo, LocalDate.now().minusYears(25));
+            mockMvc.perform(post("/api/auth/cadastro").contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(payload)))
+                    .andExpect(status().isBadRequest());
+            assertThat(usuarioRepository.findByEmail((String) payload.get("email"))).isEmpty();
+        }
+    }
 
     @Test
     void adultoPodeCadastrarArtistaEContratante() throws Exception {
@@ -91,6 +136,8 @@ class AuthControllerRf01Rf02IntegrationTest {
         assertThat(salvo.getNomeResponsavel()).isEqualTo("Responsável Legal");
         assertThat(salvo.getTelefoneResponsavel()).isEqualTo("11988887777");
         assertThat(salvo.getEmailResponsavel()).isEqualTo(payload.get("emailResponsavel"));
+        assertThat(salvo.getStatusConta()).isEqualTo(com.portifolio.model.enums.StatusConta.PENDENTE_VERIFICACAO_EMAIL);
+        assertThat(salvo.getResponsavelLegal().getDataConsentimento()).isNull();
     }
 
     @Test
@@ -230,6 +277,8 @@ class AuthControllerRf01Rf02IntegrationTest {
         payload.put("email", tipoUsuario.toLowerCase() + "-" + UUID.randomUUID() + "@palco.test");
         payload.put("senha", SENHA_VALIDA);
         payload.put("tipoUsuario", tipoUsuario);
+        payload.put("tipoPerfilArtistico", "ARTISTA_SOLO");
+        if ("ARTISTA".equals(tipoUsuario)) payload.put("areaPrincipalId", 1);
         return payload;
     }
 

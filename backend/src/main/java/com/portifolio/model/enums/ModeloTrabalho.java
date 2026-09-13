@@ -3,9 +3,9 @@ package com.portifolio.model.enums;
 import java.util.Arrays;
 
 public enum ModeloTrabalho implements DatabaseEnum {
-    PRESENCIAL("presencial"),
-    REMOTO("remoto"),
-    HIBRIDO("hibrido");
+    PRESENCIAL("PRESENCIAL"),
+    REMOTO("REMOTO"),
+    HIBRIDO("HIBRIDO");
 
     private final String databaseValue;
 

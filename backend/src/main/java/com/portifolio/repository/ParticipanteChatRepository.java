@@ -37,7 +37,7 @@ public interface ParticipanteChatRepository
             select s.id as "salaId",
                    outro.usuario_id as "participanteId",
                    u.nome as "participanteNome",
-                   u.foto_perfil as "participanteAvatar",
+                   u.foto_perfil_url as "participanteAvatar",
                    ultima.texto_mensagem as "ultimaMensagem",
                    ultima.data_envio as "ultimaMensagemData",
                    count(nao_lida.id) as "naoLidas"
@@ -58,7 +58,7 @@ public interface ParticipanteChatRepository
              and nao_lida.remetente_id <> :usuarioId
              and coalesce(nao_lida.lida, false) = false
             where eu.usuario_id = :usuarioId
-            group by s.id, s.data_criacao, outro.usuario_id, u.nome, u.foto_perfil,
+            group by s.id, s.data_criacao, outro.usuario_id, u.nome, u.foto_perfil_url,
                      ultima.texto_mensagem, ultima.data_envio
             order by coalesce(ultima.data_envio, s.data_criacao) desc nulls last, s.id desc
             """, countQuery = """

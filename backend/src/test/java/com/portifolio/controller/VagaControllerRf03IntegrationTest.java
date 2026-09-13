@@ -58,7 +58,7 @@ class VagaControllerRf03IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -77,7 +77,7 @@ class VagaControllerRf03IntegrationTest {
     @AfterEach
     void limparBanco() {
         jdbcTemplate.execute(
-                "TRUNCATE candidaturas, vagas, tags, perfis_artistas, perfis_contratantes, usuarios RESTART IDENTITY CASCADE");
+                "TRUNCATE candidaturas, vagas, funcoes, perfis_artistas, perfis_contratantes, usuarios RESTART IDENTITY CASCADE");
     }
 
     // ---------- helpers de setup (via repository, nao via REST) ----------
@@ -106,27 +106,38 @@ class VagaControllerRf03IntegrationTest {
 
     private PerfilArtista criarArtista(Usuario usuario) {
         PerfilArtista p = new PerfilArtista();
+        p.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        p.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         p.setUsuario(usuario);
         p.setBiografia("Biografia de teste");
         return perfilArtistaRepository.save(p);
     }
 
+    @Test
+    void filtroLegadoNaoPodeSerIgnoradoOuReinterpretadoComoFuncao() throws Exception {
+        mockMvc.perform(get("/api/vagas").param("tagIds", "1"))
+                .andExpect(status().isUnprocessableEntity());
+    }
+
     private com.portifolio.model.Vaga criarVaga(PerfilContratante contratante, String titulo, String cidade,
                                                  ModeloTrabalho modelo, BigDecimal valor, StatusVaga status) {
         com.portifolio.model.Vaga v = new com.portifolio.model.Vaga();
+        v.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        v.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         v.setContratante(contratante);
         v.setTitulo(titulo);
         v.setDescricao("Descricao de teste");
         v.setRequisitos("Requisitos de teste");
-        v.setRemuneraValor(valor);
-        v.setFormaPagamento("Pix");
+        v.setValorMinimo(valor);
+        v.setValorMaximo(valor);
+        v.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         v.setCidade(cidade);
         v.setEstado("SP");
         v.setModeloTrabalho(modelo);
         v.setTipoContrato("Freelance");
         v.setStatus(status);
         v.setDataPublicacao(LocalDateTime.now());
-        v.setTags(new HashSet<>());
+        v.setFuncoes(new HashSet<>());
         return vagaRepository.save(v);
     }
 
@@ -175,7 +186,7 @@ class VagaControllerRf03IntegrationTest {
         String corpo = """
                 {
                   "contratanteId": 1, "titulo": "x", "descricao": "x", "requisitos": "x",
-                  "remuneraValor": 100, "formaPagamento": "Pix", "cidade": "SP", "estado": "SP",
+                  "areaId": 1, "abrangencia": "LOCAL", "valorMinimo": 100, "valorMaximo": 100, "formaRemuneracao": "POR_EVENTO", "cidade": "SP", "estado": "SP",
                   "modeloTrabalho": "REMOTO", "tipoContrato": "Freelance"
                 }
                 """;
@@ -297,22 +308,22 @@ class VagaControllerRf03IntegrationTest {
                 ModeloTrabalho.HIBRIDO, new BigDecimal("2500"), StatusVaga.ABERTA);
         alvo.setEstado("SP");
         alvo.setTipoContrato("Temporário");
-        alvo.setCategoria("Música ao vivo");
+        alvo.setArea(com.portifolio.support.OfficialSchemaFixtures.area((short) 1));
         vagaRepository.save(alvo);
 
         var outro = criarVaga(contratanteOutro, "Fotógrafo", "Niterói",
                 ModeloTrabalho.PRESENCIAL, new BigDecimal("900"), StatusVaga.ABERTA);
         outro.setEstado("RJ");
         outro.setTipoContrato("Freelance");
-        outro.setCategoria("Fotografia");
+        outro.setArea(com.portifolio.support.OfficialSchemaFixtures.area((short) 2));
         vagaRepository.save(outro);
 
-        Long tagAlvo = jdbcTemplate.queryForObject(
-                "insert into tags (nome) values (?) returning id", Long.class, "Jazz");
-        Long tagOutra = jdbcTemplate.queryForObject(
-                "insert into tags (nome) values (?) returning id", Long.class, "Retrato");
-        jdbcTemplate.update("insert into tags_vaga (vaga_id, tag_id) values (?, ?)", alvo.getId(), tagAlvo);
-        jdbcTemplate.update("insert into tags_vaga (vaga_id, tag_id) values (?, ?)", outro.getId(), tagOutra);
+        Long funcaoAlvo = jdbcTemplate.queryForObject(
+                "insert into funcoes(area_id, nome) values (1, ?) returning id", Long.class, "Jazz");
+        Long funcaoOutra = jdbcTemplate.queryForObject(
+                "insert into funcoes(area_id, nome) values (1, ?) returning id", Long.class, "Retrato");
+        jdbcTemplate.update("insert into vaga_funcao (vaga_id, funcao_id) values (?, ?)", alvo.getId(), funcaoAlvo);
+        jdbcTemplate.update("insert into vaga_funcao (vaga_id, funcao_id) values (?, ?)", outro.getId(), funcaoOutra);
 
         String[][] filtros = {
                 {"titulo", "guitarrista"},
@@ -323,7 +334,7 @@ class VagaControllerRf03IntegrationTest {
                 {"tipoContrato", "temporário"},
                 {"faixaSalarialMin", "2000"},
                 {"areaAtuacao", "música"},
-                {"tagIds", tagAlvo.toString()}
+                {"funcaoIds", funcaoAlvo.toString()}
         };
 
         for (String[] filtro : filtros) {
@@ -338,7 +349,7 @@ class VagaControllerRf03IntegrationTest {
                         .param("cidade", "Campinas")
                         .param("modeloTrabalho", "HIBRIDO")
                         .param("areaAtuacao", "Música")
-                        .param("tagIds", tagAlvo.toString()))
+                        .param("funcaoIds", funcaoAlvo.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.content[0].id").value(alvo.getId()));
@@ -405,7 +416,7 @@ class VagaControllerRf03IntegrationTest {
                         .param("faixaSalarialMin", "2000")
                         .param("faixaSalarialMax", "1000"))
                 .andExpect(status().isBadRequest());
-        mockMvc.perform(get("/api/vagas").param("tagIds", "0"))
+        mockMvc.perform(get("/api/vagas").param("funcaoIds", "0"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -453,13 +464,13 @@ class VagaControllerRf03IntegrationTest {
     }
 
     @Test
-    void similaresDevemUsarTagsSomenteAbertasEExcluirOrigem() throws Exception {
+    void similaresDevemUsarFuncoesSomenteAbertasEExcluirOrigem() throws Exception {
         Usuario usuario = criarUsuario("similares@teste.com", TipoUsuario.CONTRATANTE);
         PerfilContratante contratante = criarContratante(usuario);
-        Long tagComum = jdbcTemplate.queryForObject(
-                "insert into tags (nome) values (?) returning id", Long.class, "Música");
-        Long tagDiferente = jdbcTemplate.queryForObject(
-                "insert into tags (nome) values (?) returning id", Long.class, "Fotografia similar");
+        Long funcaoComum = jdbcTemplate.queryForObject(
+                "insert into funcoes(area_id, nome) values (1, ?) returning id", Long.class, "Música");
+        Long funcaoDiferente = jdbcTemplate.queryForObject(
+                "insert into funcoes(area_id, nome) values (1, ?) returning id", Long.class, "Fotografia similar");
 
         var origem = criarVaga(contratante, "Origem", "SP", ModeloTrabalho.REMOTO,
                 new BigDecimal("1000"), StatusVaga.ABERTA);
@@ -469,10 +480,10 @@ class VagaControllerRf03IntegrationTest {
                 new BigDecimal("1000"), StatusVaga.PAUSADA);
         var semCorrespondencia = criarVaga(contratante, "Sem correspondência", "SP", ModeloTrabalho.REMOTO,
                 new BigDecimal("1000"), StatusVaga.ABERTA);
-        jdbcTemplate.update("insert into tags_vaga (vaga_id, tag_id) values (?, ?)", origem.getId(), tagComum);
-        jdbcTemplate.update("insert into tags_vaga (vaga_id, tag_id) values (?, ?)", similar.getId(), tagComum);
-        jdbcTemplate.update("insert into tags_vaga (vaga_id, tag_id) values (?, ?)", pausada.getId(), tagComum);
-        jdbcTemplate.update("insert into tags_vaga (vaga_id, tag_id) values (?, ?)", semCorrespondencia.getId(), tagDiferente);
+        jdbcTemplate.update("insert into vaga_funcao (vaga_id, funcao_id) values (?, ?)", origem.getId(), funcaoComum);
+        jdbcTemplate.update("insert into vaga_funcao (vaga_id, funcao_id) values (?, ?)", similar.getId(), funcaoComum);
+        jdbcTemplate.update("insert into vaga_funcao (vaga_id, funcao_id) values (?, ?)", pausada.getId(), funcaoComum);
+        jdbcTemplate.update("insert into vaga_funcao (vaga_id, funcao_id) values (?, ?)", semCorrespondencia.getId(), funcaoDiferente);
 
         mockMvc.perform(get("/api/vagas/{id}/similares", origem.getId()))
                 .andExpect(status().isOk())
@@ -482,10 +493,10 @@ class VagaControllerRf03IntegrationTest {
     }
 
     @Test
-    void similaresSemTagsDevemRetornarPaginaVaziaEEndpointDeveSerPublico() throws Exception {
-        Usuario usuario = criarUsuario("similares-sem-tag@teste.com", TipoUsuario.CONTRATANTE);
+    void similaresSemFuncoesDevemRetornarPaginaVaziaEEndpointDeveSerPublico() throws Exception {
+        Usuario usuario = criarUsuario("similares-sem-funcao@teste.com", TipoUsuario.CONTRATANTE);
         PerfilContratante contratante = criarContratante(usuario);
-        var origem = criarVaga(contratante, "Origem sem tag", "SP", ModeloTrabalho.REMOTO,
+        var origem = criarVaga(contratante, "Origem sem funcao", "SP", ModeloTrabalho.REMOTO,
                 new BigDecimal("1000"), StatusVaga.ABERTA);
 
         mockMvc.perform(get("/api/vagas/{id}/similares", origem.getId()))
@@ -498,15 +509,15 @@ class VagaControllerRf03IntegrationTest {
     void similaresDevemSerPaginadosSemDuplicacao() throws Exception {
         Usuario usuario = criarUsuario("similares-paginados@teste.com", TipoUsuario.CONTRATANTE);
         PerfilContratante contratante = criarContratante(usuario);
-        Long tag = jdbcTemplate.queryForObject(
-                "insert into tags (nome) values (?) returning id", Long.class, "Teatro");
+        Long funcao = jdbcTemplate.queryForObject(
+                "insert into funcoes(area_id, nome) values (1, ?) returning id", Long.class, "Teatro");
         var origem = criarVaga(contratante, "Origem teatro", "SP", ModeloTrabalho.REMOTO,
                 new BigDecimal("1000"), StatusVaga.ABERTA);
-        jdbcTemplate.update("insert into tags_vaga (vaga_id, tag_id) values (?, ?)", origem.getId(), tag);
+        jdbcTemplate.update("insert into vaga_funcao (vaga_id, funcao_id) values (?, ?)", origem.getId(), funcao);
         for (int i = 1; i <= 3; i++) {
             var similar = criarVaga(contratante, "Teatro " + i, "SP", ModeloTrabalho.REMOTO,
                     new BigDecimal("1000"), StatusVaga.ABERTA);
-            jdbcTemplate.update("insert into tags_vaga (vaga_id, tag_id) values (?, ?)", similar.getId(), tag);
+            jdbcTemplate.update("insert into vaga_funcao (vaga_id, funcao_id) values (?, ?)", similar.getId(), funcao);
         }
 
         MvcResult primeira = mockMvc.perform(get("/api/vagas/{id}/similares", origem.getId())
@@ -654,8 +665,8 @@ class VagaControllerRf03IntegrationTest {
                   "titulo": "Fotografo de Evento",
                   "descricao": "Cobertura completa do evento",
                   "requisitos": "Portfolio atualizado",
-                  "remuneraValor": 750.00,
-                  "formaPagamento": "Pix",
+                  "areaId": 1, "abrangencia": "LOCAL", "valorMinimo": 750.00, "valorMaximo": 750.00,
+                  "formaRemuneracao": "POR_EVENTO",
                   "cidade": "Sao Paulo",
                   "estado": "SP",
                   "modeloTrabalho": "PRESENCIAL",
@@ -663,7 +674,7 @@ class VagaControllerRf03IntegrationTest {
                   "categoria": "Fotografia",
                   "experiencia": "Intermediaria",
                   "dataLimiteCandidatura": "2030-05-05",
-                  "abrangencia": "regional",
+                  "abrangencia": "REGIONAL",
                   "fotos": ["https://example.com/foto.jpg"]
                 }
                 """.formatted(usuario.getId());
@@ -688,7 +699,7 @@ class VagaControllerRf03IntegrationTest {
         mockMvc.perform(get("/api/vagas/{id}", vagaId)
                         .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.categoria").value("Fotografia"));
+                .andExpect(jsonPath("$.categoria").value("Música"));
 
         mockMvc.perform(delete("/api/vagas/{id}", vagaId)
                         .header("Authorization", "Bearer " + token)
@@ -709,8 +720,8 @@ class VagaControllerRf03IntegrationTest {
 
         PerfilArtista perfil = criarArtista(usuario);
 
-        assertThat(perfil.getNivelMedalha()).isEqualTo(1);
-        assertThat(perfil.getScoreEngajamento()).isEqualByComparingTo("0.00");
+        assertThat(perfil.getTipoPerfilArtistico()).isEqualTo(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        assertThat(perfil.getRaioAtuacao()).isEqualTo(com.portifolio.model.enums.Abrangencia.LOCAL);
         assertThat(perfil.getUltimaAtualizacao()).isNotNull();
     }
 
@@ -732,7 +743,7 @@ class VagaControllerRf03IntegrationTest {
                   "artistaId": %d,
                   "mensagemApresentacao": "Tenho interesse nesta oportunidade.",
                   "linkPortfolioCandidatura": "https://exemplo.com/portfolio",
-                  "status": "APROVADO"
+                  "status": "ACEITA"
                 }
                 """.formatted(vaga.getId(), artistaUsuario.getId());
 
@@ -810,8 +821,8 @@ class VagaControllerRf03IntegrationTest {
         criarArtista(artista);
         Usuario outroArtista = criarUsuario("perfil-outro@teste.com", TipoUsuario.ARTISTA);
         criarArtista(outroArtista);
-        Long tagId = jdbcTemplate.queryForObject(
-                "insert into tags (nome) values (?) returning id", Long.class, "Tag perfil completo");
+        Long funcaoId = jdbcTemplate.queryForObject(
+                "insert into funcoes(area_id, nome) values (1, ?) returning id", Long.class, "Funcao perfil completo");
 
         String corpo = """
                 {
@@ -819,9 +830,9 @@ class VagaControllerRf03IntegrationTest {
                   "biografia": "Biografia completa",
                   "localizacao": "São Paulo, SP",
                   "urlPortfolio": "https://portfolio.example",
-                  "tagIds": [%d]
+                  "areaPrincipalId": 1, "tipoPerfilArtistico": "ARTISTA_SOLO", "raioAtuacao": "LOCAL", "funcaoIds": [%d]
                 }
-                """.formatted(artista.getId(), tagId);
+                """.formatted(artista.getId(), funcaoId);
 
         mockMvc.perform(put("/api/perfis-artistas/{id}", artista.getId())
                         .header("Authorization", "Bearer " + tokenPara(outroArtista))

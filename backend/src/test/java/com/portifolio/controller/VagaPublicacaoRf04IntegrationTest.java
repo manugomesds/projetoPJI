@@ -4,13 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.StatusVaga;
 import com.portifolio.model.enums.TipoUsuario;
 import com.portifolio.repository.PerfilContratanteRepository;
-import com.portifolio.repository.TagRepository;
+import com.portifolio.repository.FuncaoRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.security.JwtService;
@@ -48,14 +48,14 @@ class VagaPublicacaoRf04IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
     @Autowired JdbcTemplate jdbcTemplate;
     @Autowired UsuarioRepository usuarioRepository;
     @Autowired PerfilContratanteRepository perfilContratanteRepository;
-    @Autowired TagRepository tagRepository;
+    @Autowired FuncaoRepository funcaoRepository;
     @Autowired VagaRepository vagaRepository;
     @Autowired JwtService jwtService;
 
@@ -63,7 +63,7 @@ class VagaPublicacaoRf04IntegrationTest {
 
     @AfterEach
     void limparBanco() {
-        jdbcTemplate.execute("TRUNCATE vagas, tags, perfis_artistas, "
+        jdbcTemplate.execute("TRUNCATE vagas, funcoes, perfis_artistas, "
                 + "perfis_contratantes, usuarios RESTART IDENTITY CASCADE");
     }
 
@@ -91,8 +91,8 @@ class VagaPublicacaoRf04IntegrationTest {
         criarPerfil(autenticado, "Empresa Autenticada");
         Usuario terceiro = criarUsuario("terceiro-rf04@teste.com", TipoUsuario.CONTRATANTE);
         criarPerfil(terceiro, "Empresa Terceira");
-        Tag tag1 = criarTag("Fotografia");
-        Tag tag2 = criarTag("Eventos");
+        Funcao tag1 = criarFuncao("Fotografia");
+        Funcao tag2 = criarFuncao("Eventos");
 
         ObjectNode payload = payloadValido();
         payload.put("contratanteId", terceiro.getId());
@@ -102,7 +102,7 @@ class VagaPublicacaoRf04IntegrationTest {
         payload.put("titulo", "  Fotógrafo de evento  ");
         payload.put("estado", "sp");
         payload.put("enderecoCompleto", "   ");
-        payload.putArray("tagIds").add(tag1.getId()).add(tag2.getId());
+        payload.putArray("funcaoIds").add(tag1.getId()).add(tag2.getId());
 
         MvcResult resultado = publicar(autenticado, payload)
                 .andExpect(status().isCreated())
@@ -126,7 +126,7 @@ class VagaPublicacaoRf04IntegrationTest {
         assertThat(persistida.getStatus()).isEqualTo(StatusVaga.ABERTA);
         assertThat(persistida.getDataPublicacao()).isAfter(LocalDateTime.now().minusMinutes(1));
         assertThat(persistida.getEnderecoCompleto()).isNull();
-        assertThat(persistida.getTags()).extracting(Tag::getId)
+        assertThat(persistida.getFuncoes()).extracting(Funcao::getId)
                 .containsExactlyInAnyOrder(tag1.getId(), tag2.getId());
     }
 
@@ -166,8 +166,8 @@ class VagaPublicacaoRf04IntegrationTest {
                 Arguments.of("titulo", false),
                 Arguments.of("descricao", false),
                 Arguments.of("requisitos", false),
-                Arguments.of("remuneraValor", true),
-                Arguments.of("formaPagamento", false),
+                Arguments.of("areaId", true),
+                Arguments.of("formaRemuneracao", true),
                 Arguments.of("cidade", false),
                 Arguments.of("estado", false),
                 Arguments.of("modeloTrabalho", true),
@@ -179,14 +179,20 @@ class VagaPublicacaoRf04IntegrationTest {
         Usuario contratante = criarUsuario("remuneracao-rf04@teste.com", TipoUsuario.CONTRATANTE);
         criarPerfil(contratante, "Empresa remuneração");
         ObjectNode zero = payloadValido();
-        zero.put("remuneraValor", 0);
+        zero.put("areaId", 1);
+        zero.put("abrangencia", "LOCAL");
+        zero.put("valorMinimo", 0);
+        zero.put("valorMaximo", 0);
 
         publicar(contratante, zero)
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.remuneraValor").value(0));
 
         ObjectNode negativa = payloadValido();
-        negativa.put("remuneraValor", -0.01);
+        negativa.put("areaId", 1);
+        negativa.put("abrangencia", "LOCAL");
+        negativa.put("valorMinimo", -0.01);
+        negativa.put("valorMaximo", -0.01);
         publicar(contratante, negativa)
                 .andExpect(status().isBadRequest());
 
@@ -212,27 +218,27 @@ class VagaPublicacaoRf04IntegrationTest {
     }
 
     @Test
-    void tagInexistenteDeveRetornar404EFazerRollbackCompleto() throws Exception {
+    void funcaoInexistenteDeveRetornar404EFazerRollbackCompleto() throws Exception {
         Usuario contratante = criarUsuario("rollback-rf04@teste.com", TipoUsuario.CONTRATANTE);
         criarPerfil(contratante, "Empresa rollback");
-        Tag existente = criarTag("Tag existente");
+        Funcao existente = criarFuncao("Funcao existente");
         ObjectNode payload = payloadValido();
-        payload.putArray("tagIds").add(existente.getId()).add(999999);
+        payload.putArray("funcaoIds").add(existente.getId()).add(999999);
 
         publicar(contratante, payload)
                 .andExpect(status().isNotFound());
 
         assertThat(vagaRepository.count()).isZero();
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM tags_vaga", Long.class)).isZero();
+                "SELECT count(*) FROM vaga_funcao", Long.class)).isZero();
     }
 
     @Test
-    void idDeTagNaoPositivoDeveRetornar400SemPersistir() throws Exception {
-        Usuario contratante = criarUsuario("tag-invalida-rf04@teste.com", TipoUsuario.CONTRATANTE);
-        criarPerfil(contratante, "Empresa tag inválida");
+    void idDeFuncaoNaoPositivoDeveRetornar400SemPersistir() throws Exception {
+        Usuario contratante = criarUsuario("funcao-invalida-rf04@teste.com", TipoUsuario.CONTRATANTE);
+        criarPerfil(contratante, "Empresa funcao inválida");
         ObjectNode payload = payloadValido();
-        payload.putArray("tagIds").add(0);
+        payload.putArray("funcaoIds").add(0);
 
         publicar(contratante, payload)
                 .andExpect(status().isBadRequest())
@@ -243,23 +249,23 @@ class VagaPublicacaoRf04IntegrationTest {
 
     @Test
     void tagsAusentesOuVaziasDevemContinuarOpcionais() throws Exception {
-        Usuario contratante = criarUsuario("tags-opcionais-rf04@teste.com", TipoUsuario.CONTRATANTE);
-        criarPerfil(contratante, "Empresa tags opcionais");
+        Usuario contratante = criarUsuario("funcoes-opcionais-rf04@teste.com", TipoUsuario.CONTRATANTE);
+        criarPerfil(contratante, "Empresa funcoes opcionais");
         ObjectNode ausentes = payloadValido();
-        ausentes.remove("tagIds");
+        ausentes.remove("funcaoIds");
         publicar(contratante, ausentes)
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.tagIds.length()").value(0));
+                .andExpect(jsonPath("$.funcaoIds.length()").value(0));
 
         ObjectNode vazias = payloadValido();
-        vazias.putArray("tagIds");
+        vazias.putArray("funcaoIds");
         publicar(contratante, vazias)
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.tagIds.length()").value(0));
+                .andExpect(jsonPath("$.funcaoIds.length()").value(0));
 
         assertThat(vagaRepository.count()).isEqualTo(2);
         assertThat(jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM tags_vaga", Long.class)).isZero();
+                "SELECT count(*) FROM vaga_funcao", Long.class)).isZero();
     }
 
     @Test
@@ -286,16 +292,40 @@ class VagaPublicacaoRf04IntegrationTest {
         payload.put("titulo", "Fotógrafo de evento");
         payload.put("descricao", "Cobertura completa do evento");
         payload.put("requisitos", "Portfólio atualizado");
-        payload.put("remuneraValor", 1500.50);
-        payload.put("formaPagamento", "Pix");
+        payload.put("areaId", 1);
+        payload.put("abrangencia", "LOCAL");
+        payload.put("valorMinimo", 1500.50);
+        payload.put("valorMaximo", 1500.50);
+        payload.put("formaRemuneracao", "POR_EVENTO");
         payload.put("cidade", "São Paulo");
         payload.put("estado", "SP");
         payload.put("enderecoCompleto", "Rua das Artes, 10");
         payload.put("beneficios", "Transporte");
         payload.put("modeloTrabalho", "PRESENCIAL");
         payload.put("tipoContrato", "Freelance");
-        payload.putArray("tagIds");
+        payload.putArray("funcaoIds");
         return payload;
+    }
+
+    @Test
+    void rejeitaFaixaInvalidaFuncaoDeOutraAreaETagsLegadasSemPersistir() throws Exception {
+        Usuario dono = criarUsuario("estrutura-invalida@rf04.teste", TipoUsuario.CONTRATANTE);
+        criarPerfil(dono, "Empresa");
+        ObjectNode faixa = payloadValido();
+        faixa.put("valorMaximo", 10);
+        publicar(dono, faixa).andExpect(status().isBadRequest());
+
+        Funcao outra = criarFuncao("Área incompatível");
+        outra.setArea(com.portifolio.support.OfficialSchemaFixtures.area((short) 2));
+        funcaoRepository.saveAndFlush(outra);
+        ObjectNode funcao = payloadValido();
+        funcao.putArray("funcaoIds").add(outra.getId());
+        publicar(dono, funcao).andExpect(status().isBadRequest());
+
+        ObjectNode legado = payloadValido();
+        legado.putArray("tagIds").add(outra.getId());
+        publicar(dono, legado).andExpect(status().isBadRequest());
+        assertThat(vagaRepository.count()).isZero();
     }
 
     private String json(Object value) throws Exception {
@@ -322,9 +352,10 @@ class VagaPublicacaoRf04IntegrationTest {
         return perfilContratanteRepository.save(perfil);
     }
 
-    private Tag criarTag(String nome) {
-        Tag tag = new Tag();
-        tag.setNome(nome);
-        return tagRepository.save(tag);
+    private Funcao criarFuncao(String nome) {
+        Funcao funcao = new Funcao();
+        funcao.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        funcao.setNome(nome);
+        return funcaoRepository.save(funcao);
     }
 }

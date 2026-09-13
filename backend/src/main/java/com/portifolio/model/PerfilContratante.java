@@ -45,7 +45,10 @@ public class PerfilContratante {
     @Column(name = "banner_url", length = 255)
     private String bannerUrl;
 
-    // RF34: foto de perfil definida pelo usuario via RF08 (sobrescreve foto do Google)
-    @Column(name = "foto_perfil", length = 255)
-    private String fotoPerfil;
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(length = 14, unique = true)
+    private String cpf;
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(length = 14, unique = true)
+    private String cnpj;
 }

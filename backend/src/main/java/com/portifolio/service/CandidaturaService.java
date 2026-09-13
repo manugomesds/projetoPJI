@@ -12,7 +12,7 @@ import com.portifolio.exception.ResourceNotFoundException;
 import com.portifolio.exception.UnprocessableEntityException;
 import com.portifolio.model.Candidatura;
 import com.portifolio.model.PerfilArtista;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.StatusCandidatura;
@@ -47,7 +47,7 @@ public class CandidaturaService {
     private static final int TAMANHO_MAXIMO = 50;
     private static final Set<StatusCandidatura> STATUS_RETIRAVEIS =
             EnumSet.of(StatusCandidatura.PENDENTE, StatusCandidatura.EM_ANALISE,
-                    StatusCandidatura.REJEITADO);
+                    StatusCandidatura.REJEITADA);
 
     private final CandidaturaRepository candidaturaRepository;
     private final VagaRepository vagaRepository;
@@ -92,6 +92,7 @@ public class CandidaturaService {
                     usuario.getId(), paginaOrdenadaPorId(page, size));
             case CONTRATANTE -> candidaturaRepository.findByVagaContratanteUsuarioId(
                     usuario.getId(), paginaOrdenadaPorId(page, size));
+            default -> throw new ForbiddenException("Consulta disponível para artista e contratante.");
         };
         return candidaturas.stream().map(this::toResponse).toList();
     }
@@ -110,8 +111,8 @@ public class CandidaturaService {
         }
 
         Pageable pageable = paginaSemOrdenacao(page, size);
-        Set<Long> tagsDaVaga = vaga.getTags().stream()
-                .map(Tag::getId)
+        Set<Long> tagsDaVaga = vaga.getFuncoes().stream()
+                .map(Funcao::getId)
                 .collect(Collectors.toSet());
         Set<Long> tagsParaConsulta = tagsDaVaga.isEmpty() ? Set.of(-1L) : tagsDaVaga;
         Page<Long> paginaIds = candidaturaRepository
@@ -274,8 +275,8 @@ public class CandidaturaService {
                 : candidatura.getArtista().getUsuarioId();
         String status = switch (candidatura.getStatus()) {
             case EM_ANALISE -> "Em análise";
-            case APROVADO -> "Aprovada";
-            case REJEITADO -> "Rejeitada";
+            case ACEITA -> "Aprovada";
+            case REJEITADA -> "Rejeitada";
             case RETIRADA -> "Retirada";
             default -> candidatura.getStatus().name();
         };
@@ -298,11 +299,11 @@ public class CandidaturaService {
     private void validarTransicaoDoContratante(StatusCandidatura atual, StatusCandidatura destino) {
         boolean permitida = switch (atual) {
             case PENDENTE -> destino == StatusCandidatura.EM_ANALISE
-                    || destino == StatusCandidatura.APROVADO
-                    || destino == StatusCandidatura.REJEITADO;
-            case EM_ANALISE -> destino == StatusCandidatura.APROVADO
-                    || destino == StatusCandidatura.REJEITADO;
-            case APROVADO, REJEITADO, RETIRADA, CANCELADA_POR_VAGA -> false;
+                    || destino == StatusCandidatura.ACEITA
+                    || destino == StatusCandidatura.REJEITADA;
+            case EM_ANALISE -> destino == StatusCandidatura.ACEITA
+                    || destino == StatusCandidatura.REJEITADA;
+            case ACEITA, REJEITADA, RETIRADA, CANCELADA_POR_VAGA -> false;
         };
         if (!permitida) {
             throw transicaoInvalida(atual, destino);
@@ -356,10 +357,10 @@ public class CandidaturaService {
     private CandidaturaVagaResponse toCandidaturaVagaResponse(
             Candidatura candidatura, Set<Long> tagsDaVaga) {
         PerfilArtista artista = candidatura.getArtista();
-        Set<Long> tagIds = artista.getTags().stream()
-                .map(Tag::getId)
+        Set<Long> funcaoIds = artista.getFuncoes().stream()
+                .map(Funcao::getId)
                 .collect(Collectors.toSet());
-        Set<Long> tagsCoincidentes = tagIds.stream()
+        Set<Long> funcoesCoincidentes = funcaoIds.stream()
                 .filter(tagsDaVaga::contains)
                 .collect(Collectors.toSet());
 
@@ -373,10 +374,10 @@ public class CandidaturaService {
                 .avatarUrl(avatarService.resolverUrl(
                         artista.getUsuarioId(),
                         artista.getUsuario().getFotoPerfil(),
-                        artista.getFotoPerfil()))
-                .tagIds(tagIds)
-                .tagsCoincidentes(tagsCoincidentes)
-                .quantidadeTagsCoincidentes(tagsCoincidentes.size())
+                        null))
+                .funcaoIds(funcaoIds)
+                .funcoesCoincidentes(funcoesCoincidentes)
+                .quantidadeFuncoesCoincidentes(funcoesCoincidentes.size())
                 .mensagemApresentacao(candidatura.getMensagemApresentacao())
                 .linkPortfolioCandidatura(candidatura.getLinkPortfolioCandidatura())
                 .status(candidatura.getStatus())

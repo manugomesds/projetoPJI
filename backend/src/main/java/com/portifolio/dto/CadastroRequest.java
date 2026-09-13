@@ -47,4 +47,6 @@ public class CadastroRequest {
     @Email(message = "E-mail do responsável inválido")
     @Size(max = 150, message = "E-mail do responsável deve ter no máximo 150 caracteres")
     private String emailResponsavel;
+    private com.portifolio.model.enums.TipoPerfilArtistico tipoPerfilArtistico;
+    private Short areaPrincipalId;
 }

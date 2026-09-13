@@ -12,6 +12,7 @@ import lombok.Getter;
 public class GoogleAuthResponse {
 
     private String status;
+    private com.portifolio.model.enums.StatusConta statusConta;
 
     // Preenchidos quando status = AUTENTICADO
     private String token;

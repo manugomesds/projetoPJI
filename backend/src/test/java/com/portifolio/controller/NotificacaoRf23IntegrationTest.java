@@ -54,7 +54,7 @@ class NotificacaoRf23IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -308,6 +308,8 @@ class NotificacaoRf23IntegrationTest {
 
     private PerfilArtista novoArtista(String email) {
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(novoUsuario(email, TipoUsuario.ARTISTA));
         perfil.setBiografia("Biografia RF23");
         return perfilArtistaRepository.save(perfil);
@@ -315,19 +317,22 @@ class NotificacaoRf23IntegrationTest {
 
     private Vaga novaVaga(PerfilContratante contratante, StatusVaga status) {
         Vaga vaga = new Vaga();
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        vaga.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         vaga.setContratante(contratante);
         vaga.setTitulo("Vaga RF23");
         vaga.setDescricao("Descricao");
         vaga.setRequisitos("Requisitos");
-        vaga.setRemuneraValor(new BigDecimal("1000.00"));
-        vaga.setFormaPagamento("Pix");
+        vaga.setValorMinimo(new BigDecimal("1000.00"));
+        vaga.setValorMaximo(new BigDecimal("1000.00"));
+        vaga.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         vaga.setCidade("Sao Paulo");
         vaga.setEstado("SP");
         vaga.setModeloTrabalho(ModeloTrabalho.REMOTO);
         vaga.setTipoContrato("Freelance");
         vaga.setStatus(status);
         vaga.setDataPublicacao(LocalDateTime.now());
-        vaga.setTags(new HashSet<>());
+        vaga.setFuncoes(new HashSet<>());
         return vagaRepository.save(vaga);
     }
 

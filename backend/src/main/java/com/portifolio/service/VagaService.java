@@ -15,7 +15,7 @@ import com.portifolio.exception.UnprocessableEntityException;
 import com.portifolio.model.Candidatura;
 import com.portifolio.model.LogVagaCancelada;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.StatusCandidatura;
@@ -25,7 +25,7 @@ import com.portifolio.model.enums.TipoNotificacao;
 import com.portifolio.repository.CandidaturaRepository;
 import com.portifolio.repository.LogVagaCanceladaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
-import com.portifolio.repository.TagRepository;
+import com.portifolio.repository.FuncaoRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.repository.specification.VagaSpecifications;
 import com.portifolio.security.AuthenticatedUserResolver;
@@ -58,7 +58,8 @@ public class VagaService {
 
     private final VagaRepository vagaRepository;
     private final PerfilContratanteRepository perfilContratanteRepository;
-    private final TagRepository tagRepository;
+    private final FuncaoRepository funcaoRepository;
+    private final com.portifolio.repository.AreaArtisticaRepository areaArtisticaRepository;
     private final CandidaturaRepository candidaturaRepository;
     private final LogVagaCanceladaRepository logVagaCanceladaRepository;
     private final AuthenticatedUserResolver authenticatedUserResolver;
@@ -88,7 +89,7 @@ public class VagaService {
                 .and(VagaSpecifications.remuneracaoMinima(filtro.getFaixaSalarialMin()))
                 .and(VagaSpecifications.remuneracaoMaxima(filtro.getFaixaSalarialMax()))
                 .and(VagaSpecifications.areaAtuacaoContem(filtro.getAreaAtuacao()))
-                .and(VagaSpecifications.comAlgumaTag(filtro.getTagIds()));
+                .and(VagaSpecifications.comAlgumaFuncao(filtro.getFuncaoIds()));
 
         Pageable pageable = PageRequest.of(0, tamanho + 1, Sort.by(Sort.Direction.ASC, "id"));
         List<Vaga> bruto = vagaRepository.findAll(spec, pageable).getContent();
@@ -96,7 +97,7 @@ public class VagaService {
         boolean hasMore = bruto.size() > tamanho;
         List<Vaga> pagina = hasMore ? bruto.subList(0, tamanho) : bruto;
 
-        List<VagaResponse> content = carregarComTagsEContratante(pagina, contratanteAtualId);
+        List<VagaResponse> content = carregarComFuncoesEContratante(pagina, contratanteAtualId);
         Long nextCursor = hasMore ? pagina.get(pagina.size() - 1).getId() : null;
 
         PaginaCanceladas canceladas = buscarVagasCanceladasParaArtistaLogado(
@@ -126,7 +127,7 @@ public class VagaService {
         List<Vaga> bruto = vagaRepository.findAll(spec, pageable).getContent();
         boolean hasMore = bruto.size() > tamanho;
         List<Vaga> pagina = hasMore ? bruto.subList(0, tamanho) : bruto;
-        List<VagaResponse> content = carregarComTagsEContratante(pagina, usuario.getId());
+        List<VagaResponse> content = carregarComFuncoesEContratante(pagina, usuario.getId());
         Long nextCursor = hasMore ? pagina.get(pagina.size() - 1).getId() : null;
 
         return VagaListagemResponse.builder()
@@ -144,8 +145,8 @@ public class VagaService {
         Vaga origem = vagaRepository.findById(vagaId)
                 .orElseThrow(() -> new ResourceNotFoundException("Vaga não encontrada."));
 
-        Set<Long> tagIds = origem.getTags().stream().map(Tag::getId).collect(Collectors.toSet());
-        if (tagIds.isEmpty()) {
+        Set<Long> funcaoIds = origem.getFuncoes().stream().map(Funcao::getId).collect(Collectors.toSet());
+        if (funcaoIds.isEmpty()) {
             return paginaVazia();
         }
 
@@ -153,7 +154,7 @@ public class VagaService {
                 .where(VagaSpecifications.comStatus(StatusVaga.ABERTA))
                 .and(VagaSpecifications.idMaiorQue(cursor))
                 .and(VagaSpecifications.idDiferente(vagaId))
-                .and(VagaSpecifications.comAlgumaTag(tagIds));
+                .and(VagaSpecifications.comAlgumaFuncao(funcaoIds));
 
         Pageable pageable = PageRequest.of(0, tamanho + 1, Sort.by(Sort.Direction.ASC, "id"));
         List<Vaga> bruto = vagaRepository.findAll(spec, pageable).getContent();
@@ -164,7 +165,7 @@ public class VagaService {
                 .orElse(null);
 
         return VagaListagemResponse.builder()
-                .content(carregarComTagsEContratante(pagina, contratanteAtualId))
+                .content(carregarComFuncoesEContratante(pagina, contratanteAtualId))
                 .nextCursor(hasMore ? pagina.get(pagina.size() - 1).getId() : null)
                 .hasMore(hasMore)
                 .vagasCanceladasComCandidatura(List.of())
@@ -189,9 +190,9 @@ public class VagaService {
                 carregarPorIds(vagaIds, null, true), nextCursor, hasMore);
     }
 
-    // Segunda consulta: busca tags+contratante para o conjunto de IDs já paginado (RNF05).
+    // Segunda consulta: busca funcoes+contratante para o conjunto de IDs já paginado (RNF05).
     // Pagination + fetch join de coleção não é seguro na mesma query.
-    private List<VagaResponse> carregarComTagsEContratante(
+    private List<VagaResponse> carregarComFuncoesEContratante(
             List<Vaga> pagina, Long contratanteAtualId) {
         if (pagina.isEmpty()) {
             return List.of();
@@ -205,11 +206,11 @@ public class VagaService {
         if (ids.isEmpty()) {
             return List.of();
         }
-        Map<Long, Vaga> vagasComTags = vagaRepository.findByIdIn(ids).stream()
+        Map<Long, Vaga> vagasComFuncoes = vagaRepository.findByIdIn(ids).stream()
                 .collect(Collectors.toMap(Vaga::getId, v -> v, (a, b) -> a, LinkedHashMap::new));
 
         return ids.stream()
-                .map(vagasComTags::get)
+                .map(vagasComFuncoes::get)
                 .map(v -> toResponse(v, cancelada, contratanteAtualId))
                 .collect(Collectors.toList());
     }
@@ -242,9 +243,9 @@ public class VagaService {
                 && filtro.getEstado().trim().length() != 2) {
             throw new IllegalArgumentException("Estado deve usar exatamente 2 caracteres.");
         }
-        if (filtro.getTagIds() != null
-                && filtro.getTagIds().stream().anyMatch(id -> id == null || id <= 0)) {
-            throw new IllegalArgumentException("IDs de tags devem ser positivos.");
+        if (filtro.getFuncaoIds() != null
+                && filtro.getFuncaoIds().stream().anyMatch(id -> id == null || id <= 0)) {
+            throw new IllegalArgumentException("IDs de funcoes devem ser positivos.");
         }
     }
 
@@ -457,15 +458,25 @@ public class VagaService {
         vaga.setTitulo(request.getTitulo());
         vaga.setDescricao(request.getDescricao());
         vaga.setRequisitos(request.getRequisitos());
-        vaga.setRemuneraValor(request.getRemuneraValor());
-        vaga.setFormaPagamento(request.getFormaPagamento());
+        if (request.getAreaId() == null || request.getAbrangencia() == null || request.getFormaRemuneracao() == null) {
+            throw new IllegalArgumentException("Informe areaId, abrangencia e formaRemuneracao do catálogo oficial.");
+        }
+        vaga.setArea(areaArtisticaRepository.findById(request.getAreaId())
+                .orElseThrow(() -> new ResourceNotFoundException("Área artística não encontrada.")));
+        vaga.setValorMinimo(request.getValorMinimo());
+        vaga.setValorMaximo(request.getValorMaximo());
+        vaga.setFormaRemuneracao(request.getFormaRemuneracao());
+        if (request.getFormaRemuneracao() != com.portifolio.model.enums.FormaRemuneracao.A_COMBINAR
+                && (request.getValorMinimo() == null || request.getValorMaximo() == null
+                || request.getValorMinimo().compareTo(request.getValorMaximo()) > 0)) {
+            throw new IllegalArgumentException("Remuneração exige faixa mínima e máxima válida.");
+        }
         vaga.setCidade(request.getCidade());
         vaga.setEstado(request.getEstado());
         vaga.setEnderecoCompleto(request.getEnderecoCompleto());
         vaga.setBeneficios(request.getBeneficios());
         vaga.setModeloTrabalho(request.getModeloTrabalho());
         vaga.setTipoContrato(request.getTipoContrato());
-        vaga.setCategoria(request.getCategoria());
         vaga.setExperiencia(request.getExperiencia());
         vaga.setDataLimiteCandidatura(request.getDataLimiteCandidatura());
         vaga.setAbrangencia(request.getAbrangencia());
@@ -474,17 +485,20 @@ public class VagaService {
                     .filter(url -> url != null && !url.isBlank())
                     .toList()));
         }
-        if (request.getTagIds() != null) {
-            vaga.setTags(resolverTags(request.getTagIds()));
+        if (request.getFuncaoIds() != null) {
+            vaga.setFuncoes(resolverFuncoes(request.getFuncaoIds()));
+        }
+        if (vaga.getFuncoes().stream().anyMatch(funcao -> !funcao.getArea().getId().equals(vaga.getArea().getId()))) {
+            throw new IllegalArgumentException("As funções devem pertencer à área da vaga.");
         }
     }
 
-    private Set<Tag> resolverTags(Set<Long> tagIds) {
-        List<Tag> tags = tagRepository.findAllById(tagIds);
-        if (tags.size() != tagIds.size()) {
-            throw new ResourceNotFoundException("Uma ou mais tags não foram encontradas.");
+    private Set<Funcao> resolverFuncoes(Set<Long> funcaoIds) {
+        List<Funcao> funcoes = funcaoRepository.findAllById(funcaoIds);
+        if (funcoes.size() != funcaoIds.size()) {
+            throw new ResourceNotFoundException("Uma ou mais funcoes não foram encontradas.");
         }
-        return new HashSet<>(tags);
+        return new HashSet<>(funcoes);
     }
 
     private StatusVaga exigirTransicao(
@@ -503,6 +517,7 @@ public class VagaService {
         return switch (status) {
             case ABERTA -> "SUSPENDER ou ENCERRAR";
             case PAUSADA -> "REABRIR ou ENCERRAR";
+            case RASCUNHO -> "nenhuma neste fluxo; publicação de rascunhos pendente de RF04";
             case ENCERRADA, CANCELADA -> "nenhuma; este é um estado final";
         };
     }
@@ -511,15 +526,12 @@ public class VagaService {
         vaga.setTitulo(vaga.getTitulo().trim());
         vaga.setDescricao(vaga.getDescricao().trim());
         vaga.setRequisitos(vaga.getRequisitos().trim());
-        vaga.setFormaPagamento(vaga.getFormaPagamento().trim());
         vaga.setCidade(vaga.getCidade().trim());
         vaga.setEstado(vaga.getEstado().trim().toUpperCase(Locale.ROOT));
         vaga.setTipoContrato(vaga.getTipoContrato().trim());
         vaga.setEnderecoCompleto(normalizarOpcional(vaga.getEnderecoCompleto()));
         vaga.setBeneficios(normalizarOpcional(vaga.getBeneficios()));
-        vaga.setCategoria(normalizarOpcional(vaga.getCategoria()));
         vaga.setExperiencia(normalizarOpcional(vaga.getExperiencia()));
-        vaga.setAbrangencia(normalizarOpcional(vaga.getAbrangencia()));
         vaga.setFotos(new ArrayList<>(vaga.getFotos().stream()
                 .map(String::trim)
                 .filter(url -> !url.isEmpty())
@@ -549,7 +561,7 @@ public class VagaService {
                 .localizacao(perfil.getLocalizacao())
                 .bannerUrl(perfil.getBannerUrl())
                 .avatarUrl(avatarService.resolverUrl(
-                        perfil.getUsuarioId(), usuario.getFotoPerfil(), perfil.getFotoPerfil()))
+                        perfil.getUsuarioId(), usuario.getFotoPerfil(), null))
                 .build();
     }
 
@@ -562,8 +574,8 @@ public class VagaService {
 
     private VagaResponse toResponse(
             Vaga vaga, boolean cancelada, Long contratanteAtualId) {
-        Set<Long> tagIds = vaga.getTags().stream()
-                .map(Tag::getId)
+        Set<Long> funcaoIds = vaga.getFuncoes().stream()
+                .map(Funcao::getId)
                 .collect(Collectors.toSet());
         return VagaResponse.builder()
                 .id(vaga.getId())
@@ -575,8 +587,12 @@ public class VagaService {
                 .titulo(vaga.getTitulo())
                 .descricao(vaga.getDescricao())
                 .requisitos(vaga.getRequisitos())
-                .remuneraValor(vaga.getRemuneraValor())
-                .formaPagamento(vaga.getFormaPagamento())
+                .remuneraValor(valorUnico(vaga))
+                .valorMinimo(vaga.getValorMinimo())
+                .valorMaximo(vaga.getValorMaximo())
+                .formaRemuneracao(vaga.getFormaRemuneracao())
+                .areaId(vaga.getArea().getId())
+                .formaPagamento(null)
                 .cidade(vaga.getCidade())
                 .estado(vaga.getEstado())
                 .enderecoCompleto(vaga.getEnderecoCompleto())
@@ -585,16 +601,21 @@ public class VagaService {
                 .tipoContrato(vaga.getTipoContrato())
                 .status(vaga.getStatus())
                 .dataPublicacao(vaga.getDataPublicacao())
-                .tagIds(tagIds)
-                .categoria(vaga.getCategoria())
+                .funcaoIds(funcaoIds)
+                .categoria(vaga.getArea().getNome())
                 .experiencia(vaga.getExperiencia())
                 .dataLimiteCandidatura(vaga.getDataLimiteCandidatura())
-                .abrangencia(vaga.getAbrangencia())
+                .abrangencia(vaga.getAbrangencia() == null ? null : vaga.getAbrangencia().name())
                 .fotos(List.copyOf(vaga.getFotos()))
                 .propriaDoContratante(contratanteAtualId != null
                         && contratanteAtualId.equals(vaga.getContratante().getUsuarioId()))
                 .cancelada(cancelada)
                 .build();
+    }
+
+    private java.math.BigDecimal valorUnico(Vaga vaga) {
+        return vaga.getValorMinimo() != null && vaga.getValorMaximo() != null
+                && vaga.getValorMinimo().compareTo(vaga.getValorMaximo()) == 0 ? vaga.getValorMinimo() : null;
     }
 
     private Long contratanteAtualId(Usuario usuario) {

@@ -56,7 +56,7 @@ class CandidaturaControllerRf06IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -85,7 +85,7 @@ class CandidaturaControllerRf06IntegrationTest {
         mockMvc.perform(post("/api/candidaturas")
                         .header("Authorization", bearer(artista.getUsuario()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(corpoCriacao(vaga.getId(), "APROVADO")))
+                        .content(corpoCriacao(vaga.getId(), "ACEITA")))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.artistaId").value(artista.getUsuarioId()))
                 .andExpect(jsonPath("$.status").value("PENDENTE"));
@@ -291,9 +291,9 @@ class CandidaturaControllerRf06IntegrationTest {
         atualizarStatus(candidatura, dono.getUsuario(), StatusCandidatura.EM_ANALISE)
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("EM_ANALISE"));
-        atualizarStatus(candidatura, dono.getUsuario(), StatusCandidatura.APROVADO)
+        atualizarStatus(candidatura, dono.getUsuario(), StatusCandidatura.ACEITA)
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("APROVADO"));
+                .andExpect(jsonPath("$.status").value("ACEITA"));
     }
 
     @Test
@@ -317,7 +317,7 @@ class CandidaturaControllerRf06IntegrationTest {
         Candidatura candidatura = novaCandidatura(
                 novaVaga(dono, StatusVaga.ABERTA), artista, StatusCandidatura.PENDENTE);
 
-        atualizarStatus(candidatura, artista.getUsuario(), StatusCandidatura.APROVADO)
+        atualizarStatus(candidatura, artista.getUsuario(), StatusCandidatura.ACEITA)
                 .andExpect(status().isForbidden());
     }
 
@@ -330,7 +330,7 @@ class CandidaturaControllerRf06IntegrationTest {
 
         atualizarStatus(pendente, dono.getUsuario(), StatusCandidatura.RETIRADA)
                 .andExpect(status().isUnprocessableEntity());
-        pendente.setStatus(StatusCandidatura.REJEITADO);
+        pendente.setStatus(StatusCandidatura.REJEITADA);
         candidaturaRepository.save(pendente);
         atualizarStatus(pendente, dono.getUsuario(), StatusCandidatura.EM_ANALISE)
                 .andExpect(status().isUnprocessableEntity());
@@ -369,7 +369,7 @@ class CandidaturaControllerRf06IntegrationTest {
         PerfilContratante dono = novoContratante("dono-aprovada@teste.com");
         PerfilArtista artista = novoArtista("artista-aprovada@teste.com", true);
         Candidatura candidatura = novaCandidatura(
-                novaVaga(dono, StatusVaga.ABERTA), artista, StatusCandidatura.APROVADO);
+                novaVaga(dono, StatusVaga.ABERTA), artista, StatusCandidatura.ACEITA);
 
         mockMvc.perform(delete("/api/candidaturas/{id}", candidatura.getId())
                         .header("Authorization", bearer(artista.getUsuario())))
@@ -391,7 +391,7 @@ class CandidaturaControllerRf06IntegrationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = StatusCandidatura.class, names = {"PENDENTE", "EM_ANALISE", "REJEITADO"})
+    @EnumSource(value = StatusCandidatura.class, names = {"PENDENTE", "EM_ANALISE", "REJEITADA"})
     void retiradaPreservaCamposNotificaDonoUmaVezEImpedeRecandidatura(StatusCandidatura inicial) throws Exception {
         PerfilContratante dono = novoContratante("dono-retirada-ciclo@teste.com");
         PerfilArtista artista = novoArtista("artista-retirada-ciclo@teste.com", true);
@@ -403,7 +403,7 @@ class CandidaturaControllerRf06IntegrationTest {
         assertThat(salva.getStatus()).isEqualTo(StatusCandidatura.RETIRADA);
         assertThat(salva.getMensagemApresentacao()).isEqualTo(candidatura.getMensagemApresentacao());
         assertThat(salva.getLinkPortfolioCandidatura()).isEqualTo(candidatura.getLinkPortfolioCandidatura());
-        assertThat(jdbcTemplate.queryForObject("select status::text from candidaturas where id = ?", String.class, salva.getId())).isEqualTo("retirada");
+        assertThat(jdbcTemplate.queryForObject("select status::text from candidaturas where id = ?", String.class, salva.getId())).isEqualTo("RETIRADA");
         assertThat(jdbcTemplate.queryForList("select usuario_destino_id from notificacoes", Long.class)).containsExactly(dono.getUsuarioId());
         mockMvc.perform(delete("/api/candidaturas/{id}", candidatura.getId())
                         .header("Authorization", bearer(artista.getUsuario())))
@@ -415,7 +415,7 @@ class CandidaturaControllerRf06IntegrationTest {
     }
 
     @ParameterizedTest
-    @EnumSource(value = StatusCandidatura.class, names = {"EM_ANALISE", "APROVADO", "REJEITADO"})
+    @EnumSource(value = StatusCandidatura.class, names = {"EM_ANALISE", "ACEITA", "REJEITADA"})
     void analisePersisteNomeOficialDoBancoENotificaArtistaUmaVez(StatusCandidatura destino) throws Exception {
         PerfilContratante dono = novoContratante("dono-notificacao@teste.com");
         PerfilArtista artista = novoArtista("artista-notificacao@teste.com", true);
@@ -504,6 +504,8 @@ class CandidaturaControllerRf06IntegrationTest {
         usuario.setPerfilCompleto(completo);
         usuarioRepository.save(usuario);
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(usuario);
         perfil.setBiografia("Biografia RF06");
         return perfilArtistaRepository.save(perfil);
@@ -511,19 +513,22 @@ class CandidaturaControllerRf06IntegrationTest {
 
     private Vaga novaVaga(PerfilContratante contratante, StatusVaga status) {
         Vaga vaga = new Vaga();
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        vaga.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         vaga.setContratante(contratante);
         vaga.setTitulo("Vaga RF06 " + status);
         vaga.setDescricao("Descrição da vaga");
         vaga.setRequisitos("Requisitos da vaga");
-        vaga.setRemuneraValor(new BigDecimal("1000.00"));
-        vaga.setFormaPagamento("Pix");
+        vaga.setValorMinimo(new BigDecimal("1000.00"));
+        vaga.setValorMaximo(new BigDecimal("1000.00"));
+        vaga.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         vaga.setCidade("São Paulo");
         vaga.setEstado("SP");
         vaga.setModeloTrabalho(ModeloTrabalho.REMOTO);
         vaga.setTipoContrato("Freelance");
         vaga.setStatus(status);
         vaga.setDataPublicacao(LocalDateTime.now());
-        vaga.setTags(new HashSet<>());
+        vaga.setFuncoes(new HashSet<>());
         return vagaRepository.save(vaga);
     }
 

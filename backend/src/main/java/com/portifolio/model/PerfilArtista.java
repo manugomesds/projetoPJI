@@ -1,19 +1,10 @@
 package com.portifolio.model;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.MapsId;
-import jakarta.persistence.OneToOne;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.Table;
-import java.math.BigDecimal;
+import jakarta.persistence.*;
+import com.portifolio.model.enums.*;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
-import jakarta.persistence.ManyToMany;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -45,11 +36,14 @@ public class PerfilArtista {
     @Column(name = "url_portfolio", length = 255)
     private String urlPortfolio;
 
-    @Column(name = "nivel_medalha")
-    private Integer nivelMedalha;
-
-    @Column(name = "score_engajamento", precision = 5, scale = 2)
-    private BigDecimal scoreEngajamento;
+    @Column(name = "tipo_perfil_artistico", nullable = false, columnDefinition = "tipo_perfil_artistico_enum")
+    private TipoPerfilArtistico tipoPerfilArtistico;
+    @Column(name = "raio_atuacao", columnDefinition = "abrangencia_enum")
+    private Abrangencia raioAtuacao;
+    @Column(name = "disponivel_oportunidades")
+    private Boolean disponivelOportunidades;
+    @Column(name = "nome_integrantes", length = 150)
+    private String nomeIntegrantes;
 
     @Column(name = "banner_url", length = 255)
     private String bannerUrl;
@@ -57,26 +51,17 @@ public class PerfilArtista {
     @Column(name = "ultima_atualizacao")
     private LocalDateTime ultimaAtualizacao;
 
-    // RF34: foto de perfil definida pelo usuario via RF08 (sobrescreve foto do Google)
-    @Column(name = "foto_perfil", length = 255)
-    private String fotoPerfil;
+    @OneToMany(mappedBy = "perfil", cascade = CascadeType.ALL, orphanRemoval = true)
+    private Set<PerfilArtistaArea> areas = new HashSet<>();
 
-    @ManyToMany
-    @jakarta.persistence.JoinTable(
-            name = "tags_artista",
-            joinColumns = @jakarta.persistence.JoinColumn(name = "artista_id"),
-            inverseJoinColumns = @jakarta.persistence.JoinColumn(name = "tag_id")
-    )
-    private Set<Tag> tags = new HashSet<>();
+    /** Visão agregada; alterações pertencem às associações de cada área. */
+    public Set<Funcao> getFuncoes() {
+        return areas.stream().flatMap(area -> area.getFuncoes().stream())
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
 
     @PrePersist
     void aplicarValoresPadraoDoSchema() {
-        if (nivelMedalha == null) {
-            nivelMedalha = 1;
-        }
-        if (scoreEngajamento == null) {
-            scoreEngajamento = new BigDecimal("0.00");
-        }
         if (ultimaAtualizacao == null) {
             ultimaAtualizacao = LocalDateTime.now();
         }

@@ -30,6 +30,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     }
 
     private UserDetails toUserDetails(Usuario usuario) {
+        if (!GoogleAccountAccessPolicy.acessoNormalPermitido(usuario)) {
+            throw new UsernameNotFoundException("Conta Google sem acesso normal.");
+        }
         // RF32: usuarios Google nao possuem senha local (campo e null no banco).
         // O placeholder {noop}GOOGLE_USER satisfaz a validacao interna do Spring Security
         // sem comprometer a seguranca — a autenticacao ja foi feita pelo JWT.

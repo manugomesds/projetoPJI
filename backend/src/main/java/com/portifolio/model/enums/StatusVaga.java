@@ -3,10 +3,11 @@ package com.portifolio.model.enums;
 import java.util.Arrays;
 
 public enum StatusVaga implements DatabaseEnum {
-    ABERTA("aberta"),
-    PAUSADA("pausada"),
-    ENCERRADA("encerrada"),
-    CANCELADA("cancelada");
+    ABERTA("ABERTA"),
+    PAUSADA("PAUSADA"),
+    ENCERRADA("ENCERRADA"),
+    CANCELADA("CANCELADA"),
+    RASCUNHO("RASCUNHO");
 
     private final String databaseValue;
 

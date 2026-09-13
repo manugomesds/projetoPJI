@@ -13,6 +13,6 @@ public class DashboardTalentoResponse {
     private String localizacao;
     private String urlPortfolio;
     private String avatarUrl;
-    private Set<TagResponse> tags;
-    private long quantidadeTagsCoincidentes;
+    private Set<FuncaoResponse> funcoes;
+    private long quantidadeFuncoesCoincidentes;
 }

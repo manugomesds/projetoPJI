@@ -21,6 +21,10 @@ public class VagaResponse {
     private String descricao;
     private String requisitos;
     private BigDecimal remuneraValor;
+    private BigDecimal valorMinimo;
+    private BigDecimal valorMaximo;
+    private Short areaId;
+    private com.portifolio.model.enums.FormaRemuneracao formaRemuneracao;
     private String formaPagamento;
     private String cidade;
     private String estado;
@@ -30,7 +34,7 @@ public class VagaResponse {
     private String tipoContrato;
     private StatusVaga status;
     private LocalDateTime dataPublicacao;
-    private Set<Long> tagIds;
+    private Set<Long> funcaoIds;
     private String categoria;
     private String experiencia;
     private LocalDate dataLimiteCandidatura;

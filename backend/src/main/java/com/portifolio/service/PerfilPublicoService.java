@@ -3,7 +3,7 @@ package com.portifolio.service;
 import com.portifolio.dto.ArtistaPublicoResponse;
 import com.portifolio.dto.ContratantePublicoResponse;
 import com.portifolio.dto.PerfilPublicoResponse;
-import com.portifolio.dto.TagResponse;
+import com.portifolio.dto.FuncaoResponse;
 import com.portifolio.exception.ResourceNotFoundException;
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
@@ -35,6 +35,7 @@ public class PerfilPublicoService {
         return switch (tipo) {
             case ARTISTA -> buscarArtista(usuarioId);
             case CONTRATANTE -> buscarContratante(usuarioId);
+            default -> throw perfilNaoEncontrado();
         };
     }
 
@@ -43,9 +44,9 @@ public class PerfilPublicoService {
                 .orElseThrow(this::perfilNaoEncontrado);
         Usuario usuario = exigirPublicavel(perfil.getUsuario(), TipoUsuario.ARTISTA);
 
-        Set<TagResponse> tags = perfil.getTags().stream()
-                .sorted(Comparator.comparing(tag -> tag.getNome(), String.CASE_INSENSITIVE_ORDER))
-                .map(tag -> TagResponse.builder().id(tag.getId()).nome(tag.getNome()).build())
+        Set<FuncaoResponse> funcoes = perfil.getFuncoes().stream()
+                .sorted(Comparator.comparing(funcao -> funcao.getNome(), String.CASE_INSENSITIVE_ORDER))
+                .map(funcao -> FuncaoResponse.builder().id(funcao.getId()).areaId(funcao.getArea().getId()).nome(funcao.getNome()).build())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         return ArtistaPublicoResponse.builder()
@@ -56,8 +57,8 @@ public class PerfilPublicoService {
                 .urlPortfolio(perfil.getUrlPortfolio())
                 .bannerUrl(perfil.getBannerUrl())
                 .avatarUrl(avatarService.resolverUrl(
-                        perfil.getUsuarioId(), usuario.getFotoPerfil(), perfil.getFotoPerfil()))
-                .tags(tags)
+                        perfil.getUsuarioId(), usuario.getFotoPerfil(), null))
+                .funcoes(funcoes)
                 .build();
     }
 
@@ -79,7 +80,7 @@ public class PerfilPublicoService {
                 .localizacao(perfil.getLocalizacao())
                 .bannerUrl(perfil.getBannerUrl())
                 .avatarUrl(avatarService.resolverUrl(
-                        perfil.getUsuarioId(), usuario.getFotoPerfil(), perfil.getFotoPerfil()))
+                        perfil.getUsuarioId(), usuario.getFotoPerfil(), null))
                 .build();
     }
 

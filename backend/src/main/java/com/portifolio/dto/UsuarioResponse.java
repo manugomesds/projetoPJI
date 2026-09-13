@@ -17,7 +17,10 @@ public class UsuarioResponse {
     private TipoUsuario tipoUsuario;
     private Boolean perfilCompleto;
     private LocalDateTime dataCriacao;
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String nomeResponsavel;
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String telefoneResponsavel;
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private String emailResponsavel;
 }

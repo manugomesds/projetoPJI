@@ -8,12 +8,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.enums.TipoUsuario;
 import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
-import com.portifolio.repository.TagRepository;
+import com.portifolio.repository.FuncaoRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.security.JwtService;
 import jakarta.persistence.EntityManagerFactory;
@@ -45,7 +45,7 @@ class PerfilPublicoRf10IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -53,14 +53,14 @@ class PerfilPublicoRf10IntegrationTest {
     @Autowired UsuarioRepository usuarioRepository;
     @Autowired PerfilArtistaRepository perfilArtistaRepository;
     @Autowired PerfilContratanteRepository perfilContratanteRepository;
-    @Autowired TagRepository tagRepository;
+    @Autowired FuncaoRepository funcaoRepository;
     @Autowired JwtService jwtService;
     @Autowired EntityManagerFactory entityManagerFactory;
 
     @AfterEach
     void limparBanco() {
         jdbcTemplate.execute(
-                "TRUNCATE tags, perfis_artistas, perfis_contratantes, usuarios RESTART IDENTITY CASCADE");
+                "TRUNCATE funcoes, perfis_artistas, perfis_contratantes, usuarios RESTART IDENTITY CASCADE");
     }
 
     @Test
@@ -70,13 +70,14 @@ class PerfilPublicoRf10IntegrationTest {
         perfil.setLocalizacao("Campinas - SP");
         perfil.setUrlPortfolio("https://portfolio.example/artista");
         perfil.setBannerUrl("https://cdn.example/banner.jpg");
-        perfil.setFotoPerfil("https://cdn.example/avatar-custom.jpg");
-        perfil.getUsuario().setFotoPerfil("https://cdn.example/avatar-google.jpg");
+        perfil.getUsuario().setFotoPerfil("https://cdn.example/avatar-custom.jpg");
         perfil.getUsuario().setNomeResponsavel("Dado sigiloso");
+        perfil.getUsuario().setTelefoneResponsavel("11900000000");
+        perfil.getUsuario().setEmailResponsavel("responsavel@example.test");
         perfil.getUsuario().setTokenRecuperacao("token-sigiloso");
         usuarioRepository.save(perfil.getUsuario());
-        perfil.getTags().add(novaTag("Teatro"));
-        perfil.getTags().add(novaTag("Cinema"));
+        perfil.getAreas().iterator().next().getFuncoes().add(novaFuncao("Teatro"));
+        perfil.getAreas().iterator().next().getFuncoes().add(novaFuncao("Cinema"));
         perfilArtistaRepository.save(perfil);
 
         mockMvc.perform(get("/api/perfis/publicos/ARTISTA/{id}", perfil.getUsuarioId()))
@@ -88,8 +89,8 @@ class PerfilPublicoRf10IntegrationTest {
                 .andExpect(jsonPath("$.urlPortfolio").value("https://portfolio.example/artista"))
                 .andExpect(jsonPath("$.bannerUrl").value("https://cdn.example/banner.jpg"))
                 .andExpect(jsonPath("$.avatarUrl").value("https://cdn.example/avatar-custom.jpg"))
-                .andExpect(jsonPath("$.tags[0].nome").value("Cinema"))
-                .andExpect(jsonPath("$.tags[1].nome").value("Teatro"))
+                .andExpect(jsonPath("$.funcoes[0].nome").value("Cinema"))
+                .andExpect(jsonPath("$.funcoes[1].nome").value("Teatro"))
                 .andExpect(jsonPath("$.email").doesNotExist())
                 .andExpect(jsonPath("$.telefone").doesNotExist())
                 .andExpect(jsonPath("$.dataNascimento").doesNotExist())
@@ -108,6 +109,8 @@ class PerfilPublicoRf10IntegrationTest {
     @Test
     void usuarioAutenticadoTambemVisualizaPerfilPublico() throws Exception {
         PerfilArtista perfil = novoArtista("artista-autenticado@teste.com", LocalDate.of(1990, 1, 1), true);
+        perfil.getUsuario().setStatusConta(com.portifolio.model.enums.StatusConta.ATIVA);
+        usuarioRepository.saveAndFlush(perfil.getUsuario());
 
         mockMvc.perform(get("/api/perfis/publicos/ARTISTA/{id}", perfil.getUsuarioId())
                         .header("Authorization", "Bearer " + jwtService.gerarToken(perfil.getUsuario())))
@@ -157,7 +160,7 @@ class PerfilPublicoRf10IntegrationTest {
         mockMvc.perform(get("/api/perfis/publicos/ARTISTA/{id}", perfil.getUsuarioId()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.biografia").doesNotExist())
-                .andExpect(jsonPath("$.tags.length()").value(0));
+                .andExpect(jsonPath("$.funcoes.length()").value(0));
     }
 
     @Test
@@ -165,6 +168,8 @@ class PerfilPublicoRf10IntegrationTest {
         PerfilArtista perfil = novoArtista(
                 "menor-artista@teste.com", LocalDate.now().minusYears(16), true);
         perfil.getUsuario().setNomeResponsavel("Responsavel privado");
+        perfil.getUsuario().setTelefoneResponsavel("11911111111");
+        perfil.getUsuario().setEmailResponsavel("privado@example.test");
         usuarioRepository.save(perfil.getUsuario());
 
         mockMvc.perform(get("/api/perfis/publicos/ARTISTA/{id}", perfil.getUsuarioId()))
@@ -197,7 +202,7 @@ class PerfilPublicoRf10IntegrationTest {
 
     @Test
     void tipoInvalidoRetorna400NoFormatoPadrao() throws Exception {
-        mockMvc.perform(get("/api/perfis/publicos/ADMIN/1"))
+        mockMvc.perform(get("/api/perfis/publicos/INEXISTENTE/1"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.mensagem").value("Parâmetro 'tipo' possui valor inválido."));
@@ -218,24 +223,24 @@ class PerfilPublicoRf10IntegrationTest {
         assertThat(primeira).containsPattern("seed=[0-9a-f]{64}");
         assertThat(primeira).doesNotContain("seed=" + perfil.getUsuarioId() + "\"");
         assertThat(jdbcTemplate.queryForObject(
-                "select foto_perfil is null from usuarios where id = ?", Boolean.class, perfil.getUsuarioId()))
+                "select foto_perfil_url is null from usuarios where id = ?", Boolean.class, perfil.getUsuarioId()))
                 .isTrue();
         assertThat(jdbcTemplate.queryForObject(
-                "select foto_perfil is null from perfis_artistas where usuario_id = ?",
+                "select not exists (select 1 from information_schema.columns where table_name='perfis_artistas' and column_name='foto_perfil') from perfis_artistas where usuario_id = ?",
                 Boolean.class, perfil.getUsuarioId())).isTrue();
     }
 
     @Test
-    void artistaComMuitasTagsNaoDisparaNMaisUm() throws Exception {
+    void artistaComMuitasFuncoesNaoDisparaNMaisUm() throws Exception {
         PerfilArtista perfil = novoArtista("sem-n-mais-um@teste.com", LocalDate.of(1991, 1, 1), true);
-        IntStream.range(0, 20).forEach(numero -> perfil.getTags().add(novaTag("Tag RF10 " + numero)));
+        IntStream.range(0, 20).forEach(numero -> perfil.getAreas().iterator().next().getFuncoes().add(novaFuncao("Funcao RF10 " + numero)));
         perfilArtistaRepository.save(perfil);
         Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         statistics.clear();
 
         mockMvc.perform(get("/api/perfis/publicos/ARTISTA/{id}", perfil.getUsuarioId()))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tags.length()").value(20));
+                .andExpect(jsonPath("$.funcoes.length()").value(20));
 
         assertThat(statistics.getPrepareStatementCount()).isLessThanOrEqualTo(2);
     }
@@ -254,8 +259,10 @@ class PerfilPublicoRf10IntegrationTest {
     private PerfilArtista novoArtista(String email, LocalDate nascimento, boolean completo) {
         Usuario usuario = novoUsuario(email, nascimento, TipoUsuario.ARTISTA, completo);
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(usuario);
-        perfil.setTags(new HashSet<>());
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(perfil, new HashSet<>());
         return perfilArtistaRepository.save(perfil);
     }
 
@@ -279,9 +286,10 @@ class PerfilPublicoRf10IntegrationTest {
         return usuarioRepository.save(usuario);
     }
 
-    private Tag novaTag(String nome) {
-        Tag tag = new Tag();
-        tag.setNome(nome);
-        return tagRepository.save(tag);
+    private Funcao novaFuncao(String nome) {
+        Funcao funcao = new Funcao();
+        funcao.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        funcao.setNome(nome);
+        return funcaoRepository.save(funcao);
     }
 }

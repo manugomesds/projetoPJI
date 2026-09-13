@@ -1,12 +1,9 @@
 package com.portifolio.model;
 
 import com.portifolio.model.enums.TipoUsuario;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.portifolio.model.enums.StatusConta;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
@@ -40,6 +37,7 @@ public class Usuario {
 
     // RF32: nullable — usuarios Google nao possuem senha local
     @Column(length = 255)
+    @JsonIgnore
     private String senha;
 
     @Column(name = "tipo_usuario", nullable = false, columnDefinition = "tipo_usuario_enum")
@@ -49,6 +47,7 @@ public class Usuario {
     private Boolean perfilCompleto;
 
     @Column(name = "token_recuperacao", length = 255)
+    @JsonIgnore
     private String tokenRecuperacao;
 
     @Column(name = "token_expiracao")
@@ -57,21 +56,46 @@ public class Usuario {
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao;
 
-    @Column(name = "nome_responsavel", length = 150)
-    private String nomeResponsavel;
+    @JsonIgnore
+    @OneToOne(mappedBy = "usuario", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private ResponsavelLegal responsavelLegal;
 
-    @Column(name = "telefone_responsavel", length = 20)
-    private String telefoneResponsavel;
+    @Column(name = "status_conta", nullable = false, columnDefinition = "status_conta_enum")
+    private StatusConta statusConta = StatusConta.PENDENTE_VERIFICACAO_EMAIL;
+    @JsonIgnore @Column(length = 14, unique = true)
+    private String cpf;
+    @JsonIgnore @Column(length = 14, unique = true)
+    private String cnpj;
+    @Column(name = "versao_termo", length = 50)
+    private String versaoTermo;
+    @Column(name = "email_verificado")
+    private Boolean emailVerificado = false;
+    @JsonIgnore @Column(name = "token_verificacao", length = 255)
+    private String tokenVerificacao;
+    @Column(name = "tentativas_verificacao_email")
+    private Integer tentativasVerificacaoEmail = 0;
+    @Column(name = "ultimo_reenvio_verificacao")
+    private LocalDateTime ultimoReenvioVerificacao;
 
-    @Column(name = "email_responsavel", length = 150)
-    private String emailResponsavel;
+    // Accessors legados delegam à associação normalizada, sem colunas fictícias.
+    @JsonIgnore public String getNomeResponsavel() { return responsavelLegal == null ? null : responsavelLegal.getNomeResponsavel(); }
+    @JsonIgnore public String getTelefoneResponsavel() { return responsavelLegal == null ? null : responsavelLegal.getTelefoneResponsavel(); }
+    @JsonIgnore public String getEmailResponsavel() { return responsavelLegal == null ? null : responsavelLegal.getEmailResponsavel(); }
+    public void setNomeResponsavel(String value) { if (value != null) responsavel().setNomeResponsavel(value); }
+    public void setTelefoneResponsavel(String value) { if (value != null) responsavel().setTelefoneResponsavel(value); }
+    public void setEmailResponsavel(String value) { if (value != null) responsavel().setEmailResponsavel(value); }
+    private ResponsavelLegal responsavel() {
+        if (responsavelLegal == null) { responsavelLegal = new ResponsavelLegal(); responsavelLegal.setUsuario(this); }
+        return responsavelLegal;
+    }
 
     // RF32: identificador unico da conta Google (sub do ID Token)
     @Column(name = "google_id", length = 255, unique = true)
+    @JsonIgnore
     private String googleId;
 
     // RF34: foto vinda do Google no primeiro acesso (Opcao B)
-    // Sobrescrita quando usuario define foto propria em perfis_artistas/perfis_contratantes
-    @Column(name = "foto_perfil", length = 255)
+    // Avatar centralizado na conta pelo schema oficial.
+    @Column(name = "foto_perfil_url", length = 255)
     private String fotoPerfil;
 }

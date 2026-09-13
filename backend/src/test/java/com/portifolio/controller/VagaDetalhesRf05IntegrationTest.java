@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portifolio.model.Candidatura;
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.ModeloTrabalho;
@@ -15,7 +15,7 @@ import com.portifolio.model.enums.TipoUsuario;
 import com.portifolio.repository.CandidaturaRepository;
 import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
-import com.portifolio.repository.TagRepository;
+import com.portifolio.repository.FuncaoRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.security.JwtService;
@@ -55,7 +55,7 @@ class VagaDetalhesRf05IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -63,7 +63,7 @@ class VagaDetalhesRf05IntegrationTest {
     @Autowired UsuarioRepository usuarioRepository;
     @Autowired PerfilContratanteRepository perfilContratanteRepository;
     @Autowired PerfilArtistaRepository perfilArtistaRepository;
-    @Autowired TagRepository tagRepository;
+    @Autowired FuncaoRepository funcaoRepository;
     @Autowired VagaRepository vagaRepository;
     @Autowired CandidaturaRepository candidaturaRepository;
     @Autowired JwtService jwtService;
@@ -73,15 +73,15 @@ class VagaDetalhesRf05IntegrationTest {
 
     @AfterEach
     void limparBanco() {
-        jdbcTemplate.execute("TRUNCATE candidaturas, vagas, tags, perfis_artistas, "
+        jdbcTemplate.execute("TRUNCATE candidaturas, vagas, funcoes, perfis_artistas, "
                 + "perfis_contratantes, usuarios RESTART IDENTITY CASCADE");
     }
 
     @Test
-    void detalheAbertoDeveRetornarCamposTagsEContratantePublicoSemDadosPrivados() throws Exception {
+    void detalheAbertoDeveRetornarCamposFuncoesEContratantePublicoSemDadosPrivados() throws Exception {
         PerfilContratante contratante = novoContratante("empresa-publica@rf05.test");
-        Tag musica = novaTag("Música");
-        Tag violao = novaTag("Violão");
+        Funcao musica = novaFuncao("Música");
+        Funcao violao = novaFuncao("Violão");
         Vaga vaga = novaVaga(contratante, StatusVaga.ABERTA, musica, violao);
         Usuario artista = novoUsuario("artista-detalhe@rf05.test", TipoUsuario.ARTISTA, false);
 
@@ -92,7 +92,7 @@ class VagaDetalhesRf05IntegrationTest {
                 .andExpect(jsonPath("$.descricao").value("Descrição detalhada"))
                 .andExpect(jsonPath("$.requisitos").value("Requisitos profissionais"))
                 .andExpect(jsonPath("$.status").value("ABERTA"))
-                .andExpect(jsonPath("$.tagIds.length()").value(2))
+                .andExpect(jsonPath("$.funcaoIds.length()").value(2))
                 .andExpect(jsonPath("$.contratantePublico.nomeEmpresa").value("Empresa RF05"))
                 .andExpect(jsonPath("$.contratantePublico.biografia").value("Biografia profissional"))
                 .andExpect(jsonPath("$.contratantePublico.localizacao").value("Campinas, SP"))
@@ -275,14 +275,14 @@ class VagaDetalhesRf05IntegrationTest {
     }
 
     @Test
-    void candidatosDevemSerOrdenadosPorTagsAtualizacaoEId() throws Exception {
+    void candidatosDevemSerOrdenadosPorFuncoesAtualizacaoEId() throws Exception {
         PerfilContratante dono = novoContratante("ordenacao@rf05.test");
-        Tag musica = novaTag("Música");
-        Tag violao = novaTag("Violão");
-        Tag teatro = novaTag("Teatro");
+        Funcao musica = novaFuncao("Música");
+        Funcao violao = novaFuncao("Violão");
+        Funcao teatro = novaFuncao("Teatro");
         Vaga vaga = novaVaga(dono, StatusVaga.ABERTA, musica, violao);
 
-        PerfilArtista umaTag = novoArtista("uma-tag@rf05.test",
+        PerfilArtista umaFuncao = novoArtista("uma-funcao@rf05.test",
                 LocalDateTime.of(2026, 8, 20, 10, 0), musica);
         PerfilArtista duasRecentes = novoArtista("duas-recente@rf05.test",
                 LocalDateTime.of(2026, 8, 20, 12, 0), musica, violao);
@@ -290,10 +290,10 @@ class VagaDetalhesRf05IntegrationTest {
                 LocalDateTime.of(2026, 8, 19, 12, 0), musica, violao);
         PerfilArtista duasEmpate2 = novoArtista("duas-empate2@rf05.test",
                 LocalDateTime.of(2026, 8, 19, 12, 0), musica, violao);
-        PerfilArtista semCoincidencia = novoArtista("zero-tag@rf05.test",
+        PerfilArtista semCoincidencia = novoArtista("zero-funcao@rf05.test",
                 LocalDateTime.of(2026, 8, 21, 12, 0), teatro);
 
-        Candidatura cUma = novaCandidatura(vaga, umaTag, 1);
+        Candidatura cUma = novaCandidatura(vaga, umaFuncao, 1);
         Candidatura cRecente = novaCandidatura(vaga, duasRecentes, 2);
         Candidatura cEmpate1 = novaCandidatura(vaga, duasEmpate1, 3);
         Candidatura cEmpate2 = novaCandidatura(vaga, duasEmpate2, 4);
@@ -306,20 +306,20 @@ class VagaDetalhesRf05IntegrationTest {
                 .andExpect(jsonPath("$.content[2].candidaturaId").value(cEmpate2.getId()))
                 .andExpect(jsonPath("$.content[3].candidaturaId").value(cUma.getId()))
                 .andExpect(jsonPath("$.content[4].candidaturaId").value(cZero.getId()))
-                .andExpect(jsonPath("$.content[0].quantidadeTagsCoincidentes").value(2))
-                .andExpect(jsonPath("$.content[0].tagsCoincidentes.length()").value(2))
-                .andExpect(jsonPath("$.content[3].quantidadeTagsCoincidentes").value(1))
-                .andExpect(jsonPath("$.content[4].quantidadeTagsCoincidentes").value(0));
+                .andExpect(jsonPath("$.content[0].quantidadeFuncoesCoincidentes").value(2))
+                .andExpect(jsonPath("$.content[0].funcoesCoincidentes.length()").value(2))
+                .andExpect(jsonPath("$.content[3].quantidadeFuncoesCoincidentes").value(1))
+                .andExpect(jsonPath("$.content[4].quantidadeFuncoesCoincidentes").value(0));
     }
 
     @Test
-    void vagaSemTagsDeveProduzirCompatibilidadeZeroEOrdemDeterministica() throws Exception {
-        PerfilContratante dono = novoContratante("vaga-sem-tags@rf05.test");
+    void vagaSemFuncoesDeveProduzirCompatibilidadeZeroEOrdemDeterministica() throws Exception {
+        PerfilContratante dono = novoContratante("vaga-sem-funcoes@rf05.test");
         Vaga vaga = novaVaga(dono, StatusVaga.ABERTA);
-        Tag tag = novaTag("Dança");
-        PerfilArtista antigo = novoArtista("antigo-sem-vaga-tags@rf05.test",
-                LocalDateTime.of(2026, 8, 1, 10, 0), tag);
-        PerfilArtista recente = novoArtista("recente-sem-vaga-tags@rf05.test",
+        Funcao funcao = novaFuncao("Dança");
+        PerfilArtista antigo = novoArtista("antigo-sem-vaga-funcoes@rf05.test",
+                LocalDateTime.of(2026, 8, 1, 10, 0), funcao);
+        PerfilArtista recente = novoArtista("recente-sem-vaga-funcoes@rf05.test",
                 LocalDateTime.of(2026, 8, 2, 10, 0));
         Candidatura cAntiga = novaCandidatura(vaga, antigo, 0);
         Candidatura cRecente = novaCandidatura(vaga, recente, 1);
@@ -328,8 +328,8 @@ class VagaDetalhesRf05IntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].candidaturaId").value(cRecente.getId()))
                 .andExpect(jsonPath("$.content[1].candidaturaId").value(cAntiga.getId()))
-                .andExpect(jsonPath("$.content[0].quantidadeTagsCoincidentes").value(0))
-                .andExpect(jsonPath("$.content[1].quantidadeTagsCoincidentes").value(0));
+                .andExpect(jsonPath("$.content[0].quantidadeFuncoesCoincidentes").value(0))
+                .andExpect(jsonPath("$.content[1].quantidadeFuncoesCoincidentes").value(0));
     }
 
     @Test
@@ -400,11 +400,11 @@ class VagaDetalhesRf05IntegrationTest {
     @Test
     void carregamentoDeVinteCandidatosNaoDeveExecutarQueryPorCandidato() throws Exception {
         PerfilContratante dono = novoContratante("nmaisum@rf05.test");
-        Tag tag = novaTag("Performance");
-        Vaga vaga = novaVaga(dono, StatusVaga.ABERTA, tag);
+        Funcao funcao = novaFuncao("Performance");
+        Vaga vaga = novaVaga(dono, StatusVaga.ABERTA, funcao);
         for (int i = 0; i < 20; i++) {
             novaCandidatura(vaga, novoArtista("nmaisum-" + i + "@rf05.test",
-                    LocalDateTime.of(2026, 3, 1, 0, 0).plusMinutes(i), tag), i);
+                    LocalDateTime.of(2026, 3, 1, 0, 0).plusMinutes(i), funcao), i);
         }
         SessionFactory sessionFactory = entityManagerFactory.unwrap(SessionFactory.class);
         sessionFactory.getStatistics().clear();
@@ -467,20 +467,22 @@ class VagaDetalhesRf05IntegrationTest {
     }
 
     private PerfilArtista novoArtista(
-            String email, LocalDateTime ultimaAtualizacao, Tag... tags) {
+            String email, LocalDateTime ultimaAtualizacao, Funcao... funcoes) {
         Usuario usuario = novoUsuario(email, TipoUsuario.ARTISTA, true);
-        return novoPerfilArtista(usuario, ultimaAtualizacao, tags);
+        return novoPerfilArtista(usuario, ultimaAtualizacao, funcoes);
     }
 
     private PerfilArtista novoPerfilArtista(
-            Usuario usuario, LocalDateTime ultimaAtualizacao, Tag... tags) {
+            Usuario usuario, LocalDateTime ultimaAtualizacao, Funcao... funcoes) {
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(usuario);
         perfil.setBiografia("Biografia pública");
         perfil.setLocalizacao("São Paulo, SP");
         perfil.setUrlPortfolio("https://portfolio.example");
         perfil.setUltimaAtualizacao(ultimaAtualizacao);
-        perfil.setTags(new HashSet<>(Set.of(tags)));
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(perfil, new HashSet<>(Set.of(funcoes)));
         return perfilArtistaRepository.save(perfil);
     }
 
@@ -497,31 +499,35 @@ class VagaDetalhesRf05IntegrationTest {
         return usuarioRepository.save(usuario);
     }
 
-    private Tag novaTag(String nome) {
-        Tag tag = new Tag();
-        tag.setNome(nome);
-        return tagRepository.save(tag);
+    private Funcao novaFuncao(String nome) {
+        Funcao funcao = new Funcao();
+        funcao.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        funcao.setNome(nome);
+        return funcaoRepository.save(funcao);
     }
 
     private Vaga novaVaga(
-            PerfilContratante contratante, StatusVaga status, Tag... tags) {
+            PerfilContratante contratante, StatusVaga status, Funcao... funcoes) {
         Vaga vaga = new Vaga();
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        vaga.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         vaga.setContratante(contratante);
         vaga.setTitulo("Vaga RF05");
         vaga.setDescricao("Descrição detalhada");
         vaga.setRequisitos("Requisitos profissionais");
-        vaga.setRemuneraValor(new BigDecimal("2500.00"));
-        vaga.setFormaPagamento("Pix");
+        vaga.setValorMinimo(new BigDecimal("2500.00"));
+        vaga.setValorMaximo(new BigDecimal("2500.00"));
+        vaga.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         vaga.setCidade("Campinas");
         vaga.setEstado("SP");
         vaga.setEnderecoCompleto("Rua da Oportunidade, 10");
         vaga.setBeneficios("Transporte");
         vaga.setModeloTrabalho(ModeloTrabalho.HIBRIDO);
         vaga.setTipoContrato("Freelance");
-        vaga.setCategoria("Música");
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area((short) 1));
         vaga.setStatus(status);
         vaga.setDataPublicacao(LocalDateTime.of(2026, 8, 1, 9, 0));
-        vaga.setTags(new HashSet<>(Set.of(tags)));
+        vaga.setFuncoes(new HashSet<>(Set.of(funcoes)));
         return vagaRepository.save(vaga);
     }
 

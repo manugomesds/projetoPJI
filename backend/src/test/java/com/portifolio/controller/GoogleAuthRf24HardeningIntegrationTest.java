@@ -2,6 +2,7 @@ package com.portifolio.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -10,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portifolio.exception.UnauthorizedException;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.enums.TipoUsuario;
+import com.portifolio.model.enums.StatusConta;
 import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
 import com.portifolio.repository.RefreshTokenRepository;
@@ -53,7 +55,7 @@ class GoogleAuthRf24HardeningIntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -64,8 +66,114 @@ class GoogleAuthRf24HardeningIntegrationTest {
     @Autowired RefreshTokenRepository refreshTokenRepository;
     @Autowired PasswordEncoder passwordEncoder;
     @Autowired FakeGoogleTokenVerifier fakeVerifier;
+    @Autowired com.portifolio.security.JwtService jwtService;
+    @Autowired com.portifolio.service.RefreshTokenService refreshTokenService;
+    @Autowired com.portifolio.security.UserDetailsServiceImpl userDetailsService;
+    @Autowired com.portifolio.config.StompJwtChannelInterceptor stompInterceptor;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
+
+    @Test
+    void estadosPendentesNaoSaoPromovidosENaoAceitamSenhaRefreshOuJwtAnterior() throws Exception {
+        for (StatusConta estado : new StatusConta[]{StatusConta.PENDENTE_TIPO_PERFIL,
+                StatusConta.PENDENTE_VERIFICACAO_EMAIL, StatusConta.PENDENTE_CONSENTIMENTO,
+                StatusConta.BLOQUEADA}) {
+            Usuario usuario = usuarioLocal(estado.name() + "@palco.test", "Senha@2026", TipoUsuario.ARTISTA);
+            String jwtAnterior = jwtService.gerarToken(usuario);
+            String refreshAnterior = refreshTokenService.gerarRefreshToken(usuario);
+            usuario.setStatusConta(estado);
+            usuarioRepository.saveAndFlush(usuario);
+            fakeVerifier.aceitar(estado.name(), claims("google-" + estado.name(), usuario.getEmail()));
+
+            var loginGoogle = mockMvc.perform(postGoogle(payloadCompleto(estado.name(), "CONTRATANTE", true)));
+            if (estado == StatusConta.BLOQUEADA) {
+                loginGoogle.andExpect(status().isForbidden());
+                // A transação rejeitada não vincula o Google. Configura um vínculo já existente
+                // para verificar também os outros meios de autenticação da conta bloqueada.
+                usuario.setGoogleId("google-" + estado.name());
+                usuarioRepository.saveAndFlush(usuario);
+            } else {
+                loginGoogle.andExpect(status().isOk())
+                        .andExpect(jsonPath("$.status").value("AGUARDANDO_DADOS"))
+                        .andExpect(jsonPath("$.statusConta").value(estado.name()))
+                        .andExpect(jsonPath("$.token").isEmpty())
+                        .andExpect(jsonPath("$.refreshToken").isEmpty());
+                // Repetir pelo google_id já vinculado também não promove a conta.
+                mockMvc.perform(postGoogle(payloadCompleto(estado.name(), "CONTRATANTE", true)))
+                        .andExpect(status().isOk()).andExpect(jsonPath("$.token").isEmpty());
+            }
+            Usuario depois = usuarioRepository.findById(usuario.getId()).orElseThrow();
+            assertThat(depois.getStatusConta()).isEqualTo(estado);
+            assertThat(depois.getTipoUsuario()).isEqualTo(TipoUsuario.ARTISTA);
+            assertThat(depois.getSenha()).isEqualTo(usuario.getSenha());
+            mockMvc.perform(get("/api/usuarios/me").header("Authorization", "Bearer " + jwtAnterior))
+                    .andExpect(status().isUnauthorized());
+            mockMvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(Map.of("email", usuario.getEmail(), "senha", "Senha@2026"))))
+                    .andExpect(status().isForbidden());
+            mockMvc.perform(post("/api/auth/refresh").contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(Map.of("refreshToken", refreshAnterior))))
+                    .andExpect(status().isForbidden());
+            var frame = org.springframework.messaging.simp.stomp.StompHeaderAccessor.create(
+                    org.springframework.messaging.simp.stomp.StompCommand.CONNECT);
+            frame.setNativeHeader("Authorization", "Bearer " + jwtAnterior);
+            frame.setLeaveMutable(true);
+            var message = org.springframework.messaging.support.MessageBuilder.createMessage(new byte[0], frame.getMessageHeaders());
+            org.assertj.core.api.Assertions.assertThatThrownBy(() -> stompInterceptor.preSend(message, null))
+                    .isInstanceOf(org.springframework.security.core.userdetails.UsernameNotFoundException.class);
+        }
+        // Somente os quatro refresh antigos de fixture; nenhum novo foi emitido.
+        assertThat(refreshTokenRepository.count()).isEqualTo(4);
+        assertThat(perfilArtistaRepository.count()).isZero();
+    }
+
+    @Test
+    void contaAtivaComPerfilIncompletoNaoRecebeAcessoNormal() throws Exception {
+        Usuario usuario = usuarioLocal("incompleta-existente@palco.test", "Senha@2026", TipoUsuario.ARTISTA);
+        usuario.setGoogleId("google-perfil-incompleto");
+        usuario.setPerfilCompleto(false);
+        usuarioRepository.saveAndFlush(usuario);
+        fakeVerifier.aceitar("perfil-incompleto", claims(usuario.getGoogleId(), usuario.getEmail()));
+        mockMvc.perform(postGoogle(Map.of("idToken", "perfil-incompleto", "rememberMe", true)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("AGUARDANDO_DADOS"))
+                .andExpect(jsonPath("$.statusConta").value("ATIVA"))
+                .andExpect(jsonPath("$.perfilCompleto").value(false))
+                .andExpect(jsonPath("$.token").isEmpty())
+                .andExpect(jsonPath("$.refreshToken").isEmpty());
+        assertThat(usuarioRepository.findById(usuario.getId()).orElseThrow().getPerfilCompleto()).isFalse();
+        assertThat(refreshTokenRepository.count()).isZero();
+    }
+
+    @Test
+    void contaGoogleOnlyAptaExistenteContinuaAcessandoNormalmente() throws Exception {
+        Usuario usuario = usuarioLocal("google-apto@palco.test", "Senha@2026", TipoUsuario.ARTISTA);
+        usuario.setGoogleId("google-apto");
+        usuario.setSenha(null);
+        usuarioRepository.saveAndFlush(usuario);
+        fakeVerifier.aceitar("apto", claims(usuario.getGoogleId(), usuario.getEmail()));
+        MvcResult resultado = mockMvc.perform(postGoogle(Map.of("idToken", "apto", "rememberMe", true)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("AUTENTICADO"))
+                .andExpect(jsonPath("$.statusConta").value("ATIVA"))
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.refreshToken").isNotEmpty()).andReturn();
+        JsonNode resposta = objectMapper.readTree(resultado.getResponse().getContentAsString());
+        mockMvc.perform(get("/api/usuarios/me").header("Authorization", "Bearer " + resposta.get("token").asText()))
+                .andExpect(status().isOk());
+        assertThat(usuarioRepository.findById(usuario.getId()).orElseThrow().getSenha()).isNull();
+    }
+
+    @Test
+    void provisoriaNaoEmiteRefreshMesmoComRememberMeTrue() throws Exception {
+        fakeVerifier.aceitar("provisoria", claims("google-provisoria", "provisoria@palco.test"));
+        mockMvc.perform(postGoogle(payloadCompleto("provisoria", "ARTISTA", true)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.statusConta").value("PENDENTE_TIPO_PERFIL"))
+                .andExpect(jsonPath("$.token").isEmpty())
+                .andExpect(jsonPath("$.refreshToken").isEmpty());
+        assertThat(refreshTokenRepository.count()).isZero();
+    }
 
     @BeforeEach
     void limparBancoEFake() {
@@ -77,19 +185,26 @@ class GoogleAuthRf24HardeningIntegrationTest {
     }
 
     @Test
-    void credencialValidaCriaContaGoogleOnlySemSenhaEPerfilInicial() throws Exception {
+    void credencialValidaCriaContaPendenteSemSenhaPerfilDefinitivoOuTokens() throws Exception {
         fakeVerifier.aceitar("novo", claims("google-novo", "novo@palco.test"));
 
         mockMvc.perform(postGoogle(payloadCompleto("novo", "ARTISTA", false)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("AUTENTICADO"))
-                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.status").value("AGUARDANDO_DADOS"))
+                .andExpect(jsonPath("$.statusConta").value("PENDENTE_TIPO_PERFIL"))
+                .andExpect(jsonPath("$.token").isEmpty())
+                .andExpect(jsonPath("$.refreshToken").isEmpty())
                 .andExpect(jsonPath("$.tipoUsuario").value("ARTISTA"));
 
         Usuario salvo = usuarioRepository.findByEmail("novo@palco.test").orElseThrow();
         assertThat(salvo.getSenha()).isNull();
         assertThat(salvo.getGoogleId()).isEqualTo("google-novo");
-        assertThat(perfilArtistaRepository.findById(salvo.getId())).isPresent();
+        assertThat(salvo.getStatusConta()).isEqualTo(StatusConta.PENDENTE_TIPO_PERFIL);
+        assertThat(salvo.getEmailVerificado()).isTrue();
+        assertThat(salvo.getPerfilCompleto()).isFalse();
+        assertThat(salvo.getNome()).isEqualTo("Pessoa Google");
+        assertThat(salvo.getFotoPerfil()).isEqualTo("https://img.example/avatar");
+        assertThat(perfilArtistaRepository.findById(salvo.getId())).isEmpty();
         assertThat(perfilContratanteRepository.count()).isZero();
     }
 
@@ -240,23 +355,28 @@ class GoogleAuthRf24HardeningIntegrationTest {
 
     @Test
     void rememberMeTrueUsaRefreshTokenVigente() throws Exception {
+        usuarioLocal("com-refresh@palco.test", "Senha@2026", TipoUsuario.CONTRATANTE);
         fakeVerifier.aceitar("com-refresh", claims("google-com-refresh", "com-refresh@palco.test"));
 
         mockMvc.perform(postGoogle(payloadCompleto("com-refresh", "CONTRATANTE", true)))
                 .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("AUTENTICADO"))
+                .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.refreshToken").isNotEmpty());
 
         assertThat(refreshTokenRepository.count()).isOne();
     }
 
     @Test
-    void novoUsuarioSemDadosComplementaresMantemComportamentoSemPersistirProvisorio()
+    void schemaImpedeProvisorioSemDadosERespostaNaoEmiteAcesso()
             throws Exception {
         fakeVerifier.aceitar("incompleto", claims("google-incompleto", "incompleto@palco.test"));
 
         mockMvc.perform(postGoogle(Map.of("idToken", "incompleto", "rememberMe", false)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("AGUARDANDO_DADOS"))
+                .andExpect(jsonPath("$.token").isEmpty())
+                .andExpect(jsonPath("$.refreshToken").isEmpty())
                 .andExpect(jsonPath("$.emailGoogle").value("incompleto@palco.test"));
 
         assertThat(usuarioRepository.count()).isZero();
@@ -281,7 +401,7 @@ class GoogleAuthRf24HardeningIntegrationTest {
     }
 
     @Test
-    void duasAutenticacoesSimultaneasCriamUmaSoContaEUmSoPerfil() throws Exception {
+    void duasAutenticacoesSimultaneasCriamUmaSoContaPendenteSemPerfil() throws Exception {
         fakeVerifier.aceitar("concorrente", claims("google-concorrente", "concorrente@palco.test"));
         Map<String, Object> payload = payloadCompleto("concorrente", "ARTISTA", false);
         CountDownLatch prontas = new CountDownLatch(2);
@@ -302,6 +422,10 @@ class GoogleAuthRf24HardeningIntegrationTest {
             JsonNode respostaA = objectMapper.readTree(resultadoA.getResponse().getContentAsString());
             JsonNode respostaB = objectMapper.readTree(resultadoB.getResponse().getContentAsString());
             assertThat(respostaA.get("id").asLong()).isEqualTo(respostaB.get("id").asLong());
+            assertThat(respostaA.get("statusConta").asText()).isEqualTo("PENDENTE_TIPO_PERFIL");
+            assertThat(respostaB.get("statusConta").asText()).isEqualTo("PENDENTE_TIPO_PERFIL");
+            assertThat(respostaA.get("token").isNull()).isTrue();
+            assertThat(respostaB.get("token").isNull()).isTrue();
         } finally {
             iniciar.countDown();
             executor.shutdownNow();
@@ -310,7 +434,7 @@ class GoogleAuthRf24HardeningIntegrationTest {
         assertThat(usuarioRepository.count()).isOne();
         assertThat(usuarioRepository.findByEmail("concorrente@palco.test").orElseThrow().getSenha())
                 .isNull();
-        assertThat(perfilArtistaRepository.count()).isOne();
+        assertThat(perfilArtistaRepository.count()).isZero();
         assertThat(perfilContratanteRepository.count()).isZero();
     }
 
@@ -334,6 +458,7 @@ class GoogleAuthRf24HardeningIntegrationTest {
                 "idToken", token,
                 "rememberMe", rememberMe,
                 "tipoUsuario", tipo,
+                "tipoPerfilArtistico", "ARTISTA_SOLO",
                 "dataNascimento", "1990-01-01",
                 "telefone", "11999999999");
     }
@@ -351,7 +476,8 @@ class GoogleAuthRf24HardeningIntegrationTest {
         usuario.setEmail(email);
         usuario.setSenha(passwordEncoder.encode(senha));
         usuario.setTipoUsuario(tipo);
-        usuario.setPerfilCompleto(false);
+        usuario.setPerfilCompleto(true);
+        usuario.setStatusConta(StatusConta.ATIVA);
         usuario.setDataCriacao(LocalDateTime.now());
         return usuarioRepository.saveAndFlush(usuario);
     }

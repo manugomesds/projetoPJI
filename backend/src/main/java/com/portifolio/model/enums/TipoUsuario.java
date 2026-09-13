@@ -3,8 +3,10 @@ package com.portifolio.model.enums;
 import java.util.Arrays;
 
 public enum TipoUsuario implements DatabaseEnum {
-    CONTRATANTE("contratante"),
-    ARTISTA("artista");
+    CONTRATANTE("CONTRATANTE"),
+    ARTISTA("ARTISTA"),
+    ADMIN("ADMIN"),
+    MODERADOR("MODERADOR");
 
     private final String databaseValue;
 

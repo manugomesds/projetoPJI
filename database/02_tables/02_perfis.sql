@@ -5,7 +5,7 @@ create table perfis_artistas (
     url_portfolio varchar(255),
     tipo_perfil_artistico tipo_perfil_artistico_enum not null,
     disponivel_oportunidades boolean,
-    raio_atuacao  abrangencia_enum not null,
+    raio_atuacao  abrangencia_enum,
     nome_integrantes varchar(150),
     banner_url varchar(255),
     ultima_atualizacao timestamp default current_timestamp

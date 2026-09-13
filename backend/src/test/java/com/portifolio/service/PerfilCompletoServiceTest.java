@@ -4,7 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.enums.TipoUsuario;
 import java.time.LocalDate;
@@ -23,9 +23,6 @@ class PerfilCompletoServiceTest {
         Usuario usuario = usuarioCompleto(TipoUsuario.ARTISTA);
         PerfilArtista perfil = perfilArtistaCompleto();
         perfil.setBannerUrl(null);
-        perfil.setFotoPerfil(null);
-        perfil.setNivelMedalha(null);
-        perfil.setScoreEngajamento(null);
 
         assertThat(service.calcularArtista(usuario, perfil)).isTrue();
     }
@@ -65,13 +62,13 @@ class PerfilCompletoServiceTest {
     }
 
     @Test
-    void artistaSemTagsFicaIncompletoEComUmaTagFicaCompleto() {
+    void artistaSemFuncoesFicaIncompletoEComUmaFuncaoFicaCompleto() {
         Usuario usuario = usuarioCompleto(TipoUsuario.ARTISTA);
         PerfilArtista perfil = perfilArtistaCompleto();
-        perfil.setTags(new HashSet<>());
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(perfil, new HashSet<>());
         assertThat(service.calcularArtista(usuario, perfil)).isFalse();
 
-        perfil.setTags(Set.of(new Tag()));
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(perfil, Set.of(new Funcao()));
         assertThat(service.calcularArtista(usuario, perfil)).isTrue();
     }
 
@@ -81,7 +78,6 @@ class PerfilCompletoServiceTest {
         PerfilContratante perfil = perfilContratanteCompleto();
         perfil.setNomeEmpresa(null);
         perfil.setBannerUrl(null);
-        perfil.setFotoPerfil(null);
         assertThat(service.calcularContratante(usuario, perfil)).isTrue();
 
         perfil.setNomeEmpresa("");
@@ -126,10 +122,12 @@ class PerfilCompletoServiceTest {
 
     private PerfilArtista perfilArtistaCompleto() {
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setBiografia("Biografia");
         perfil.setLocalizacao("São Paulo");
         perfil.setUrlPortfolio("https://portfolio.example");
-        perfil.setTags(Set.of(new Tag()));
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(perfil, Set.of(new Funcao()));
         return perfil;
     }
 

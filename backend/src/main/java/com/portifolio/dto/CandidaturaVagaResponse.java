@@ -16,9 +16,9 @@ public class CandidaturaVagaResponse {
     private String localizacao;
     private String urlPortfolio;
     private String avatarUrl;
-    private Set<Long> tagIds;
-    private Set<Long> tagsCoincidentes;
-    private int quantidadeTagsCoincidentes;
+    private Set<Long> funcaoIds;
+    private Set<Long> funcoesCoincidentes;
+    private int quantidadeFuncoesCoincidentes;
     private String mensagemApresentacao;
     private String linkPortfolioCandidatura;
     private StatusCandidatura status;

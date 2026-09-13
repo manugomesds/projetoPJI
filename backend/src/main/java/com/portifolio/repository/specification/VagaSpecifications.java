@@ -72,19 +72,19 @@ public final class VagaSpecifications {
     public static Specification<Vaga> remuneracaoMinima(BigDecimal min) {
         return (root, query, cb) -> min == null
                 ? cb.conjunction()
-                : cb.greaterThanOrEqualTo(root.get("remuneraValor"), min);
+                : cb.greaterThanOrEqualTo(root.get("valorMinimo"), min);
     }
 
     public static Specification<Vaga> remuneracaoMaxima(BigDecimal max) {
         return (root, query, cb) -> max == null
                 ? cb.conjunction()
-                : cb.lessThanOrEqualTo(root.get("remuneraValor"), max);
+                : cb.lessThanOrEqualTo(root.get("valorMinimo"), max);
     }
 
     public static Specification<Vaga> areaAtuacaoContem(String areaAtuacao) {
         return (root, query, cb) -> (areaAtuacao == null || areaAtuacao.isBlank())
                 ? cb.conjunction()
-                : cb.like(cb.lower(root.get("categoria")),
+                : cb.like(cb.lower(root.join("area").get("nome")),
                         "%" + areaAtuacao.trim().toLowerCase() + "%");
     }
 
@@ -94,15 +94,15 @@ public final class VagaSpecifications {
                 : cb.notEqual(root.get("id"), id);
     }
 
-    // distinct(true) evita vaga duplicada no resultado quando ela casa com mais de uma tag do filtro
-    public static Specification<Vaga> comAlgumaTag(Set<Long> tagIds) {
+    // distinct(true) evita vaga duplicada no resultado quando ela casa com mais de uma funcao do filtro
+    public static Specification<Vaga> comAlgumaFuncao(Set<Long> funcaoIds) {
         return (root, query, cb) -> {
-            if (tagIds == null || tagIds.isEmpty()) {
+            if (funcaoIds == null || funcaoIds.isEmpty()) {
                 return cb.conjunction();
             }
             query.distinct(true);
-            Join<Object, Object> tagJoin = root.join("tags");
-            return tagJoin.get("id").in(tagIds);
+            Join<Object, Object> funcaoJoin = root.join("funcoes");
+            return funcaoJoin.get("id").in(funcaoIds);
         };
     }
 

@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.portifolio.model.Candidatura;
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.ModeloTrabalho;
@@ -15,7 +15,7 @@ import com.portifolio.model.enums.TipoUsuario;
 import com.portifolio.repository.CandidaturaRepository;
 import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
-import com.portifolio.repository.TagRepository;
+import com.portifolio.repository.FuncaoRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.security.JwtService;
@@ -24,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -52,7 +53,7 @@ class VagaEdicaoRf07IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -62,13 +63,13 @@ class VagaEdicaoRf07IntegrationTest {
     @Autowired PerfilContratanteRepository perfilContratanteRepository;
     @Autowired PerfilArtistaRepository perfilArtistaRepository;
     @Autowired VagaRepository vagaRepository;
-    @Autowired TagRepository tagRepository;
+    @Autowired FuncaoRepository funcaoRepository;
     @Autowired CandidaturaRepository candidaturaRepository;
     @Autowired JwtService jwtService;
 
     @AfterEach
     void limparBanco() {
-        jdbcTemplate.execute("TRUNCATE candidaturas, vagas, tags, perfis_artistas, "
+        jdbcTemplate.execute("TRUNCATE candidaturas, vagas, funcoes, perfis_artistas, "
                 + "perfis_contratantes, usuarios RESTART IDENTITY CASCADE");
     }
 
@@ -143,19 +144,19 @@ class VagaEdicaoRf07IntegrationTest {
                 .andExpect(jsonPath("$.modeloTrabalho").value("HIBRIDO"))
                 .andExpect(jsonPath("$.fotos.length()").value(2));
 
-        Vaga persistida = vagaRepository.findById(idOriginal).orElseThrow();
+        Vaga persistida = vagaRepository.findDetalhesById(idOriginal).orElseThrow();
         assertThat(persistida.getId()).isEqualTo(idOriginal);
         assertThat(persistida.getContratante().getUsuarioId()).isEqualTo(dono.getId());
         assertThat(persistida.getStatus()).isEqualTo(StatusVaga.PAUSADA);
         assertThat(persistida.getDataPublicacao()).isEqualTo(publicacaoOriginal);
-        assertThat(persistida.getFormaPagamento()).isEqualTo("Transferência");
+        assertThat(persistida.getFormaRemuneracao()).isEqualTo(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         assertThat(persistida.getEnderecoCompleto()).isEqualTo("Rua Nova, 10");
         assertThat(persistida.getBeneficios()).isEqualTo("Transporte");
         assertThat(persistida.getTipoContrato()).isEqualTo("Temporário");
-        assertThat(persistida.getCategoria()).isEqualTo("Música");
+        assertThat(persistida.getArea().getNome()).isEqualTo("Música");
         assertThat(persistida.getExperiencia()).isEqualTo("Pleno");
         assertThat(persistida.getDataLimiteCandidatura()).isEqualTo(LocalDate.of(2030, 12, 20));
-        assertThat(persistida.getAbrangencia()).isEqualTo("nacional");
+        assertThat(persistida.getAbrangencia()).isEqualTo(com.portifolio.model.enums.Abrangencia.NACIONAL);
     }
 
     @ParameterizedTest
@@ -193,7 +194,10 @@ class VagaEdicaoRf07IntegrationTest {
         editar(vaga.getId(), dono, tituloLongo).andExpect(status().isBadRequest());
 
         ObjectNode valorForaDaPrecisao = payloadValido();
-        valorForaDaPrecisao.put("remuneraValor", 100_000_000);
+        valorForaDaPrecisao.put("areaId", 1);
+        valorForaDaPrecisao.put("abrangencia", "LOCAL");
+        valorForaDaPrecisao.put("valorMinimo", 100_000_000);
+        valorForaDaPrecisao.put("valorMaximo", 100_000_000);
         editar(vaga.getId(), dono, valorForaDaPrecisao).andExpect(status().isBadRequest());
 
         assertThat(vagaRepository.findById(vaga.getId()).orElseThrow().getTitulo()).isEqualTo("Original");
@@ -205,7 +209,10 @@ class VagaEdicaoRf07IntegrationTest {
         Vaga vaga = criarVaga(criarContratante(dono), StatusVaga.ABERTA);
 
         ObjectNode negativo = payloadValido();
-        negativo.put("remuneraValor", -0.01);
+        negativo.put("areaId", 1);
+        negativo.put("abrangencia", "LOCAL");
+        negativo.put("valorMinimo", -0.01);
+        negativo.put("valorMaximo", -0.01);
         editar(vaga.getId(), dono, negativo).andExpect(status().isBadRequest());
 
         ObjectNode enumInvalido = payloadValido();
@@ -214,77 +221,78 @@ class VagaEdicaoRf07IntegrationTest {
     }
 
     @Test
-    void deveSubstituirAdicionarRemoverEDeduplicarTags() throws Exception {
-        Usuario dono = criarUsuario("tags@teste.com", TipoUsuario.CONTRATANTE);
+    void deveSubstituirAdicionarRemoverEDeduplicarFuncoes() throws Exception {
+        Usuario dono = criarUsuario("funcoes@teste.com", TipoUsuario.CONTRATANTE);
         Vaga vaga = criarVaga(criarContratante(dono), StatusVaga.ABERTA);
-        Tag tag1 = criarTag("Música");
-        Tag tag2 = criarTag("Fotografia");
-        Tag tag3 = criarTag("Teatro");
-        definirTags(vaga.getId(), tag1.getId(), tag2.getId());
+        Funcao tag1 = criarFuncao("Música");
+        Funcao tag2 = criarFuncao("Fotografia");
+        Funcao tag3 = criarFuncao("Teatro");
+        definirFuncoes(vaga.getId(), tag1.getId(), tag2.getId());
 
         ObjectNode substituir = payloadValido();
-        substituir.putArray("tagIds").add(tag2.getId()).add(tag3.getId()).add(tag3.getId());
+        substituir.putArray("funcaoIds").add(tag2.getId()).add(tag3.getId()).add(tag3.getId());
         editar(vaga.getId(), dono, substituir).andExpect(status().isOk());
         assertThat(tagsDaVaga(vaga.getId())).containsExactlyInAnyOrder(tag2.getId(), tag3.getId());
 
         ObjectNode adicionar = payloadValido();
-        adicionar.putArray("tagIds").add(tag1.getId()).add(tag2.getId()).add(tag3.getId());
+        adicionar.putArray("funcaoIds").add(tag1.getId()).add(tag2.getId()).add(tag3.getId());
         editar(vaga.getId(), dono, adicionar).andExpect(status().isOk());
         assertThat(tagsDaVaga(vaga.getId())).containsExactlyInAnyOrder(tag1.getId(), tag2.getId(), tag3.getId());
 
         ObjectNode remover = payloadValido();
-        remover.putArray("tagIds").add(tag1.getId());
+        remover.putArray("funcaoIds").add(tag1.getId());
         editar(vaga.getId(), dono, remover).andExpect(status().isOk());
         assertThat(tagsDaVaga(vaga.getId())).containsExactly(tag1.getId());
     }
 
     @Test
-    void tagIdsAusenteOuNullDevePreservarEListaVaziaDeveLimpar() throws Exception {
-        Usuario dono = criarUsuario("semantica-tags@teste.com", TipoUsuario.CONTRATANTE);
+    void funcaoIdsAusenteOuNullDevePreservarEListaVaziaDeveLimpar() throws Exception {
+        Usuario dono = criarUsuario("semantica-funcoes@teste.com", TipoUsuario.CONTRATANTE);
         Vaga vaga = criarVaga(criarContratante(dono), StatusVaga.ABERTA);
-        Tag tag = criarTag("Dança");
-        definirTags(vaga.getId(), tag.getId());
+        Funcao funcao = criarFuncao("Dança");
+        definirFuncoes(vaga.getId(), funcao.getId());
 
         ObjectNode ausente = payloadValido();
-        ausente.remove("tagIds");
+        ausente.remove("funcaoIds");
         editar(vaga.getId(), dono, ausente).andExpect(status().isOk());
-        assertThat(tagsDaVaga(vaga.getId())).containsExactly(tag.getId());
+        assertThat(tagsDaVaga(vaga.getId())).containsExactly(funcao.getId());
 
         ObjectNode nulo = payloadValido();
-        nulo.putNull("tagIds");
+        nulo.putNull("funcaoIds");
         editar(vaga.getId(), dono, nulo).andExpect(status().isOk());
-        assertThat(tagsDaVaga(vaga.getId())).containsExactly(tag.getId());
+        assertThat(tagsDaVaga(vaga.getId())).containsExactly(funcao.getId());
 
         ObjectNode vazio = payloadValido();
-        vazio.putArray("tagIds");
+        vazio.putArray("funcaoIds");
         editar(vaga.getId(), dono, vazio).andExpect(status().isOk());
         assertThat(tagsDaVaga(vaga.getId())).isEmpty();
     }
 
     @Test
-    void tagInexistenteDeveCausarRollbackSemAlterarCatalogoOuTagsDoArtista() throws Exception {
+    void funcaoInexistenteDeveCausarRollbackSemAlterarCatalogoOuFuncoesDoArtista() throws Exception {
         Usuario dono = criarUsuario("rollback@teste.com", TipoUsuario.CONTRATANTE);
         Vaga vaga = criarVaga(criarContratante(dono), StatusVaga.ABERTA);
-        Tag tag1 = criarTag("Cinema");
-        Tag tag2 = criarTag("Produção");
-        definirTags(vaga.getId(), tag1.getId(), tag2.getId());
+        Funcao tag1 = criarFuncao("Cinema");
+        Funcao tag2 = criarFuncao("Produção");
+        definirFuncoes(vaga.getId(), tag1.getId(), tag2.getId());
 
-        Usuario artistaUsuario = criarUsuario("artista-tag@teste.com", TipoUsuario.ARTISTA);
+        Usuario artistaUsuario = criarUsuario("artista-funcao@teste.com", TipoUsuario.ARTISTA);
         PerfilArtista artista = criarArtista(artistaUsuario);
-        artista.getTags().add(tag1);
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(artista, Set.of(tag1));
         perfilArtistaRepository.save(artista);
-        long catalogoAntes = tagRepository.count();
-        long tagsArtistaAntes = contarTagsArtista(artistaUsuario.getId());
+        long catalogoAntes = funcaoRepository.count();
+        long tagsArtistaAntes = contarFuncoesArtista(artistaUsuario.getId());
+        assertThat(tagsArtistaAntes).isEqualTo(1);
 
         ObjectNode payload = payloadValido();
         payload.put("titulo", "Não pode persistir");
-        payload.putArray("tagIds").add(tag1.getId()).add(999_999);
+        payload.putArray("funcaoIds").add(tag1.getId()).add(999_999);
         editar(vaga.getId(), dono, payload).andExpect(status().isNotFound());
 
         assertThat(vagaRepository.findById(vaga.getId()).orElseThrow().getTitulo()).isEqualTo("Original");
         assertThat(tagsDaVaga(vaga.getId())).containsExactlyInAnyOrder(tag1.getId(), tag2.getId());
-        assertThat(tagRepository.count()).isEqualTo(catalogoAntes);
-        assertThat(contarTagsArtista(artistaUsuario.getId())).isEqualTo(tagsArtistaAntes);
+        assertThat(funcaoRepository.count()).isEqualTo(catalogoAntes);
+        assertThat(contarFuncoesArtista(artistaUsuario.getId())).isEqualTo(tagsArtistaAntes);
     }
 
     @Test
@@ -322,8 +330,11 @@ class VagaEdicaoRf07IntegrationTest {
         payload.put("titulo", "Título atualizado");
         payload.put("descricao", "Descrição atualizada");
         payload.put("requisitos", "Requisitos atualizados");
-        payload.put("remuneraValor", 2500.75);
-        payload.put("formaPagamento", "Transferência");
+        payload.put("areaId", 1);
+        payload.put("abrangencia", "LOCAL");
+        payload.put("valorMinimo", 2500.75);
+        payload.put("valorMaximo", 2500.75);
+        payload.put("formaRemuneracao", "POR_EVENTO");
         payload.put("cidade", "Campinas");
         payload.put("estado", "SP");
         payload.put("enderecoCompleto", "Rua Nova, 10");
@@ -333,7 +344,7 @@ class VagaEdicaoRf07IntegrationTest {
         payload.put("categoria", "Música");
         payload.put("experiencia", "Pleno");
         payload.put("dataLimiteCandidatura", "2030-12-20");
-        payload.put("abrangencia", "nacional");
+        payload.put("abrangencia", "NACIONAL");
         payload.putArray("fotos").add("assets/vaga-foto-1.png").add("https://exemplo.com/foto.jpg");
         return payload;
     }
@@ -360,6 +371,8 @@ class VagaEdicaoRf07IntegrationTest {
 
     private PerfilArtista criarArtista(Usuario usuario) {
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(usuario);
         perfil.setBiografia("Biografia RF07");
         return perfilArtistaRepository.save(perfil);
@@ -367,42 +380,46 @@ class VagaEdicaoRf07IntegrationTest {
 
     private Vaga criarVaga(PerfilContratante contratante, StatusVaga status) {
         Vaga vaga = new Vaga();
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        vaga.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         vaga.setContratante(contratante);
         vaga.setTitulo("Original");
         vaga.setDescricao("Descrição original");
         vaga.setRequisitos("Requisitos originais");
-        vaga.setRemuneraValor(new BigDecimal("1000.00"));
-        vaga.setFormaPagamento("Pix");
+        vaga.setValorMinimo(new BigDecimal("1000.00"));
+        vaga.setValorMaximo(new BigDecimal("1000.00"));
+        vaga.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         vaga.setCidade("São Paulo");
         vaga.setEstado("SP");
         vaga.setModeloTrabalho(ModeloTrabalho.REMOTO);
         vaga.setTipoContrato("Freelance");
         vaga.setStatus(status);
         vaga.setDataPublicacao(LocalDateTime.of(2026, 1, 15, 10, 30));
-        vaga.setTags(new HashSet<>());
+        vaga.setFuncoes(new HashSet<>());
         return vagaRepository.save(vaga);
     }
 
-    private Tag criarTag(String nome) {
-        Tag tag = new Tag();
-        tag.setNome(nome);
-        return tagRepository.save(tag);
+    private Funcao criarFuncao(String nome) {
+        Funcao funcao = new Funcao();
+        funcao.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        funcao.setNome(nome);
+        return funcaoRepository.save(funcao);
     }
 
-    private void definirTags(Long vagaId, Long... tagIds) {
-        for (Long tagId : tagIds) {
-            jdbcTemplate.update("INSERT INTO tags_vaga (vaga_id, tag_id) VALUES (?, ?)", vagaId, tagId);
+    private void definirFuncoes(Long vagaId, Long... funcaoIds) {
+        for (Long funcaoId : funcaoIds) {
+            jdbcTemplate.update("INSERT INTO vaga_funcao (vaga_id, funcao_id) VALUES (?, ?)", vagaId, funcaoId);
         }
     }
 
     private List<Long> tagsDaVaga(Long vagaId) {
         return jdbcTemplate.queryForList(
-                "SELECT tag_id FROM tags_vaga WHERE vaga_id = ? ORDER BY tag_id", Long.class, vagaId);
+                "SELECT funcao_id FROM vaga_funcao WHERE vaga_id = ? ORDER BY funcao_id", Long.class, vagaId);
     }
 
-    private long contarTagsArtista(Long artistaId) {
+    private long contarFuncoesArtista(Long artistaId) {
         return jdbcTemplate.queryForObject(
-                "SELECT count(*) FROM tags_artista WHERE artista_id = ?", Long.class, artistaId);
+                "SELECT count(*) FROM perfil_artista_funcao WHERE perfil_artista_id = ?", Long.class, artistaId);
     }
 
     private Candidatura criarCandidatura(Vaga vaga, PerfilArtista artista) {

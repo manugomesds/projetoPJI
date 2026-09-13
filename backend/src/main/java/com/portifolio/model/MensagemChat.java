@@ -29,8 +29,8 @@ public class MensagemChat {
     @JoinColumn(name = "sala_id", nullable = false)
     private SalaChat sala;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "remetente_id", nullable = false)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "remetente_id")
     private Usuario remetente;
 
     @Column(name = "texto_mensagem", columnDefinition = "text")
@@ -44,4 +44,15 @@ public class MensagemChat {
 
     @Column(name = "data_envio")
     private LocalDateTime dataEnvio;
+    @Column(name = "editada")
+    private Boolean editada = false;
+    @Column(name = "data_edicao")
+    private LocalDateTime dataEdicao;
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @Column(name = "texto_original", columnDefinition = "text")
+    private String textoOriginal;
+    @Column(name = "excluida")
+    private Boolean excluida = false;
+    @Column(name = "data_exclusao")
+    private LocalDateTime dataExclusao;
 }

@@ -36,14 +36,14 @@ class GenericEndpointsSecurityIntegrationTest {
 
     private static final String SENHA = "PalcoTeste123!";
     private static final List<String> TABELAS = List.of(
-            "usuarios", "perfis_artistas", "perfis_contratantes", "tags", "tags_artista",
-            "vagas", "tags_vaga", "candidaturas", "salas_chat", "participantes_chat",
+            "usuarios", "perfis_artistas", "perfis_contratantes", "funcoes", "perfil_artista_funcao",
+            "vagas", "vaga_funcao", "candidaturas", "salas_chat", "participantes_chat",
             "mensagens_chat", "notificacoes", "refresh_tokens", "log_vagas_canceladas");
 
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mvc;
@@ -52,7 +52,7 @@ class GenericEndpointsSecurityIntegrationTest {
     private Conta artista;
     private Conta contratante;
     private Conta menor;
-    private Long tagId;
+    private Long funcaoId;
     private Long vagaId;
 
     @BeforeEach
@@ -60,16 +60,18 @@ class GenericEndpointsSecurityIntegrationTest {
         artista = cadastrar("artista", "ARTISTA", false);
         contratante = cadastrar("contratante", "CONTRATANTE", false);
         menor = cadastrar("menor", "ARTISTA", true);
-        tagId = jdbc.queryForObject("insert into tags(nome) values ('Teste segurança') returning id", Long.class);
-        jdbc.update("insert into tags_artista(artista_id, tag_id) values (?, ?)", artista.id(), tagId);
+        funcaoId = jdbc.queryForObject("insert into funcoes(area_id, nome) values (1, 'Teste segurança') returning id", Long.class);
+        assertThat(jdbc.queryForObject("select area_id from perfil_artista_area where perfil_artista_id=? and principal", Short.class,
+                artista.id())).isEqualTo((short) 1);
+        jdbc.update("insert into perfil_artista_funcao(perfil_artista_id, area_id, funcao_id) values (?, 1, ?)", artista.id(), funcaoId);
         jdbc.update("update perfis_artistas set biografia = ?, localizacao = ?, url_portfolio = ? where usuario_id = ?",
                 "Biografia privada do menor", "Local privado", "https://example.test/privado", menor.id());
         vagaId = jdbc.queryForObject("""
-                insert into vagas(contratante_id,titulo,descricao,requisitos,remunera_valor,
-                    forma_pagamento,cidade,estado,modelo_trabalho,tipo_contrato)
-                values (?, 'Vaga de teste', 'Descrição', 'Requisitos', 100, 'Pix', 'São Paulo', 'SP', 'remoto', 'Freelance') returning id
+                insert into vagas(contratante_id,titulo,descricao,requisitos,valor_minimo,valor_maximo,area_id,abrangencia,
+                    forma_remuneracao,cidade,estado,modelo_trabalho,tipo_contrato)
+                values (?, 'Vaga de teste', 'Descrição', 'Requisitos', 100, 100, 1, 'LOCAL', 'POR_EVENTO', 'São Paulo', 'SP', 'REMOTO', 'Freelance') returning id
                 """, Long.class, contratante.id());
-        jdbc.update("insert into tags_vaga(vaga_id,tag_id) values (?,?)", vagaId, tagId);
+        jdbc.update("insert into vaga_funcao(vaga_id,funcao_id) values (?,?)", vagaId, funcaoId);
         jdbc.update("insert into candidaturas(vaga_id,artista_id,mensagem_apresentacao,link_portfolio_candidatura) values (?,?,?,?)",
                 vagaId, artista.id(), "Apresentação", "https://example.test/portfolio");
         Long salaId = jdbc.queryForObject("insert into salas_chat default values returning id", Long.class);
@@ -77,7 +79,7 @@ class GenericEndpointsSecurityIntegrationTest {
                 salaId, artista.id(), salaId, contratante.id());
         jdbc.update("insert into mensagens_chat(sala_id,remetente_id,texto_mensagem) values (?,?,?)",
                 salaId, artista.id(), "Histórico que não pode desaparecer");
-        jdbc.update("insert into notificacoes(usuario_destino_id,tipo_notificacao,mensagem_alerta,link_contexto) values (?,'mensagem',?,?)",
+        jdbc.update("insert into notificacoes(usuario_destino_id,tipo_notificacao,mensagem_alerta,link_contexto) values (?,'MENSAGEM',?,?)",
                 contratante.id(), "Alerta de teste", "/mensagens");
         jdbc.update("insert into log_vagas_canceladas(vaga_id,cancelado_por_id,motivo) values (?,?,?)",
                 vagaId, contratante.id(), "Registro de teste");
@@ -85,7 +87,7 @@ class GenericEndpointsSecurityIntegrationTest {
 
     @AfterEach
     void limparDadosDescartaveis() {
-        jdbc.execute("TRUNCATE usuarios, tags, salas_chat RESTART IDENTITY CASCADE");
+        jdbc.execute("TRUNCATE usuarios, funcoes, salas_chat RESTART IDENTITY CASCADE");
     }
 
     @ParameterizedTest
@@ -116,7 +118,7 @@ class GenericEndpointsSecurityIntegrationTest {
     @Test
     void anonimoETokenInvalidoNaoAcessamOperacoesContidas() throws Exception {
         for (String token : List.of("", "Bearer token-invalido")) {
-            for (String path : List.of("/api/usuarios", "/api/tags")) {
+            for (String path : List.of("/api/usuarios", "/api/funcoes")) {
                 mvc.perform(post(path).header("Authorization", token).contentType(MediaType.APPLICATION_JSON).content("{}"))
                         .andExpect(status().isUnauthorized());
             }
@@ -124,15 +126,15 @@ class GenericEndpointsSecurityIntegrationTest {
                 mvc.perform(delete(path).header("Authorization", token)).andExpect(status().isUnauthorized());
             }
             for (String path : List.of("/api/perfis-artistas", "/api/perfis-contratantes", "/api/usuarios",
-                    "/api/perfis-artistas/" + menor.id(), "/api/perfis-contratantes/" + contratante.id(), "/api/tags")) {
+                    "/api/perfis-artistas/" + menor.id(), "/api/perfis-contratantes/" + contratante.id(), "/api/funcoes")) {
                 mvc.perform(get(path).header("Authorization", token)).andExpect(status().isUnauthorized());
             }
         }
     }
 
     @ParameterizedTest
-    @CsvSource({"POST, /api/tags", "PUT, /api/tags/1", "PATCH, /api/tags/1", "DELETE, /api/tags/1",
-            "POST, /api/tags/", "POST, /api/usuarios/", "DELETE, /api/tags"})
+    @CsvSource({"POST, /api/funcoes", "PUT, /api/funcoes/1", "PATCH, /api/funcoes/1", "DELETE, /api/funcoes/1",
+            "POST, /api/funcoes/", "POST, /api/usuarios/", "DELETE, /api/funcoes"})
     void variantesDeMutacaoSaoBloqueadasAntesDoBody(String method, String path) throws Exception {
         Map<String, List<String>> antes = snapshot();
         for (Conta conta : List.of(artista, contratante)) {
@@ -144,29 +146,30 @@ class GenericEndpointsSecurityIntegrationTest {
     }
 
     @Test
-    void leituraDeTagsEAssociacoesLegitimasContinuamFuncionais() throws Exception {
-        mvc.perform(get("/api/tags").header("Authorization", artista.bearer()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(tagId));
-        mvc.perform(get("/api/tags/{id}", tagId).header("Authorization", contratante.bearer()))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(tagId));
+    void leituraDeFuncoesEAssociacoesLegitimasContinuamFuncionais() throws Exception {
+        mvc.perform(get("/api/funcoes").header("Authorization", artista.bearer()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$[0].id").value(funcaoId));
+        mvc.perform(get("/api/funcoes/{id}", funcaoId).header("Authorization", contratante.bearer()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.id").value(funcaoId));
         mvc.perform(put("/api/perfis-artistas/{id}", artista.id()).header("Authorization", artista.bearer())
                         .contentType(MediaType.APPLICATION_JSON).content(json(Map.of(
-                                "usuarioId", artista.id(), "biografia", "Arte", "localizacao", "São Paulo",
-                                "urlPortfolio", "https://example.test/artista", "tagIds", List.of(tagId)))))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.tagIds[0]").value(tagId));
+                                "usuarioId", artista.id(), "biografia", "Arte", "localizacao", "São Paulo", "areaPrincipalId", 1,
+                                "urlPortfolio", "https://example.test/artista", "funcaoIds", List.of(funcaoId)))))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.funcaoIds[0]").value(funcaoId));
         Map<String, Object> vaga = new LinkedHashMap<>(Map.of(
-                "titulo", "Nova vaga", "descricao", "Descrição", "requisitos", "Requisitos", "remuneraValor", 200,
-                "formaPagamento", "Pix", "cidade", "São Paulo", "estado", "SP", "modeloTrabalho", "REMOTO",
-                "tipoContrato", "Freelance", "tagIds", List.of(tagId)));
+                "titulo", "Nova vaga", "descricao", "Descrição", "requisitos", "Requisitos", "areaId", 1,
+                "formaRemuneracao", "A_COMBINAR", "cidade", "São Paulo", "estado", "SP", "modeloTrabalho", "REMOTO",
+                "tipoContrato", "Freelance", "funcaoIds", List.of(funcaoId)));
+        vaga.put("abrangencia", "LOCAL");
         JsonNode criada = mapper.readTree(mvc.perform(post("/api/vagas").header("Authorization", contratante.bearer())
                         .contentType(MediaType.APPLICATION_JSON).content(json(vaga)))
-                .andExpect(status().isCreated()).andExpect(jsonPath("$.tagIds[0]").value(tagId))
+                .andExpect(status().isCreated()).andExpect(jsonPath("$.funcaoIds[0]").value(funcaoId))
                 .andReturn().getResponse().getContentAsString());
         vaga.put("titulo", "Vaga editada");
         mvc.perform(put("/api/vagas/{id}", criada.get("id").asLong()).header("Authorization", contratante.bearer())
                         .contentType(MediaType.APPLICATION_JSON).content(json(vaga)))
-                .andExpect(status().isOk()).andExpect(jsonPath("$.tagIds[0]").value(tagId));
-        assertThat(jdbc.queryForObject("select count(*) from tags", Integer.class)).isEqualTo(1);
+                .andExpect(status().isOk()).andExpect(jsonPath("$.funcaoIds[0]").value(funcaoId));
+        assertThat(jdbc.queryForObject("select count(*) from funcoes", Integer.class)).isEqualTo(1);
     }
 
     @ParameterizedTest
@@ -265,6 +268,8 @@ class GenericEndpointsSecurityIntegrationTest {
         dados.put("telefone", "11999999999");
         dados.put("senha", SENHA);
         dados.put("tipoUsuario", tipo);
+        dados.put("tipoPerfilArtistico", "ARTISTA_SOLO");
+        if ("ARTISTA".equals(tipo)) dados.put("areaPrincipalId", 1);
         if (ehMenor) {
             dados.put("nomeResponsavel", "Responsável sintético");
             dados.put("telefoneResponsavel", "11888888888");

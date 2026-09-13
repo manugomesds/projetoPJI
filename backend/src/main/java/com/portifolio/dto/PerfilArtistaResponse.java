@@ -10,6 +10,9 @@ import lombok.Getter;
 @Builder
 public class PerfilArtistaResponse {
     private Long usuarioId;
+    private com.portifolio.model.enums.TipoPerfilArtistico tipoPerfilArtistico;
+    private com.portifolio.model.enums.Abrangencia raioAtuacao;
+    private Short areaPrincipalId;
     private String biografia;
     private String localizacao;
     private String urlPortfolio;
@@ -17,7 +20,7 @@ public class PerfilArtistaResponse {
     private BigDecimal scoreEngajamento;
     private String bannerUrl;
     private LocalDateTime ultimaAtualizacao;
-    private Set<Long> tagIds;
+    private Set<Long> funcaoIds;
 
     // RF34: URL do avatar resolvida (foto propria > foto Google > DiceBear)
     private String avatarUrl;

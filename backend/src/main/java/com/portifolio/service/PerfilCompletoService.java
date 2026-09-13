@@ -31,10 +31,12 @@ public class PerfilCompletoService {
             Optional<PerfilArtista> perfil = perfilArtistaRepository.findById(usuario.getId());
             perfilArtista = perfil.orElse(null);
             completo = perfil.map(valor -> calcularArtista(usuario, valor)).orElse(false);
-        } else {
+        } else if (usuario.getTipoUsuario() == TipoUsuario.CONTRATANTE) {
             completo = perfilContratanteRepository.findById(usuario.getId())
                     .map(perfil -> calcularContratante(usuario, perfil))
                     .orElse(false);
+        } else {
+            completo = false;
         }
 
         boolean tornouCompleto = !Boolean.TRUE.equals(usuario.getPerfilCompleto()) && completo;
@@ -53,8 +55,11 @@ public class PerfilCompletoService {
                 && preenchido(perfil.getBiografia())
                 && preenchido(perfil.getLocalizacao())
                 && preenchido(perfil.getUrlPortfolio())
-                && perfil.getTags() != null
-                && !perfil.getTags().isEmpty();
+                && perfil.getTipoPerfilArtistico() != null
+                && perfil.getRaioAtuacao() != null
+                && perfil.getAreas().stream().filter(com.portifolio.model.PerfilArtistaArea::isPrincipal).count() == 1
+                && perfil.getFuncoes() != null
+                && !perfil.getFuncoes().isEmpty();
     }
 
     public boolean calcularContratante(Usuario usuario, PerfilContratante perfil) {

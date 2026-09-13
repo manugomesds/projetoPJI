@@ -40,7 +40,7 @@ class JwtAuthenticationIntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -117,8 +117,9 @@ class JwtAuthenticationIntegrationTest {
                                 "titulo", "Vaga restrita a contratante",
                                 "descricao", "Descrição válida",
                                 "requisitos", "Requisitos válidos",
-                                "remuneraValor", 1000,
-                                "formaPagamento", "Pix",
+                                "areaId", 1,
+                                "abrangencia", "LOCAL",
+                                "formaRemuneracao", "A_COMBINAR",
                                 "cidade", "São Paulo",
                                 "estado", "SP",
                                 "modeloTrabalho", "REMOTO",

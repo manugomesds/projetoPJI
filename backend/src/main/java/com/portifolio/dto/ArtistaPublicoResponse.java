@@ -14,5 +14,5 @@ public class ArtistaPublicoResponse implements PerfilPublicoResponse {
     private String urlPortfolio;
     private String bannerUrl;
     private String avatarUrl;
-    private Set<TagResponse> tags;
+    private Set<FuncaoResponse> funcoes;
 }

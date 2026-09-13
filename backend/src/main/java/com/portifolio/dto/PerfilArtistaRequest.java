@@ -37,5 +37,14 @@ public class PerfilArtistaRequest {
     @Size(max = 255, message = "URL do banner deve ter no máximo 255 caracteres")
     @URL(message = "URL do banner deve ser válida")
     private String bannerUrl;
-    private Set<@NotNull(message = "ID da tag não pode ser nulo") Long> tagIds;
+    @jakarta.validation.constraints.Positive
+    private Short areaPrincipalId;
+    private Set<@NotNull(message = "ID da funcao não pode ser nulo") Long> funcaoIds;
+    private com.portifolio.model.enums.TipoPerfilArtistico tipoPerfilArtistico;
+    private com.portifolio.model.enums.Abrangencia raioAtuacao;
+
+    @com.fasterxml.jackson.annotation.JsonSetter("tagIds")
+    public void rejeitarTagsLegadas(Object ignored) {
+        throw new IllegalArgumentException("tagIds foi substituído por areaPrincipalId e funcaoIds.");
+    }
 }

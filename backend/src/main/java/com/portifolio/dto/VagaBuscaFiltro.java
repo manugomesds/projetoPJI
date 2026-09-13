@@ -19,7 +19,7 @@ public class VagaBuscaFiltro {
     private BigDecimal faixaSalarialMin;
     private BigDecimal faixaSalarialMax;
     private String areaAtuacao;
-    private Set<Long> tagIds;
+    private Set<Long> funcaoIds;
     private Long cursor;
     private Long cursorCanceladas;
     private Integer size;

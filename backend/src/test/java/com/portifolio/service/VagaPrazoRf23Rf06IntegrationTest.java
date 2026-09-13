@@ -64,7 +64,7 @@ class VagaPrazoRf23Rf06IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -286,6 +286,8 @@ class VagaPrazoRf23Rf06IntegrationTest {
 
     private PerfilArtista novoArtista(String email, boolean perfilCompleto) {
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(novoUsuario(email, TipoUsuario.ARTISTA, perfilCompleto));
         perfil.setBiografia("Biografia Prazo");
         return perfilArtistaRepository.save(perfil);
@@ -294,12 +296,15 @@ class VagaPrazoRf23Rf06IntegrationTest {
     private Vaga novaVaga(
             PerfilContratante contratante, StatusVaga status, LocalDate dataLimite) {
         Vaga vaga = new Vaga();
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        vaga.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         vaga.setContratante(contratante);
         vaga.setTitulo("Vaga Prazo " + status + " " + dataLimite);
         vaga.setDescricao("Descrição da vaga");
         vaga.setRequisitos("Requisitos da vaga");
-        vaga.setRemuneraValor(new BigDecimal("1000.00"));
-        vaga.setFormaPagamento("Pix");
+        vaga.setValorMinimo(new BigDecimal("1000.00"));
+        vaga.setValorMaximo(new BigDecimal("1000.00"));
+        vaga.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         vaga.setCidade("São Paulo");
         vaga.setEstado("SP");
         vaga.setModeloTrabalho(ModeloTrabalho.REMOTO);
@@ -307,7 +312,7 @@ class VagaPrazoRf23Rf06IntegrationTest {
         vaga.setStatus(status);
         vaga.setDataLimiteCandidatura(dataLimite);
         vaga.setDataPublicacao(LocalDateTime.now());
-        vaga.setTags(new HashSet<>());
+        vaga.setFuncoes(new HashSet<>());
         return vagaRepository.save(vaga);
     }
 

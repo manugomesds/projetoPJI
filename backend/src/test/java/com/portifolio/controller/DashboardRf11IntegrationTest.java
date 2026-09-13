@@ -8,7 +8,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.portifolio.model.Candidatura;
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.ModeloTrabalho;
@@ -18,7 +18,7 @@ import com.portifolio.model.enums.TipoUsuario;
 import com.portifolio.repository.CandidaturaRepository;
 import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
-import com.portifolio.repository.TagRepository;
+import com.portifolio.repository.FuncaoRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.security.JwtService;
@@ -53,7 +53,7 @@ class DashboardRf11IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -61,7 +61,7 @@ class DashboardRf11IntegrationTest {
     @Autowired UsuarioRepository usuarioRepository;
     @Autowired PerfilArtistaRepository perfilArtistaRepository;
     @Autowired PerfilContratanteRepository perfilContratanteRepository;
-    @Autowired TagRepository tagRepository;
+    @Autowired FuncaoRepository funcaoRepository;
     @Autowired VagaRepository vagaRepository;
     @Autowired CandidaturaRepository candidaturaRepository;
     @Autowired JwtService jwtService;
@@ -70,7 +70,7 @@ class DashboardRf11IntegrationTest {
     @AfterEach
     void limparBanco() {
         jdbcTemplate.execute("""
-                TRUNCATE candidaturas, vagas, tags, perfis_artistas,
+                TRUNCATE candidaturas, vagas, funcoes, perfis_artistas,
                          perfis_contratantes, usuarios RESTART IDENTITY CASCADE
                 """);
     }
@@ -84,12 +84,12 @@ class DashboardRf11IntegrationTest {
     }
 
     @Test
-    void artistaRecebeSomenteVagasAbertasComTagsCoincidentesOrdenadasPorCompatibilidade() throws Exception {
+    void artistaRecebeSomenteVagasAbertasComFuncoesCoincidentesOrdenadasPorCompatibilidade() throws Exception {
         PerfilArtista artista = criarArtista("artista@rf11.test", true, LocalDate.of(1990, 1, 1));
-        Tag teatro = criarTag("Teatro");
-        Tag danca = criarTag("Danca");
-        Tag musica = criarTag("Musica");
-        artista.setTags(new HashSet<>(Set.of(teatro, danca)));
+        Funcao teatro = criarFuncao("Teatro");
+        Funcao danca = criarFuncao("Danca");
+        Funcao musica = criarFuncao("Musica");
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(artista, new HashSet<>(Set.of(teatro, danca)));
         perfilArtistaRepository.save(artista);
 
         PerfilContratante contratante = criarContratante("contratante@rf11.test", true);
@@ -106,7 +106,7 @@ class DashboardRf11IntegrationTest {
                 .andExpect(jsonPath("$.tipoUsuario").value("ARTISTA"))
                 .andExpect(jsonPath("$.vagasRecomendadas.content.length()").value(2))
                 .andExpect(jsonPath("$.vagasRecomendadas.content[0].titulo").value("Duas coincidencias"))
-                .andExpect(jsonPath("$.vagasRecomendadas.content[0].quantidadeTagsCoincidentes").value(2))
+                .andExpect(jsonPath("$.vagasRecomendadas.content[0].quantidadeFuncoesCoincidentes").value(2))
                 .andExpect(jsonPath("$.vagasRecomendadas.content[1].titulo").value("Uma coincidencia"))
                 .andExpect(jsonPath("$.candidaturasRecentes").doesNotExist())
                 .andExpect(jsonPath("$.talentosSugeridos").doesNotExist())
@@ -117,10 +117,10 @@ class DashboardRf11IntegrationTest {
     }
 
     @Test
-    void artistaSemTagsNaoRecebeSugestaoAleatoriaEEnxergaPerfilIncompleto() throws Exception {
-        PerfilArtista artista = criarArtista("sem-tags@rf11.test", false, LocalDate.of(1992, 2, 2));
+    void artistaSemFuncoesNaoRecebeSugestaoAleatoriaEEnxergaPerfilIncompleto() throws Exception {
+        PerfilArtista artista = criarArtista("sem-funcoes@rf11.test", false, LocalDate.of(1992, 2, 2));
         PerfilContratante contratante = criarContratante("publicador@rf11.test", true);
-        criarVaga(contratante, "Vaga qualquer", StatusVaga.ABERTA, criarTag("Cinema"));
+        criarVaga(contratante, "Vaga qualquer", StatusVaga.ABERTA, criarFuncao("Cinema"));
 
         mockMvc.perform(get("/api/dashboard")
                         .header("Authorization", bearer(artista.getUsuario())))
@@ -133,12 +133,12 @@ class DashboardRf11IntegrationTest {
 
     @Test
     void perfilIncompletoNaoBloqueiaDashboardNemVisualizacaoDeRecomendacoes() throws Exception {
-        PerfilArtista artista = criarArtista("incompleto-com-tag@rf11.test", false, LocalDate.of(1992, 2, 2));
-        Tag tag = criarTag("Teatro incompleto");
-        artista.setTags(new HashSet<>(Set.of(tag)));
+        PerfilArtista artista = criarArtista("incompleto-com-funcao@rf11.test", false, LocalDate.of(1992, 2, 2));
+        Funcao funcao = criarFuncao("Teatro incompleto");
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(artista, new HashSet<>(Set.of(funcao)));
         perfilArtistaRepository.save(artista);
         PerfilContratante contratante = criarContratante("publicador-incompleto@rf11.test", true);
-        criarVaga(contratante, "Vaga visivel", StatusVaga.ABERTA, tag);
+        criarVaga(contratante, "Vaga visivel", StatusVaga.ABERTA, funcao);
 
         mockMvc.perform(get("/api/dashboard")
                         .header("Authorization", bearer(artista.getUsuario())))
@@ -199,34 +199,34 @@ class DashboardRf11IntegrationTest {
     }
 
     @Test
-    void talentosUsamTagsDasVagasAtivasEExcluemPerfilIncompletoEMenor() throws Exception {
+    void talentosUsamFuncoesDasVagasAtivasEExcluemPerfilIncompletoEMenor() throws Exception {
         PerfilContratante dono = criarContratante("matching@rf11.test", true);
-        Tag teatro = criarTag("Teatro RF11");
-        Tag cinema = criarTag("Cinema RF11");
-        Tag circo = criarTag("Circo RF11");
+        Funcao teatro = criarFuncao("Teatro RF11");
+        Funcao cinema = criarFuncao("Cinema RF11");
+        Funcao circo = criarFuncao("Circo RF11");
         criarVaga(dono, "Vaga ativa", StatusVaga.PAUSADA, teatro, cinema);
         criarVaga(dono, "Vaga cancelada", StatusVaga.CANCELADA, circo);
         PerfilArtista compativel = criarArtista("compativel@rf11.test", true, LocalDate.of(1990, 1, 1), teatro, cinema);
         criarArtista("incompleto@rf11.test", false, LocalDate.of(1990, 1, 1), teatro, cinema);
         criarArtista("menor@rf11.test", true, LocalDate.now().minusYears(17), teatro, cinema);
-        criarArtista("tag-cancelada@rf11.test", true, LocalDate.of(1990, 1, 1), circo);
+        criarArtista("funcao-cancelada@rf11.test", true, LocalDate.of(1990, 1, 1), circo);
 
         mockMvc.perform(get("/api/dashboard")
                         .header("Authorization", bearer(dono.getUsuario())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.talentosSugeridos.content.length()").value(1))
                 .andExpect(jsonPath("$.talentosSugeridos.content[0].artistaId").value(compativel.getUsuarioId()))
-                .andExpect(jsonPath("$.talentosSugeridos.content[0].quantidadeTagsCoincidentes").value(2))
+                .andExpect(jsonPath("$.talentosSugeridos.content[0].quantidadeFuncoesCoincidentes").value(2))
                 .andExpect(jsonPath("$.talentosSugeridos.content[0].email").doesNotExist())
                 .andExpect(jsonPath("$.talentosSugeridos.content[0].dataNascimento").doesNotExist());
     }
 
     @Test
-    void contratanteSemVagaAtivaComTagsNaoRecebeTalentoAleatorio() throws Exception {
+    void contratanteSemVagaAtivaComFuncoesNaoRecebeTalentoAleatorio() throws Exception {
         PerfilContratante dono = criarContratante("sem-contexto@rf11.test", true);
-        Tag tag = criarTag("Sem contexto");
-        criarVaga(dono, "Encerrada", StatusVaga.ENCERRADA, tag);
-        criarArtista("artista-aleatorio@rf11.test", true, LocalDate.of(1990, 1, 1), tag);
+        Funcao funcao = criarFuncao("Sem contexto");
+        criarVaga(dono, "Encerrada", StatusVaga.ENCERRADA, funcao);
+        criarArtista("artista-aleatorio@rf11.test", true, LocalDate.of(1990, 1, 1), funcao);
 
         mockMvc.perform(get("/api/dashboard")
                         .header("Authorization", bearer(dono.getUsuario())))
@@ -238,26 +238,26 @@ class DashboardRf11IntegrationTest {
     @Test
     void talentosOrdenamPorCoincidenciaDepoisPorAtualizacaoMaisRecente() throws Exception {
         PerfilContratante dono = criarContratante("ordem-talentos@rf11.test", true);
-        Tag teatro = criarTag("Teatro ordem");
-        Tag musica = criarTag("Musica ordem");
+        Funcao teatro = criarFuncao("Teatro ordem");
+        Funcao musica = criarFuncao("Musica ordem");
         criarVaga(dono, "Contexto", StatusVaga.ABERTA, teatro, musica);
-        PerfilArtista duasTagsAntigo = criarArtista(
+        PerfilArtista duasFuncoesAntigo = criarArtista(
                 "duas-antigo@rf11.test", true, LocalDate.of(1990, 1, 1), teatro, musica);
-        PerfilArtista duasTagsNovo = criarArtista(
+        PerfilArtista duasFuncoesNovo = criarArtista(
                 "duas-novo@rf11.test", true, LocalDate.of(1990, 1, 1), teatro, musica);
-        PerfilArtista umaTag = criarArtista(
+        PerfilArtista umaFuncao = criarArtista(
                 "uma@rf11.test", true, LocalDate.of(1990, 1, 1), teatro);
-        duasTagsAntigo.setUltimaAtualizacao(LocalDateTime.now().minusDays(2));
-        duasTagsNovo.setUltimaAtualizacao(LocalDateTime.now());
-        umaTag.setUltimaAtualizacao(LocalDateTime.now().plusDays(1));
-        perfilArtistaRepository.saveAll(Set.of(duasTagsAntigo, duasTagsNovo, umaTag));
+        duasFuncoesAntigo.setUltimaAtualizacao(LocalDateTime.now().minusDays(2));
+        duasFuncoesNovo.setUltimaAtualizacao(LocalDateTime.now());
+        umaFuncao.setUltimaAtualizacao(LocalDateTime.now().plusDays(1));
+        perfilArtistaRepository.saveAll(Set.of(duasFuncoesAntigo, duasFuncoesNovo, umaFuncao));
 
         mockMvc.perform(get("/api/dashboard")
                         .header("Authorization", bearer(dono.getUsuario())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.talentosSugeridos.content[0].artistaId").value(duasTagsNovo.getUsuarioId()))
-                .andExpect(jsonPath("$.talentosSugeridos.content[1].artistaId").value(duasTagsAntigo.getUsuarioId()))
-                .andExpect(jsonPath("$.talentosSugeridos.content[2].artistaId").value(umaTag.getUsuarioId()));
+                .andExpect(jsonPath("$.talentosSugeridos.content[0].artistaId").value(duasFuncoesNovo.getUsuarioId()))
+                .andExpect(jsonPath("$.talentosSugeridos.content[1].artistaId").value(duasFuncoesAntigo.getUsuarioId()))
+                .andExpect(jsonPath("$.talentosSugeridos.content[2].artistaId").value(umaFuncao.getUsuarioId()));
     }
 
     @Test
@@ -280,11 +280,11 @@ class DashboardRf11IntegrationTest {
     @Test
     void paginacaoInformaTotalEHasMore() throws Exception {
         PerfilArtista artista = criarArtista("paginacao@rf11.test", true, LocalDate.of(1990, 1, 1));
-        Tag tag = criarTag("Paginada");
-        artista.setTags(new HashSet<>(Set.of(tag)));
+        Funcao funcao = criarFuncao("Paginada");
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(artista, new HashSet<>(Set.of(funcao)));
         perfilArtistaRepository.save(artista);
         PerfilContratante contratante = criarContratante("paginador@rf11.test", true);
-        IntStream.range(0, 3).forEach(i -> criarVaga(contratante, "Vaga " + i, StatusVaga.ABERTA, tag));
+        IntStream.range(0, 3).forEach(i -> criarVaga(contratante, "Vaga " + i, StatusVaga.ABERTA, funcao));
 
         mockMvc.perform(get("/api/dashboard").param("size", "2")
                         .header("Authorization", bearer(artista.getUsuario())))
@@ -297,11 +297,11 @@ class DashboardRf11IntegrationTest {
     @Test
     void vinteRecomendacoesNaoDisparamNMaisUm() throws Exception {
         PerfilArtista artista = criarArtista("nmaisum@rf11.test", true, LocalDate.of(1990, 1, 1));
-        Tag tag = criarTag("Escalavel");
-        artista.setTags(new HashSet<>(Set.of(tag)));
+        Funcao funcao = criarFuncao("Escalavel");
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(artista, new HashSet<>(Set.of(funcao)));
         perfilArtistaRepository.save(artista);
         PerfilContratante contratante = criarContratante("volume@rf11.test", true);
-        IntStream.range(0, 20).forEach(i -> criarVaga(contratante, "Vaga volume " + i, StatusVaga.ABERTA, tag));
+        IntStream.range(0, 20).forEach(i -> criarVaga(contratante, "Vaga volume " + i, StatusVaga.ABERTA, funcao));
         Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
         statistics.clear();
 
@@ -318,14 +318,14 @@ class DashboardRf11IntegrationTest {
     @Test
     void vinteCandidaturasEVinteTalentosNaoDisparamNMaisUm() throws Exception {
         PerfilContratante dono = criarContratante("volume-contratante@rf11.test", true);
-        Tag tag = criarTag("Volume contratante");
-        Vaga vaga = criarVaga(dono, "Vaga para vinte", StatusVaga.ABERTA, tag);
+        Funcao funcao = criarFuncao("Volume contratante");
+        Vaga vaga = criarVaga(dono, "Vaga para vinte", StatusVaga.ABERTA, funcao);
         IntStream.range(0, 20).forEach(i -> {
             PerfilArtista artista = criarArtista(
                     "volume-artista-" + i + "@rf11.test",
                     true,
                     LocalDate.of(1990, 1, 1),
-                    tag);
+                    funcao);
             criarCandidatura(vaga, artista, LocalDateTime.now().minusMinutes(i));
         });
         Statistics statistics = entityManagerFactory.unwrap(SessionFactory.class).getStatistics();
@@ -353,13 +353,15 @@ class DashboardRf11IntegrationTest {
         return usuarioRepository.save(usuario);
     }
 
-    private PerfilArtista criarArtista(String email, boolean completo, LocalDate nascimento, Tag... tags) {
+    private PerfilArtista criarArtista(String email, boolean completo, LocalDate nascimento, Funcao... funcoes) {
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(criarUsuario(email, TipoUsuario.ARTISTA, completo, nascimento));
         perfil.setBiografia("Biografia publica");
         perfil.setLocalizacao("Sao Paulo - SP");
         perfil.setUrlPortfolio("https://portfolio.example/" + email);
-        perfil.setTags(new HashSet<>(Set.of(tags)));
+        com.portifolio.support.OfficialSchemaFixtures.funcoes(perfil, new HashSet<>(Set.of(funcoes)));
         return perfilArtistaRepository.save(perfil);
     }
 
@@ -370,27 +372,31 @@ class DashboardRf11IntegrationTest {
         return perfilContratanteRepository.save(perfil);
     }
 
-    private Tag criarTag(String nome) {
-        Tag tag = new Tag();
-        tag.setNome(nome);
-        return tagRepository.save(tag);
+    private Funcao criarFuncao(String nome) {
+        Funcao funcao = new Funcao();
+        funcao.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        funcao.setNome(nome);
+        return funcaoRepository.save(funcao);
     }
 
-    private Vaga criarVaga(PerfilContratante contratante, String titulo, StatusVaga status, Tag... tags) {
+    private Vaga criarVaga(PerfilContratante contratante, String titulo, StatusVaga status, Funcao... funcoes) {
         Vaga vaga = new Vaga();
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        vaga.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         vaga.setContratante(contratante);
         vaga.setTitulo(titulo);
         vaga.setDescricao("Descricao da vaga");
         vaga.setRequisitos("Requisitos da vaga");
-        vaga.setRemuneraValor(new BigDecimal("1000.00"));
-        vaga.setFormaPagamento("Cachê");
+        vaga.setValorMinimo(new BigDecimal("1000.00"));
+        vaga.setValorMaximo(new BigDecimal("1000.00"));
+        vaga.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         vaga.setCidade("Sao Paulo");
         vaga.setEstado("SP");
         vaga.setModeloTrabalho(ModeloTrabalho.PRESENCIAL);
         vaga.setTipoContrato("Freelancer");
         vaga.setStatus(status);
         vaga.setDataPublicacao(LocalDateTime.now());
-        vaga.setTags(new HashSet<>(Set.of(tags)));
+        vaga.setFuncoes(new HashSet<>(Set.of(funcoes)));
         return vagaRepository.save(vaga);
     }
 

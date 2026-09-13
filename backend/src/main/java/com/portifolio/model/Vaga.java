@@ -1,6 +1,6 @@
 package com.portifolio.model;
 
-import com.portifolio.model.enums.ModeloTrabalho;
+import com.portifolio.model.enums.*;
 import com.portifolio.model.enums.StatusVaga;
 import jakarta.persistence.Column;
 import jakarta.persistence.CollectionTable;
@@ -59,11 +59,15 @@ public class Vaga {
     @Column(nullable = false, columnDefinition = "text")
     private String requisitos;
 
-    @Column(name = "remunera_valor", nullable = false, precision = 10, scale = 2)
-    private BigDecimal remuneraValor;
-
-    @Column(name = "forma_pagamento", nullable = false, length = 100)
-    private String formaPagamento;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "area_id", nullable = false)
+    private AreaArtistica area;
+    @Column(name = "forma_remuneracao", nullable = false, columnDefinition = "forma_remuneracao_enum")
+    private FormaRemuneracao formaRemuneracao = FormaRemuneracao.A_COMBINAR;
+    @Column(name = "valor_minimo", precision = 10, scale = 2)
+    private BigDecimal valorMinimo;
+    @Column(name = "valor_maximo", precision = 10, scale = 2)
+    private BigDecimal valorMaximo;
 
     @Column(nullable = false, length = 100)
     private String cidade;
@@ -77,20 +81,18 @@ public class Vaga {
     @Column(columnDefinition = "text")
     private String beneficios;
 
-    @Column(name = "modelo_trabalho", nullable = false, columnDefinition = "modelo_trabalho_enum")
+    @Column(name = "modelo_trabalho", columnDefinition = "modelo_trabalho_enum")
     private ModeloTrabalho modeloTrabalho;
 
     @Column(name = "tipo_contrato", nullable = false, length = 100)
     private String tipoContrato;
 
     @Column(name = "status", columnDefinition = "status_vaga_enum")
-    private StatusVaga status;
+    private StatusVaga status = StatusVaga.RASCUNHO;
 
     @Column(name = "data_publicacao")
     private LocalDateTime dataPublicacao;
 
-    @Column(length = 100)
-    private String categoria;
 
     @Column(length = 100)
     private String experiencia;
@@ -98,8 +100,8 @@ public class Vaga {
     @Column(name = "data_limite_candidatura")
     private LocalDate dataLimiteCandidatura;
 
-    @Column(length = 30)
-    private String abrangencia;
+    @Column(nullable = false, columnDefinition = "abrangencia_enum")
+    private Abrangencia abrangencia;
 
     @ElementCollection
     @CollectionTable(name = "fotos_vaga", joinColumns = @JoinColumn(name = "vaga_id"))
@@ -109,9 +111,17 @@ public class Vaga {
 
     @ManyToMany
     @JoinTable(
-            name = "tags_vaga",
+            name = "vaga_funcao",
             joinColumns = @JoinColumn(name = "vaga_id"),
-            inverseJoinColumns = @JoinColumn(name = "tag_id")
+            inverseJoinColumns = @JoinColumn(name = "funcao_id")
     )
-    private Set<Tag> tags = new HashSet<>();
+    private Set<Funcao> funcoes = new HashSet<>();
+    @ManyToMany
+    @JoinTable(name = "vaga_especializacao", joinColumns = @JoinColumn(name = "vaga_id"),
+            inverseJoinColumns = @JoinColumn(name = "especializacao_id"))
+    private Set<Especializacao> especializacoes = new HashSet<>();
+    @ManyToMany
+    @JoinTable(name = "vagas_categorias_afirmativas", joinColumns = @JoinColumn(name = "vaga_id"),
+            inverseJoinColumns = @JoinColumn(name = "categoria_id"))
+    private Set<CategoriaAfirmativa> categoriasAfirmativas = new HashSet<>();
 }

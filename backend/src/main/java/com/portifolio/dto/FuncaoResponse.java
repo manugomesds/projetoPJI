@@ -5,7 +5,8 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class TagResponse {
+public class FuncaoResponse {
     private Long id;
+    private Short areaId;
     private String nome;
 }

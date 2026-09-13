@@ -6,11 +6,11 @@ import com.portifolio.dto.DashboardResponse;
 import com.portifolio.dto.DashboardSecaoResponse;
 import com.portifolio.dto.DashboardTalentoResponse;
 import com.portifolio.dto.DashboardVagaResponse;
-import com.portifolio.dto.TagResponse;
+import com.portifolio.dto.FuncaoResponse;
 import com.portifolio.exception.ResourceNotFoundException;
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.StatusVaga;
@@ -67,25 +67,26 @@ public class DashboardService {
         return switch (usuario.getTipoUsuario()) {
             case ARTISTA -> dashboardArtista(usuario, tamanho);
             case CONTRATANTE -> dashboardContratante(usuario, tamanho);
+            default -> throw new com.portifolio.exception.ForbiddenException("Dashboard disponível para artista e contratante.");
         };
     }
 
     private DashboardResponse dashboardArtista(Usuario usuario, int tamanho) {
         PerfilArtista perfil = perfilArtistaRepository.buscarPublicoPorUsuarioId(usuario.getId())
                 .orElse(null);
-        Set<Long> tagIds = perfil == null
+        Set<Long> funcaoIds = perfil == null
                 ? Set.of()
-                : perfil.getTags().stream().map(Tag::getId).collect(Collectors.toSet());
+                : perfil.getFuncoes().stream().map(Funcao::getId).collect(Collectors.toSet());
 
         return DashboardResponse.builder()
                 .tipoUsuario(usuario.getTipoUsuario())
                 .nomeExibicao(usuario.getNome())
                 .avatarUrl(avatarService.resolverUrl(
-                        usuario.getId(), usuario.getFotoPerfil(), perfil == null ? null : perfil.getFotoPerfil()))
+                        usuario.getId(), usuario.getFotoPerfil(), null))
                 .perfilCompleto(Boolean.TRUE.equals(usuario.getPerfilCompleto()))
                 .notificacoes(NOTIFICACOES_DISPONIVEIS)
                 .mensagens(mensagensDisponiveis(usuario.getId()))
-                .vagasRecomendadas(buscarVagasRecomendadas(tagIds, tamanho))
+                .vagasRecomendadas(buscarVagasRecomendadas(funcaoIds, tamanho))
                 .build();
     }
 
@@ -96,14 +97,14 @@ public class DashboardService {
                 || perfil.getNomeEmpresa().isBlank()
                 ? usuario.getNome()
                 : perfil.getNomeEmpresa();
-        Set<Long> tagsContexto = vagaRepository.findTagIdsDasVagasAtivasDoContratante(
+        Set<Long> tagsContexto = vagaRepository.findFuncaoIdsDasVagasAtivasDoContratante(
                 usuario.getId(), STATUS_ATIVOS);
 
         return DashboardResponse.builder()
                 .tipoUsuario(usuario.getTipoUsuario())
                 .nomeExibicao(nomeExibicao)
                 .avatarUrl(avatarService.resolverUrl(
-                        usuario.getId(), usuario.getFotoPerfil(), perfil == null ? null : perfil.getFotoPerfil()))
+                        usuario.getId(), usuario.getFotoPerfil(), null))
                 .perfilCompleto(Boolean.TRUE.equals(usuario.getPerfilCompleto()))
                 .notificacoes(NOTIFICACOES_DISPONIVEIS)
                 .mensagens(mensagensDisponiveis(usuario.getId()))
@@ -113,13 +114,13 @@ public class DashboardService {
     }
 
     private DashboardSecaoResponse<DashboardVagaResponse> buscarVagasRecomendadas(
-            Set<Long> tagIds, int tamanho) {
-        if (tagIds.isEmpty()) {
+            Set<Long> funcaoIds, int tamanho) {
+        if (funcaoIds.isEmpty()) {
             return secaoVazia();
         }
 
-        Page<VagaRecomendadaProjection> pagina = vagaRepository.findRecomendadasPorTags(
-                tagIds, PageRequest.of(0, tamanho));
+        Page<VagaRecomendadaProjection> pagina = vagaRepository.findRecomendadasPorFuncoes(
+                funcaoIds, PageRequest.of(0, tamanho));
         if (pagina.isEmpty()) {
             return secaoVazia();
         }
@@ -129,7 +130,7 @@ public class DashboardService {
         Map<Long, Long> coincidencias = pagina.getContent().stream()
                 .collect(Collectors.toMap(
                         VagaRecomendadaProjection::getId,
-                        VagaRecomendadaProjection::getQuantidadeTagsCoincidentes));
+                        VagaRecomendadaProjection::getQuantidadeFuncoesCoincidentes));
 
         List<DashboardVagaResponse> content = ids.stream()
                 .map(vagas::get)
@@ -163,13 +164,13 @@ public class DashboardService {
     }
 
     private DashboardSecaoResponse<DashboardTalentoResponse> buscarTalentosSugeridos(
-            Set<Long> tagIds, int tamanho) {
-        if (tagIds.isEmpty()) {
+            Set<Long> funcaoIds, int tamanho) {
+        if (funcaoIds.isEmpty()) {
             return secaoVazia();
         }
 
-        Page<TalentoSugeridoProjection> pagina = perfilArtistaRepository.findSugeridosPorTags(
-                tagIds, PageRequest.of(0, tamanho));
+        Page<TalentoSugeridoProjection> pagina = perfilArtistaRepository.findSugeridosPorFuncoes(
+                funcaoIds, PageRequest.of(0, tamanho));
         if (pagina.isEmpty()) {
             return secaoVazia();
         }
@@ -180,7 +181,7 @@ public class DashboardService {
         Map<Long, Long> coincidencias = pagina.getContent().stream()
                 .collect(Collectors.toMap(
                         TalentoSugeridoProjection::getUsuarioId,
-                        TalentoSugeridoProjection::getQuantidadeTagsCoincidentes));
+                        TalentoSugeridoProjection::getQuantidadeFuncoesCoincidentes));
 
         List<DashboardTalentoResponse> content = ids.stream()
                 .map(perfis::get)
@@ -200,13 +201,13 @@ public class DashboardService {
                 .id(vaga.getId())
                 .titulo(vaga.getTitulo())
                 .nomeContratante(nomeContratante)
-                .remuneraValor(vaga.getRemuneraValor())
+                .remuneraValor(vaga.getValorMinimo() != null && vaga.getValorMinimo().equals(vaga.getValorMaximo()) ? vaga.getValorMinimo() : null)
                 .cidade(vaga.getCidade())
                 .estado(vaga.getEstado())
                 .modeloTrabalho(vaga.getModeloTrabalho())
                 .dataPublicacao(vaga.getDataPublicacao())
-                .tags(toTags(vaga.getTags()))
-                .quantidadeTagsCoincidentes(coincidencias == null ? 0 : coincidencias)
+                .funcoes(toFuncoes(vaga.getFuncoes()))
+                .quantidadeFuncoesCoincidentes(coincidencias == null ? 0 : coincidencias)
                 .build();
     }
 
@@ -219,16 +220,16 @@ public class DashboardService {
                 .localizacao(perfil.getLocalizacao())
                 .urlPortfolio(perfil.getUrlPortfolio())
                 .avatarUrl(avatarService.resolverUrl(
-                        perfil.getUsuarioId(), usuario.getFotoPerfil(), perfil.getFotoPerfil()))
-                .tags(toTags(perfil.getTags()))
-                .quantidadeTagsCoincidentes(coincidencias == null ? 0 : coincidencias)
+                        perfil.getUsuarioId(), usuario.getFotoPerfil(), null))
+                .funcoes(toFuncoes(perfil.getFuncoes()))
+                .quantidadeFuncoesCoincidentes(coincidencias == null ? 0 : coincidencias)
                 .build();
     }
 
-    private Set<TagResponse> toTags(Set<Tag> tags) {
-        return tags.stream()
-                .sorted(Comparator.comparing(Tag::getNome, String.CASE_INSENSITIVE_ORDER))
-                .map(tag -> TagResponse.builder().id(tag.getId()).nome(tag.getNome()).build())
+    private Set<FuncaoResponse> toFuncoes(Set<Funcao> funcoes) {
+        return funcoes.stream()
+                .sorted(Comparator.comparing(Funcao::getNome, String.CASE_INSENSITIVE_ORDER))
+                .map(funcao -> FuncaoResponse.builder().id(funcao.getId()).areaId(funcao.getArea().getId()).nome(funcao.getNome()).build())
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 

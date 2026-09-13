@@ -18,6 +18,6 @@ public class DashboardVagaResponse {
     private String estado;
     private ModeloTrabalho modeloTrabalho;
     private LocalDateTime dataPublicacao;
-    private Set<TagResponse> tags;
-    private long quantidadeTagsCoincidentes;
+    private Set<FuncaoResponse> funcoes;
+    private long quantidadeFuncoesCoincidentes;
 }

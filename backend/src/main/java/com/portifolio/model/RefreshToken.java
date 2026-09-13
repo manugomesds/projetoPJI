@@ -29,7 +29,7 @@ public class RefreshToken {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "usuario_id", nullable = false)
+    @JoinColumn(name = "usuario_id")
     private Usuario usuario;
 
     // Token armazenado como hash SHA-256 (nunca em texto puro — RNF01)
@@ -44,4 +44,10 @@ public class RefreshToken {
 
     @Column(name = "data_criacao")
     private LocalDateTime dataCriacao;
+    @Column(name = "dispositivo_info", length = 255)
+    private String dispositivoInfo;
+    @Column(name = "ip_criacao", length = 45)
+    private String ipCriacao;
+    @Column(name = "ultimo_uso")
+    private LocalDateTime ultimoUso;
 }

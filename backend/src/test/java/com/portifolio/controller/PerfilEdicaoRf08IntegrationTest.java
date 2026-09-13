@@ -10,7 +10,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.portifolio.model.PerfilArtista;
 import com.portifolio.model.PerfilContratante;
-import com.portifolio.model.Tag;
+import com.portifolio.model.Funcao;
 import com.portifolio.model.Usuario;
 import com.portifolio.model.Vaga;
 import com.portifolio.model.enums.ModeloTrabalho;
@@ -20,7 +20,7 @@ import com.portifolio.repository.CandidaturaRepository;
 import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
 import com.portifolio.repository.RefreshTokenRepository;
-import com.portifolio.repository.TagRepository;
+import com.portifolio.repository.FuncaoRepository;
 import com.portifolio.repository.UsuarioRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.security.JwtService;
@@ -55,7 +55,7 @@ class PerfilEdicaoRf08IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -64,7 +64,7 @@ class PerfilEdicaoRf08IntegrationTest {
     @Autowired UsuarioRepository usuarioRepository;
     @Autowired PerfilArtistaRepository perfilArtistaRepository;
     @Autowired PerfilContratanteRepository perfilContratanteRepository;
-    @Autowired TagRepository tagRepository;
+    @Autowired FuncaoRepository funcaoRepository;
     @Autowired VagaRepository vagaRepository;
     @Autowired CandidaturaRepository candidaturaRepository;
     @Autowired RefreshTokenRepository refreshTokenRepository;
@@ -75,7 +75,7 @@ class PerfilEdicaoRf08IntegrationTest {
     @AfterEach
     void limparBanco() {
         jdbcTemplate.execute(
-                "TRUNCATE candidaturas, vagas, tags, perfis_artistas, perfis_contratantes, refresh_tokens, usuarios RESTART IDENTITY CASCADE");
+                "TRUNCATE candidaturas, vagas, funcoes, perfis_artistas, perfis_contratantes, refresh_tokens, usuarios RESTART IDENTITY CASCADE");
     }
 
     @Test
@@ -83,8 +83,8 @@ class PerfilEdicaoRf08IntegrationTest {
         PerfilArtista artista = novoArtista("artista-proprio-rf08@teste.com");
         PerfilArtista outro = novoArtista("artista-alheio-rf08@teste.com");
         PerfilContratante contratante = novoContratante("contratante-cruzado-rf08@teste.com");
-        Tag tag = novaTag("Teatro");
-        String corpo = json(perfilArtistaPayload(artista.getUsuarioId(), tag.getId()));
+        Funcao funcao = novaFuncao("Teatro");
+        String corpo = json(perfilArtistaPayload(artista.getUsuarioId(), funcao.getId()));
 
         mockMvc.perform(put("/api/perfis-artistas/{id}", artista.getUsuarioId())
                         .contentType(MediaType.APPLICATION_JSON).content(corpo))
@@ -96,24 +96,24 @@ class PerfilEdicaoRf08IntegrationTest {
         mockMvc.perform(put("/api/perfis-artistas/{id}", contratante.getUsuarioId())
                         .header("Authorization", bearer(contratante.getUsuario()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(perfilArtistaPayload(contratante.getUsuarioId(), tag.getId()))))
+                        .content(json(perfilArtistaPayload(contratante.getUsuarioId(), funcao.getId()))))
                 .andExpect(status().isForbidden());
     }
 
     @Test
-    void artistaCompletoComUmaTagAtualizaFlagETimestampSemDependerDeOpcionais() throws Exception {
+    void artistaCompletoComUmaFuncaoAtualizaFlagETimestampSemDependerDeOpcionais() throws Exception {
         PerfilArtista artista = novoArtista("artista-completo-rf08@teste.com");
         artista.setUltimaAtualizacao(LocalDateTime.now().minusDays(2));
         perfilArtistaRepository.save(artista);
         LocalDateTime anterior = artista.getUltimaAtualizacao();
-        Tag tag = novaTag("Música");
+        Funcao funcao = novaFuncao("Música");
 
         mockMvc.perform(put("/api/perfis-artistas/{id}", artista.getUsuarioId())
                         .header("Authorization", bearer(artista.getUsuario()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(perfilArtistaPayload(artista.getUsuarioId(), tag.getId()))))
+                        .content(json(perfilArtistaPayload(artista.getUsuarioId(), funcao.getId()))))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.tagIds.length()").value(1));
+                .andExpect(jsonPath("$.funcaoIds.length()").value(1));
 
         Usuario atualizado = usuarioRepository.findById(artista.getUsuarioId()).orElseThrow();
         PerfilArtista perfil = perfilArtistaRepository.findById(artista.getUsuarioId()).orElseThrow();
@@ -122,17 +122,20 @@ class PerfilEdicaoRf08IntegrationTest {
     }
 
     @Test
-    void removerUltimaTagRebaixaPerfilCompletoParaFalse() throws Exception {
-        PerfilArtista artista = novoArtista("artista-remove-tag@teste.com");
-        Tag tag = novaTag("Dança");
-        completarArtista(artista, tag);
+    void removerUltimaFuncaoRebaixaPerfilCompletoParaFalse() throws Exception {
+        PerfilArtista artista = novoArtista("artista-remove-funcao@teste.com");
+        Funcao funcao = novaFuncao("Dança");
+        completarArtista(artista, funcao);
         assertThat(usuarioRepository.findById(artista.getUsuarioId()).orElseThrow().getPerfilCompleto()).isTrue();
 
-        Map<String, Object> semTags = perfilArtistaPayload(artista.getUsuarioId(), tag.getId());
-        semTags.put("tagIds", List.of());
+        Map<String, Object> semFuncoes = perfilArtistaPayload(artista.getUsuarioId(), funcao.getId());
+        semFuncoes.put("areaPrincipalId", 1);
+        semFuncoes.put("tipoPerfilArtistico", "ARTISTA_SOLO");
+        semFuncoes.put("raioAtuacao", "LOCAL");
+        semFuncoes.put("funcaoIds", List.of());
         mockMvc.perform(put("/api/perfis-artistas/{id}", artista.getUsuarioId())
                         .header("Authorization", bearer(artista.getUsuario()))
-                        .contentType(MediaType.APPLICATION_JSON).content(json(semTags)))
+                        .contentType(MediaType.APPLICATION_JSON).content(json(semFuncoes)))
                 .andExpect(status().isOk());
 
         assertThat(usuarioRepository.findById(artista.getUsuarioId()).orElseThrow().getPerfilCompleto()).isFalse();
@@ -141,8 +144,8 @@ class PerfilEdicaoRf08IntegrationTest {
     @Test
     void clienteNaoBurlaComPerfilCompletoEPerfilObrigatorioBlankContinuaFalse() throws Exception {
         PerfilArtista artista = novoArtista("artista-burla-rf08@teste.com");
-        Tag tag = novaTag("Cinema");
-        Map<String, Object> payload = perfilArtistaPayload(artista.getUsuarioId(), tag.getId());
+        Funcao funcao = novaFuncao("Cinema");
+        Map<String, Object> payload = perfilArtistaPayload(artista.getUsuarioId(), funcao.getId());
         payload.put("biografia", "   ");
         payload.put("perfilCompleto", true);
 
@@ -155,8 +158,8 @@ class PerfilEdicaoRf08IntegrationTest {
     }
 
     @Test
-    void tagInexistenteEhRejeitadaSemAtualizacaoParcial() throws Exception {
-        PerfilArtista artista = novoArtista("artista-tag-inexistente@teste.com");
+    void funcaoInexistenteEhRejeitadaSemAtualizacaoParcial() throws Exception {
+        PerfilArtista artista = novoArtista("artista-funcao-inexistente@teste.com");
 
         mockMvc.perform(put("/api/perfis-artistas/{id}", artista.getUsuarioId())
                         .header("Authorization", bearer(artista.getUsuario()))
@@ -167,17 +170,20 @@ class PerfilEdicaoRf08IntegrationTest {
         PerfilArtista persistido = perfilArtistaRepository.findById(artista.getUsuarioId()).orElseThrow();
         assertThat(persistido.getBiografia()).isNull();
         assertThat(jdbcTemplate.queryForObject(
-                "select count(*) from tags_artista where artista_id = ?", Integer.class,
+                "select count(*) from perfil_artista_funcao where perfil_artista_id = ?", Integer.class,
                 artista.getUsuarioId())).isZero();
         assertThat(usuarioRepository.findById(artista.getUsuarioId()).orElseThrow().getPerfilCompleto()).isFalse();
     }
 
     @Test
     void tagsDuplicadasGeramUmaUnicaAssociacao() throws Exception {
-        PerfilArtista artista = novoArtista("artista-tags-duplicadas@teste.com");
-        Tag tag = novaTag("Fotografia");
-        Map<String, Object> payload = perfilArtistaPayload(artista.getUsuarioId(), tag.getId());
-        payload.put("tagIds", List.of(tag.getId(), tag.getId()));
+        PerfilArtista artista = novoArtista("artista-funcoes-duplicadas@teste.com");
+        Funcao funcao = novaFuncao("Fotografia");
+        Map<String, Object> payload = perfilArtistaPayload(artista.getUsuarioId(), funcao.getId());
+        payload.put("areaPrincipalId", 1);
+        payload.put("tipoPerfilArtistico", "ARTISTA_SOLO");
+        payload.put("raioAtuacao", "LOCAL");
+        payload.put("funcaoIds", List.of(funcao.getId(), funcao.getId()));
 
         mockMvc.perform(put("/api/perfis-artistas/{id}", artista.getUsuarioId())
                         .header("Authorization", bearer(artista.getUsuario()))
@@ -185,15 +191,15 @@ class PerfilEdicaoRf08IntegrationTest {
                 .andExpect(status().isOk());
 
         assertThat(jdbcTemplate.queryForObject(
-                "select count(*) from tags_artista where artista_id = ?", Integer.class, artista.getUsuarioId()))
+                "select count(*) from perfil_artista_funcao where perfil_artista_id = ?", Integer.class, artista.getUsuarioId()))
                 .isEqualTo(1);
     }
 
     @Test
     void medalhaEScoreEnviadosPeloArtistaSaoIgnorados() throws Exception {
         PerfilArtista artista = novoArtista("artista-score-rf08@teste.com");
-        Tag tag = novaTag("Artes Visuais");
-        Map<String, Object> payload = perfilArtistaPayload(artista.getUsuarioId(), tag.getId());
+        Funcao funcao = novaFuncao("Artes Visuais");
+        Map<String, Object> payload = perfilArtistaPayload(artista.getUsuarioId(), funcao.getId());
         payload.put("nivelMedalha", 5);
         payload.put("scoreEngajamento", 999.99);
 
@@ -203,8 +209,8 @@ class PerfilEdicaoRf08IntegrationTest {
                 .andExpect(status().isOk());
 
         PerfilArtista persistido = perfilArtistaRepository.findById(artista.getUsuarioId()).orElseThrow();
-        assertThat(persistido.getNivelMedalha()).isEqualTo(1);
-        assertThat(persistido.getScoreEngajamento()).isEqualByComparingTo("0.00");
+        assertThat(persistido.getTipoPerfilArtistico()).isEqualTo(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        assertThat(persistido.getRaioAtuacao()).isEqualTo(com.portifolio.model.enums.Abrangencia.LOCAL);
     }
 
     @Test
@@ -303,9 +309,9 @@ class PerfilEdicaoRf08IntegrationTest {
                         .header("Authorization", bearer(menor.getUsuario()))
                         .contentType(MediaType.APPLICATION_JSON).content(json(payload)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.nomeResponsavel").value("Responsável Atualizado"))
-                .andExpect(jsonPath("$.telefoneResponsavel").value("11888887777"))
-                .andExpect(jsonPath("$.emailResponsavel").value("responsavel-atualizado@teste.com"))
+                .andExpect(jsonPath("$.nomeResponsavel").doesNotExist())
+                .andExpect(jsonPath("$.telefoneResponsavel").doesNotExist())
+                .andExpect(jsonPath("$.emailResponsavel").doesNotExist())
                 .andExpect(jsonPath("$.perfilCompleto").value(true));
 
         Usuario persistido = usuarioRepository.findById(menor.getUsuarioId()).orElseThrow();
@@ -367,6 +373,8 @@ class PerfilEdicaoRf08IntegrationTest {
         payloadLegado.put("telefone", menor.getUsuario().getTelefone());
         payloadLegado.put("email", menor.getUsuario().getEmail());
         payloadLegado.put("tipoUsuario", menor.getUsuario().getTipoUsuario().name());
+        payloadLegado.put("tipoPerfilArtistico", "ARTISTA_SOLO");
+        payloadLegado.put("raioAtuacao", "LOCAL");
         payloadLegado.put("nomeResponsavel", "Tentativa alheia");
         payloadLegado.put("telefoneResponsavel", "11777776666");
         payloadLegado.put("emailResponsavel", "tentativa-alheia@teste.com");
@@ -569,6 +577,8 @@ class PerfilEdicaoRf08IntegrationTest {
         payload.put("email", emailNovo);
         payload.put("senha", "artista123");
         payload.put("tipoUsuario", "ARTISTA");
+        payload.put("tipoPerfilArtistico", "ARTISTA_SOLO");
+        payload.put("raioAtuacao", "LOCAL");
 
         mockMvc.perform(post("/api/usuarios")
                         .header("Authorization", bearer(autenticado.getUsuario()))
@@ -583,6 +593,8 @@ class PerfilEdicaoRf08IntegrationTest {
         PerfilArtista artista = novoArtista("google-rf08@teste.com");
         artista.getUsuario().setSenha(null);
         artista.getUsuario().setGoogleId("google-rf08-id");
+        artista.getUsuario().setStatusConta(com.portifolio.model.enums.StatusConta.ATIVA);
+        artista.getUsuario().setPerfilCompleto(true);
         usuarioRepository.save(artista.getUsuario());
         Map<String, Object> payload = dadosUsuario(artista.getUsuario());
         payload.put("senhaAtual", "qualquer");
@@ -608,18 +620,21 @@ class PerfilEdicaoRf08IntegrationTest {
                         .contentType(MediaType.APPLICATION_JSON).content(candidatura1))
                 .andExpect(status().isUnprocessableEntity());
 
-        Tag tag = novaTag("Produção");
-        completarArtista(artista, tag);
+        Funcao funcao = novaFuncao("Produção");
+        completarArtista(artista, funcao);
         mockMvc.perform(post("/api/candidaturas")
                         .header("Authorization", bearer(artista.getUsuario()))
                         .contentType(MediaType.APPLICATION_JSON).content(candidatura1))
                 .andExpect(status().isCreated());
 
-        Map<String, Object> semTags = perfilArtistaPayload(artista.getUsuarioId(), tag.getId());
-        semTags.put("tagIds", List.of());
+        Map<String, Object> semFuncoes = perfilArtistaPayload(artista.getUsuarioId(), funcao.getId());
+        semFuncoes.put("areaPrincipalId", 1);
+        semFuncoes.put("tipoPerfilArtistico", "ARTISTA_SOLO");
+        semFuncoes.put("raioAtuacao", "LOCAL");
+        semFuncoes.put("funcaoIds", List.of());
         mockMvc.perform(put("/api/perfis-artistas/{id}", artista.getUsuarioId())
                         .header("Authorization", bearer(artista.getUsuario()))
-                        .contentType(MediaType.APPLICATION_JSON).content(json(semTags)))
+                        .contentType(MediaType.APPLICATION_JSON).content(json(semFuncoes)))
                 .andExpect(status().isOk());
         assertThat(usuarioRepository.findById(artista.getUsuarioId()).orElseThrow().getPerfilCompleto()).isFalse();
 
@@ -633,6 +648,8 @@ class PerfilEdicaoRf08IntegrationTest {
     private PerfilArtista novoArtista(String email) {
         Usuario usuario = novoUsuario(email, TipoUsuario.ARTISTA);
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(usuario);
         return perfilArtistaRepository.save(perfil);
     }
@@ -677,17 +694,18 @@ class PerfilEdicaoRf08IntegrationTest {
         return usuarioRepository.save(usuario);
     }
 
-    private Tag novaTag(String nome) {
-        Tag tag = new Tag();
-        tag.setNome(nome);
-        return tagRepository.save(tag);
+    private Funcao novaFuncao(String nome) {
+        Funcao funcao = new Funcao();
+        funcao.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        funcao.setNome(nome);
+        return funcaoRepository.save(funcao);
     }
 
-    private void completarArtista(PerfilArtista artista, Tag tag) throws Exception {
+    private void completarArtista(PerfilArtista artista, Funcao funcao) throws Exception {
         mockMvc.perform(put("/api/perfis-artistas/{id}", artista.getUsuarioId())
                         .header("Authorization", bearer(artista.getUsuario()))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(json(perfilArtistaPayload(artista.getUsuarioId(), tag.getId()))))
+                        .content(json(perfilArtistaPayload(artista.getUsuarioId(), funcao.getId()))))
                 .andExpect(status().isOk());
     }
 
@@ -699,13 +717,16 @@ class PerfilEdicaoRf08IntegrationTest {
                 .andExpect(status().isOk());
     }
 
-    private Map<String, Object> perfilArtistaPayload(Long usuarioId, Long tagId) {
+    private Map<String, Object> perfilArtistaPayload(Long usuarioId, Long funcaoId) {
         return new java.util.LinkedHashMap<>(Map.of(
                 "usuarioId", usuarioId,
                 "biografia", "Biografia completa",
                 "localizacao", "São Paulo, SP",
                 "urlPortfolio", "https://portfolio.example",
-                "tagIds", List.of(tagId)));
+                "areaPrincipalId", 1,
+                "tipoPerfilArtistico", "ARTISTA_SOLO",
+                "raioAtuacao", "LOCAL",
+                "funcaoIds", List.of(funcaoId)));
     }
 
     private Map<String, Object> perfilContratantePayload(Long usuarioId, String nomeEmpresa) {
@@ -728,19 +749,22 @@ class PerfilEdicaoRf08IntegrationTest {
 
     private Vaga novaVaga(PerfilContratante contratante, String titulo) {
         Vaga vaga = new Vaga();
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        vaga.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         vaga.setContratante(contratante);
         vaga.setTitulo(titulo);
         vaga.setDescricao("Descrição");
         vaga.setRequisitos("Requisitos");
-        vaga.setRemuneraValor(new BigDecimal("1000.00"));
-        vaga.setFormaPagamento("Pix");
+        vaga.setValorMinimo(new BigDecimal("1000.00"));
+        vaga.setValorMaximo(new BigDecimal("1000.00"));
+        vaga.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         vaga.setCidade("São Paulo");
         vaga.setEstado("SP");
         vaga.setModeloTrabalho(ModeloTrabalho.REMOTO);
         vaga.setTipoContrato("Freelance");
         vaga.setStatus(StatusVaga.ABERTA);
         vaga.setDataPublicacao(LocalDateTime.now());
-        vaga.setTags(new HashSet<>());
+        vaga.setFuncoes(new HashSet<>());
         return vagaRepository.save(vaga);
     }
 

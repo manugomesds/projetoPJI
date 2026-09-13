@@ -57,7 +57,7 @@ class VagaGerenciamentoRf31IntegrationTest {
     @Container
     @ServiceConnection
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:18-alpine")
-            .withInitScript("db/schema-test.sql")
+            .withInitScripts("db/schema-test.sql", "db/catalogo-test.sql")
             .withUrlParam("stringtype", "unspecified");
 
     @Autowired MockMvc mockMvc;
@@ -392,6 +392,8 @@ class VagaGerenciamentoRf31IntegrationTest {
     private PerfilArtista novoArtista(String email) {
         Usuario usuario = novoUsuario(email, TipoUsuario.ARTISTA, true);
         PerfilArtista perfil = new PerfilArtista();
+        perfil.setTipoPerfilArtistico(com.portifolio.model.enums.TipoPerfilArtistico.ARTISTA_SOLO);
+        perfil.setRaioAtuacao(com.portifolio.model.enums.Abrangencia.LOCAL);
         perfil.setUsuario(usuario);
         perfil.setBiografia("Biografia profissional");
         perfil.setLocalizacao("São Paulo, SP");
@@ -415,12 +417,15 @@ class VagaGerenciamentoRf31IntegrationTest {
 
     private Vaga novaVaga(PerfilContratante contratante, StatusVaga status) {
         Vaga vaga = new Vaga();
+        vaga.setArea(com.portifolio.support.OfficialSchemaFixtures.area());
+        vaga.setAbrangencia(com.portifolio.model.enums.Abrangencia.LOCAL);
         vaga.setContratante(contratante);
         vaga.setTitulo("Vaga RF31");
         vaga.setDescricao("Descrição da vaga");
         vaga.setRequisitos("Requisitos profissionais");
-        vaga.setRemuneraValor(new BigDecimal("2500.00"));
-        vaga.setFormaPagamento("Pix");
+        vaga.setValorMinimo(new BigDecimal("2500.00"));
+        vaga.setValorMaximo(new BigDecimal("2500.00"));
+        vaga.setFormaRemuneracao(com.portifolio.model.enums.FormaRemuneracao.POR_EVENTO);
         vaga.setCidade("Campinas");
         vaga.setEstado("SP");
         vaga.setModeloTrabalho(ModeloTrabalho.HIBRIDO);

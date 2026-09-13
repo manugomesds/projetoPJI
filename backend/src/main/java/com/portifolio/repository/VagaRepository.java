@@ -55,48 +55,48 @@ public interface VagaRepository extends JpaRepository<Vaga, Long>, JpaSpecificat
             @Param("statusElegiveis") Set<StatusVaga> statusElegiveis,
             @Param("statusEncerrado") StatusVaga statusEncerrado);
 
-    // RNF05: carrega tags (ManyToMany) e contratante junto, evitando N+1.
+    // RNF05: carrega funcoes (ManyToMany) e contratante junto, evitando N+1.
     // Usado APÓS a paginação (conjunto de IDs já delimitado) — nunca combine
     // fetch join de coleção com LIMIT/OFFSET na mesma query.
-    @EntityGraph(attributePaths = {"tags", "contratante", "contratante.usuario", "fotos"})
+    @EntityGraph(attributePaths = {"area", "funcoes", "contratante", "contratante.usuario.responsavelLegal", "fotos"})
     List<Vaga> findByIdIn(List<Long> ids);
 
-    // RF05: uma única vaga detalhada pode carregar tags e dados públicos do
+    // RF05: uma única vaga detalhada pode carregar funcoes e dados públicos do
     // contratante juntos; fotos permanecem em consulta própria dentro da transação.
-    @EntityGraph(attributePaths = {"tags", "contratante", "contratante.usuario"})
+    @EntityGraph(attributePaths = {"area", "funcoes", "contratante", "contratante.usuario.responsavelLegal"})
     @Query("select v from Vaga v where v.id = :id")
     Optional<Vaga> findDetalhesById(@Param("id") Long id);
 
     @Query(value = """
             select v.id as id,
-                   count(distinct tv.tag_id) as quantidadeTagsCoincidentes
+                   count(distinct tv.funcao_id) as quantidadeFuncoesCoincidentes
             from vagas v
-            join tags_vaga tv on tv.vaga_id = v.id
-            where v.status = 'aberta'
-              and tv.tag_id in (:tagIds)
+            join vaga_funcao tv on tv.vaga_id = v.id
+            where v.status = 'ABERTA'
+              and tv.funcao_id in (:funcaoIds)
             group by v.id, v.data_publicacao
-            order by count(distinct tv.tag_id) desc,
+            order by count(distinct tv.funcao_id) desc,
                      v.data_publicacao desc nulls last,
                      v.id desc
             """, countQuery = """
             select count(distinct v.id)
             from vagas v
-            join tags_vaga tv on tv.vaga_id = v.id
-            where v.status = 'aberta'
-              and tv.tag_id in (:tagIds)
+            join vaga_funcao tv on tv.vaga_id = v.id
+            where v.status = 'ABERTA'
+              and tv.funcao_id in (:funcaoIds)
             """, nativeQuery = true)
-    Page<VagaRecomendadaProjection> findRecomendadasPorTags(
-            @Param("tagIds") Set<Long> tagIds,
+    Page<VagaRecomendadaProjection> findRecomendadasPorFuncoes(
+            @Param("funcaoIds") Set<Long> funcaoIds,
             Pageable pageable);
 
     @Query("""
-            select distinct tag.id
+            select distinct funcao.id
             from Vaga vaga
-            join vaga.tags tag
+            join vaga.funcoes funcao
             where vaga.contratante.usuarioId = :contratanteId
               and vaga.status in :statusAtivos
             """)
-    Set<Long> findTagIdsDasVagasAtivasDoContratante(
+    Set<Long> findFuncaoIdsDasVagasAtivasDoContratante(
             @Param("contratanteId") Long contratanteId,
             @Param("statusAtivos") Set<StatusVaga> statusAtivos);
 }

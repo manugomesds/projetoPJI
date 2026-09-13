@@ -43,10 +43,11 @@ public interface CandidaturaRepository extends JpaRepository<Candidatura, Long> 
     @Query(value = """
             select c.id
             from Candidatura c
-            left join c.artista.tags tag
+            left join c.artista.areas areaArtista
+            left join areaArtista.funcoes funcao
             where c.vaga.id = :vagaId
             group by c.id, c.artista.ultimaAtualizacao
-            order by sum(case when tag.id in :tagIds then 1 else 0 end) desc,
+            order by sum(case when funcao.id in :funcaoIds then 1 else 0 end) desc,
                      case when c.artista.ultimaAtualizacao is null then 1 else 0 end asc,
                      c.artista.ultimaAtualizacao desc,
                      c.id asc
@@ -57,10 +58,10 @@ public interface CandidaturaRepository extends JpaRepository<Candidatura, Long> 
             """)
     Page<Long> findIdsPorVagaOrdenadosPorCompatibilidade(
             @Param("vagaId") Long vagaId,
-            @Param("tagIds") Set<Long> tagIds,
+            @Param("funcaoIds") Set<Long> funcaoIds,
             Pageable pageable);
 
-    @EntityGraph(attributePaths = {"artista", "artista.usuario", "artista.tags"})
+    @EntityGraph(attributePaths = {"artista", "artista.usuario.responsavelLegal", "artista.areas.funcoes"})
     @Query("select distinct c from Candidatura c where c.id in :ids")
     List<Candidatura> findDetalhadasByIdIn(@Param("ids") List<Long> ids);
 
@@ -88,7 +89,7 @@ public interface CandidaturaRepository extends JpaRepository<Candidatura, Long> 
                    vaga.titulo as tituloVaga,
                    artista.usuarioId as artistaId,
                    usuario.nome as nomeArtista,
-                   artista.fotoPerfil as fotoPerfilArtista,
+                   usuario.fotoPerfil as fotoPerfilArtista,
                    usuario.fotoPerfil as fotoPerfilUsuario,
                    c.status as status,
                    c.dataCandidatura as dataCandidatura
