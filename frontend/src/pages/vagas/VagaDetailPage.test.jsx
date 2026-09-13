@@ -24,7 +24,7 @@ const vaga = {
   descricao: 'Apresentação no palco principal.',
   requisitos: 'Experiência com repertório autoral.',
   status: 'ABERTA',
-  tagIds: [2, 7],
+  funcaoIds: [2, 7],
 };
 
 function renderPage(path = '/vagas/42', routePath = '/vagas/:id') {
@@ -138,8 +138,8 @@ test('renderiza as tags quando presentes', async () => {
   apiClient.get.mockResolvedValue(vaga);
   renderPage();
 
-  expect(await screen.findByText('Área #2')).toBeInTheDocument();
-  expect(screen.getByText('Área #7')).toBeInTheDocument();
+  expect(await screen.findByText('Função #2')).toBeInTheDocument();
+  expect(screen.getByText('Função #7')).toBeInTheDocument();
 });
 
 test('404 produz o estado NotFound da vaga', async () => {
@@ -220,8 +220,8 @@ test('proprietário vê ações administrativas e candidatos ordenados pelo back
         localizacao: 'São Paulo/SP',
         biografia: 'Cantora e compositora.',
         avatarUrl: '/api/usuarios/7/avatar',
-        tagsCoincidentes: [2, 7],
-        quantidadeTagsCoincidentes: 2,
+        funcoesCoincidentes: [2, 7],
+        quantidadeFuncoesCoincidentes: 2,
         email: 'privado@example.com',
         telefone: '11999999999',
         mensagemApresentacao: 'Mensagem reservada da candidatura.',
@@ -241,7 +241,7 @@ test('proprietário vê ações administrativas e candidatos ordenados pelo back
   expect(screen.getByRole('link', { name: 'Editar vaga' })).toHaveAttribute('href', '/vagas/42/editar');
   expect(screen.getByRole('link', { name: 'Cancelar vaga' })).toHaveAttribute('href', '/vagas/42/gerenciar#cancelar');
   expect(await screen.findByRole('heading', { name: 'Artista Aurora' })).toBeInTheDocument();
-  expect(screen.getByText('2 áreas compatíveis')).toBeInTheDocument();
+  expect(screen.getByText('2 funções compatíveis')).toBeInTheDocument();
   expect(screen.getByRole('link', { name: 'Ver perfil público' })).toHaveAttribute('href', '/perfis/ARTISTA/7');
   expect(screen.queryByText('privado@example.com')).not.toBeInTheDocument();
   expect(screen.queryByText('11999999999')).not.toBeInTheDocument();
@@ -373,8 +373,8 @@ test('texto não confiável de candidato é tratado como texto e dados privados 
             candidaturaId: 1,
             artistaId: 9,
             nomeArtista: untrustedName,
-            tagsCoincidentes: [],
-            quantidadeTagsCoincidentes: 0,
+            funcoesCoincidentes: [],
+            quantidadeFuncoesCoincidentes: 0,
           }],
         }
   ));

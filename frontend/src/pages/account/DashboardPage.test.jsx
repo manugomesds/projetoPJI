@@ -11,14 +11,14 @@ const availability = { disponivel: true, mensagem: 'Recurso real disponível.' }
 const artist = {
   tipoUsuario: 'ARTISTA', nomeExibicao: 'Artista', perfilCompleto: false, avatarUrl: '/avatar.png',
   notificacoes: availability, mensagens: { ...availability, quantidadeNaoLidas: 2 },
-  vagasRecomendadas: { content: [{ id: 4, titulo: 'Show de jazz', nomeContratante: 'Casa', cidade: 'Recife', estado: 'PE', remuneraValor: 500, tags: [{ id: 1, nome: 'Música' }], quantidadeTagsCoincidentes: 1 }], totalElements: 1, hasMore: false },
+  vagasRecomendadas: { content: [{ id: 4, titulo: 'Show de jazz', nomeContratante: 'Casa', cidade: 'Recife', estado: 'PE', remuneraValor: 500, funcoes: [{ id: 1, nome: 'Música' }], quantidadeFuncoesCoincidentes: 1 }], totalElements: 1, hasMore: false },
 };
 
 const contractor = {
   tipoUsuario: 'CONTRATANTE', nomeExibicao: 'Produtora', perfilCompleto: true, avatarUrl: '/owner.png',
   notificacoes: availability, mensagens: { ...availability, quantidadeNaoLidas: 0 },
   candidaturasRecentes: { content: [{ id: 8, vagaId: 3, tituloVaga: 'Vaga real', artistaId: 12, nomeArtista: 'Pessoa artista', avatarUrl: '/artist.png', status: 'PENDENTE' }], totalElements: 1, hasMore: false },
-  talentosSugeridos: { content: [{ artistaId: 13, nomeExibicao: 'Talento', localizacao: 'SP', avatarUrl: '/talent.png', tags: [], quantidadeTagsCoincidentes: 2 }], totalElements: 1, hasMore: false },
+  talentosSugeridos: { content: [{ artistaId: 13, nomeExibicao: 'Talento', localizacao: 'SP', avatarUrl: '/talent.png', funcoes: [], quantidadeFuncoesCoincidentes: 2 }], totalElements: 1, hasMore: false },
 };
 
 beforeEach(() => getDashboard.mockReset());

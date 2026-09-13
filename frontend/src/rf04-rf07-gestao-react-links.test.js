@@ -12,7 +12,7 @@ test('links produtivos da gestão de vagas apontam para as rotas React', () => {
   expect(mainScript).toContain("['Minhas vagas', '/minhas-vagas']");
   expect(mainScript).toContain("['Publicar vaga', '/vagas/nova']");
   expect(mainScript).toContain("'/vagas/' + encodeURIComponent(vaga.id) + '/editar'");
-  expect(mainScript).toContain("'/vagas/' + encodeURIComponent(vaga.id) + '/gerenciar'");
+  expect(mainScript).toContain("/vagas/' + encodeURIComponent(vaga.id) + '/gerenciar");
   expect(mainScript).toContain("window.location.href = '/minhas-vagas'");
   expect(readPublic('publicar-vaga.html')).toContain('href="/minhas-vagas"');
   expect(readPublic('detalhe-vaga-proprietario.html')).toContain('href="/minhas-vagas"');

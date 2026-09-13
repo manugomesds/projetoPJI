@@ -1,0 +1,190 @@
+/* ==========================================================================
+   Palco — fluxo.css
+   Telas de fluxo de conta: verificacao de e-mail, autorizacao do responsavel
+   e retorno do acesso com Google. Cartao unico e centrado, sobre o fundo
+   escuro da area publica.
+   ========================================================================== */
+
+.fluxo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: 3rem 1.5rem;
+}
+
+.fluxo__card {
+  width: min(100%, 560px);
+  padding: 2.5rem;
+  text-align: center;
+}
+
+.fluxo__card--largo {
+  width: min(100%, 720px);
+  text-align: left;
+}
+
+.fluxo__estado {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+}
+
+.fluxo__card--largo .fluxo__estado {
+  align-items: stretch;
+}
+
+.fluxo__sobrelinha {
+  margin: 0;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cor-magenta);
+}
+
+.fluxo__titulo {
+  margin: 0;
+  font-family: var(--fonte-display);
+  font-size: var(--texto-3xl);
+  line-height: 1.1;
+}
+
+.fluxo__texto {
+  margin: 0;
+  line-height: 1.6;
+}
+
+.fluxo__texto--suave {
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-suave);
+}
+
+.fluxo__texto a,
+.fluxo__versao a {
+  color: var(--cor-magenta);
+  font-weight: 600;
+}
+
+.fluxo__estado--erro .fluxo__sobrelinha {
+  color: var(--cor-magenta);
+}
+
+.fluxo__spinner {
+  width: 36px;
+  height: 36px;
+  border: 3px solid var(--cor-linha);
+  border-top-color: var(--cor-magenta);
+  border-radius: 50%;
+  animation: fluxo-girar 0.9s linear infinite;
+}
+
+@keyframes fluxo-girar {
+  to { transform: rotate(360deg); }
+}
+
+/* Termo do responsavel: rola dentro da propria caixa e recebe foco, para ser
+   alcancavel por teclado sem depender de arrastar a pagina. */
+.fluxo__termo {
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 1.25rem;
+  text-align: left;
+  line-height: 1.6;
+  background-color: var(--cor-lilas);
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-sm);
+}
+
+.fluxo__termo:focus-visible {
+  outline: 3px solid var(--cor-magenta);
+  outline-offset: 2px;
+}
+
+.fluxo__versao {
+  margin: 0;
+  font-size: var(--texto-xs);
+  color: var(--cor-texto-suave);
+}
+
+.fluxo__aceite {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  line-height: 1.5;
+  cursor: pointer;
+}
+
+.fluxo__aceite input {
+  margin-top: 0.2rem;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.fluxo__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+}
+
+.fluxo__aviso {
+  margin: 0;
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  color: var(--cor-magenta);
+}
+
+/* Indisponibilidade honesta: a tela existe, a operacao nao. Fica visivel e
+   legivel, sem parecer erro do usuario. */
+.fluxo__indisponivel {
+  margin: 1.5rem 0 0;
+  padding: 0.9rem 1.1rem;
+  font-size: var(--texto-sm);
+  line-height: 1.5;
+  text-align: left;
+  color: var(--cor-navy);
+  background-color: rgba(255, 191, 0, 0.18);
+  border: 1px solid rgba(255, 191, 0, 0.85);
+  border-radius: var(--raio-sm);
+}
+
+@media (max-width: 700px) {
+  .fluxo {
+    padding: 2rem 1rem;
+  }
+
+  .fluxo__card {
+    padding: 1.75rem 1.25rem;
+  }
+
+  .fluxo__titulo {
+    font-size: var(--texto-2xl);
+  }
+
+  .fluxo__acoes .btn {
+    width: 100%;
+  }
+}
+
+/* Exclusao de conta (RF22) */
+.fluxo__lista {
+  margin: 0;
+  padding-left: 1.25rem;
+  line-height: 1.7;
+}
+
+.fluxo__lista li + li {
+  margin-top: 0.4rem;
+}
+
+.fluxo__motivo {
+  min-height: 96px;
+  padding: 0.75rem 1rem;
+  line-height: 1.5;
+  resize: vertical;
+  border-radius: var(--raio-sm);
+}
+
+[hidden] { display: none !important; }

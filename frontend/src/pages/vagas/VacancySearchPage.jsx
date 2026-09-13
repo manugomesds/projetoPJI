@@ -140,9 +140,9 @@ function SimilarVacancies({ vacancies }) {
   return (
     <section className="vagas-similares-react" aria-labelledby="titulo-vagas-similares">
       <div className="vagas-similares-react__cabecalho">
-        <p>Relacionadas por tags</p>
+        <p>Relacionadas por funções</p>
         <h2 id="titulo-vagas-similares">Vagas Similares</h2>
-        <p>Com base nas tags da primeira oportunidade exibida.</p>
+        <p>Com base nas funções da primeira oportunidade exibida.</p>
       </div>
       <div className="vagas-similares-react__lista">
         {vacancies.map((vacancy, index) => (

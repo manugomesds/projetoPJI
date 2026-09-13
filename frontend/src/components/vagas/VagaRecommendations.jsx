@@ -16,12 +16,12 @@ function RecommendationsState({ kind, children }) {
 }
 
 function SuggestedArtistCard({ artist }) {
-  const tagIds = Array.isArray(artist.tagsCoincidentes)
-    ? artist.tagsCoincidentes
-    : Array.from(artist.tagsCoincidentes || []);
-  const matchCount = Number.isFinite(Number(artist.quantidadeTagsCoincidentes))
-    ? Number(artist.quantidadeTagsCoincidentes)
-    : tagIds.length;
+  const funcaoIds = Array.isArray(artist.funcoesCoincidentes)
+    ? artist.funcoesCoincidentes
+    : Array.from(artist.funcoesCoincidentes || []);
+  const matchCount = Number.isFinite(Number(artist.quantidadeFuncoesCoincidentes))
+    ? Number(artist.quantidadeFuncoesCoincidentes)
+    : funcaoIds.length;
 
   return (
     <article className="rf05-artist-card">
@@ -39,12 +39,12 @@ function SuggestedArtistCard({ artist }) {
         </div>
       </div>
       <p className="rf05-artist-card__match">
-        {matchCount === 1 ? '1 área compatível' : `${matchCount} áreas compatíveis`}
+        {matchCount === 1 ? '1 função compatível' : `${matchCount} funções compatíveis`}
       </p>
       {artist.biografia ? <p className="rf05-artist-card__bio">{artist.biografia}</p> : null}
-      {tagIds.length ? (
-        <div className="rf05-artist-card__tags" aria-label="Áreas compatíveis">
-          {tagIds.map((tagId) => <span key={tagId}>Área #{tagId}</span>)}
+      {funcaoIds.length ? (
+        <div className="rf05-artist-card__tags" aria-label="Funções compatíveis">
+          {funcaoIds.map((tagId) => <span key={tagId}>Função #{tagId}</span>)}
         </div>
       ) : null}
       {artist.artistaId ? (
@@ -62,7 +62,7 @@ function OwnerRecommendations({ state }) {
       <header>
         <p className="dashboard__sobrelinha">Compatibilidade da vaga</p>
         <h2 id="rf05-artists-title">Artistas sugeridos</h2>
-        <p>Candidatos ordenados pelas áreas em comum e pela atualização do perfil.</p>
+        <p>Candidatos ordenados pelas funções em comum e pela atualização do perfil.</p>
       </header>
       {state.status === 'loading' ? (
         <RecommendationsState kind="loading">Carregando artistas sugeridos…</RecommendationsState>

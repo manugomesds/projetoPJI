@@ -282,3 +282,22 @@
     min-height: 64px;
   }
 }
+
+/* RF22 — bloco de encerramento de conta no perfil. Separado do formulario
+   para nao ser lido como parte de "salvar alteracoes". */
+.perfil__zona-risco {
+  margin-top: 2.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--cor-linha);
+}
+
+.perfil__zona-risco-titulo {
+  margin: 0 0 0.35rem;
+  font-size: var(--texto-lg);
+}
+
+.perfil__zona-risco-texto {
+  margin: 0 0 1rem;
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-suave);
+}

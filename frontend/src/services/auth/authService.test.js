@@ -26,13 +26,13 @@ test('cadastro de artista usa lista branca e não envia identidade ou confirmaç
   await cadastrar({
     nome: '  Artista Teste ', dataNascimento: '1990-01-01', telefone: ' 11999999999 ',
     email: ' artista@palco.test ', senha: 'senha123', confirmarSenha: 'senha123',
-    tipoUsuario: 'ARTISTA', tipoPerfilContratante: 'Pessoa Física', termos: true,
+    tipoUsuario: 'ARTISTA', tipoPerfilArtistico: 'ARTISTA_SOLO', areaPrincipalId: 6, tipoPerfilContratante: 'Pessoa Física', termos: true,
     artistaId: 44, usuarioId: 55,
   });
 
   expect(apiClient.post).toHaveBeenCalledWith('/auth/cadastro', {
     nome: 'Artista Teste', dataNascimento: '1990-01-01', telefone: '11999999999',
-    email: 'artista@palco.test', senha: 'senha123', tipoUsuario: 'ARTISTA',
+    email: 'artista@palco.test', senha: 'senha123', tipoUsuario: 'ARTISTA', tipoPerfilArtistico: 'ARTISTA_SOLO', areaPrincipalId: 6,
     tipoPerfilContratante: null, nomeResponsavel: null,
     telefoneResponsavel: null, emailResponsavel: null,
   }, { token: null });

@@ -19,23 +19,12 @@ jest.mock('../../services/vagas/vacancyManagementService', () => ({
 
 const ownVacancy = {
   id: 8, propriaDoContratante: true, titulo: 'Vaga atual', descricao: 'Descrição',
-  requisitos: 'Requisitos', remuneraValor: 500, formaPagamento: 'Pix', cidade: 'Recife',
-  estado: 'PE', modeloTrabalho: 'PRESENCIAL', tipoContrato: 'Freela', tagIds: [2], status: 'PAUSADA',
+  requisitos: 'Requisitos', areaId: 6, abrangencia: 'LOCAL', valorMinimo: 500, formaRemuneracao: 'POR_EVENTO', cidade: 'Recife',
+  estado: 'PE', modeloTrabalho: 'PRESENCIAL', tipoContrato: 'Freela', funcaoIds: [2], status: 'PAUSADA',
 };
 
 function renderRoute(path, element) {
   return render(<MemoryRouter initialEntries={[path]} future={{ v7_relativeSplatPath: true, v7_startTransition: true }}><Routes><Route path={path.includes('editar') ? '/vagas/:id/editar' : '/vagas/nova'} element={element} /><Route path="/vagas/:id/gerenciar" element={<h1>Gestão após salvar</h1>} /></Routes></MemoryRouter>);
-}
-
-function fillCreateForm() {
-  fireEvent.change(screen.getByLabelText('Título da vaga'), { target: { value: 'Nova vaga' } });
-  fireEvent.change(screen.getByLabelText('Descrição'), { target: { value: 'Descrição' } });
-  fireEvent.change(screen.getByLabelText('Requisitos'), { target: { value: 'Requisitos' } });
-  fireEvent.change(screen.getByLabelText('Remuneração'), { target: { value: '1000' } });
-  fireEvent.change(screen.getByLabelText('Forma de pagamento'), { target: { value: 'Pix' } });
-  fireEvent.change(screen.getByLabelText('Cidade'), { target: { value: 'Recife' } });
-  fireEvent.change(screen.getByLabelText('Estado (UF)'), { target: { value: 'PE' } });
-  fireEvent.change(screen.getByLabelText('Tipo de contrato'), { target: { value: 'Freela' } });
 }
 
 beforeEach(() => {
@@ -43,30 +32,26 @@ beforeEach(() => {
   getManagedVacancy.mockReset();
   listVacancyTags.mockReset();
   updateVacancy.mockReset();
-  listVacancyTags.mockResolvedValue([{ id: 2, nome: 'Música' }]);
+  listVacancyTags.mockResolvedValue([{ id: 2, areaId: 6, nome: 'Música' }]);
 });
 
-test('publicação válida usa tags da API e segue para gestão após 201', async () => {
-  createVacancy.mockResolvedValue({ id: 81 });
+test('publicação aguarda catálogo real de áreas sem enviar vaga', async () => {
   renderRoute('/vagas/nova', <VacancyCreatePage />);
-  await screen.findByLabelText('Música');
-  fillCreateForm();
-  fireEvent.click(screen.getByLabelText('Música'));
-  fireEvent.click(screen.getByRole('button', { name: 'Publicar vaga' }));
-  await waitFor(() => expect(createVacancy).toHaveBeenCalledWith(expect.objectContaining({ titulo: 'Nova vaga', tagIds: [2] })));
-  expect(await screen.findByRole('heading', { name: 'Gestão após salvar' })).toBeInTheDocument();
+  expect(await screen.findByRole('button', { name: 'Publicar vaga' })).toBeDisabled();
+  expect(screen.getByText(/Publicação indisponível/)).toBeInTheDocument();
+  expect(createVacancy).not.toHaveBeenCalled();
 });
 
 test.each([
   [403, 'Você não tem permissão'],
   [409, 'entrou em conflito'],
   [422, 'Dados de publicação inválidos'],
-])('publicação preserva erro contextual HTTP %s', async (status, expected) => {
-  createVacancy.mockRejectedValue({ status, message: status === 422 ? 'Dados de publicação inválidos' : 'interno' });
-  renderRoute('/vagas/nova', <VacancyCreatePage />);
+])('edição preserva erro contextual HTTP %s', async (status, expected) => {
+  getManagedVacancy.mockResolvedValue(ownVacancy);
+  updateVacancy.mockRejectedValue({ status, message: status === 422 ? 'Dados de publicação inválidos' : 'interno' });
+  renderRoute('/vagas/8/editar', <VacancyEditPage />);
   await screen.findByLabelText('Música');
-  fillCreateForm();
-  fireEvent.click(screen.getByRole('button', { name: 'Publicar vaga' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
   expect(await screen.findByRole('alert')).toHaveTextContent(expected);
 });
 
@@ -79,7 +64,7 @@ test('edição própria carrega dados/tags e envia somente alterações do formu
   expect(screen.getByLabelText('Música')).toBeChecked();
   fireEvent.change(title, { target: { value: 'Título atualizado' } });
   fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
-  await waitFor(() => expect(updateVacancy).toHaveBeenCalledWith('8', expect.objectContaining({ titulo: 'Título atualizado', tagIds: [2] })));
+  await waitFor(() => expect(updateVacancy).toHaveBeenCalledWith('8', expect.objectContaining({ titulo: 'Título atualizado', funcaoIds: [2] })));
   expect(await screen.findByRole('heading', { name: 'Gestão após salvar' })).toBeInTheDocument();
 });
 

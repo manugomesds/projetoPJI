@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Conclusão do acesso com a conta Google.">
+  <title>Entrando com Google — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/fluxo.css">
+</head>
+<body class="pagina-escura">
+
+  <header>
+    <nav class="navbar" aria-label="Navegação principal">
+      <a href="index.html">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+      <ul class="navbar__menu">
+        <li><a class="navbar__link navbar__link--destaque" href="buscar-vagas.html">Vagas</a></li>
+      </ul>
+      <div class="navbar__acoes">
+        <a class="navbar__link" href="/login">Login</a>
+        <a class="navbar__link navbar__link--destaque" href="/cadastro">Cadastrar</a>
+      </div>
+    </nav>
+  </header>
+
+
+  <main class="fluxo">
+    <div class="card fluxo__card">
+
+      <section class="fluxo__estado" data-google-carregando hidden>
+        <span class="fluxo__spinner" aria-hidden="true"></span>
+        <p class="fluxo__texto">Concluindo seu acesso com o Google...</p>
+      </section>
+
+      <!-- Falta escolher o papel: PENDENTE_TIPO_PERFIL -->
+      <section class="fluxo__estado" data-google-tipo hidden>
+        <p class="fluxo__sobrelinha">Acesso pendente</p>
+        <h1 class="fluxo__titulo">Seu acesso está <span class="destaque-magenta">pendente</span></h1>
+        <p class="fluxo__texto">
+          O acesso aguarda dados ou ativação da conta. A conclusão deste cadastro
+          ainda não está disponível. Nenhuma sessão autenticada foi iniciada.
+        </p>
+        <div class="fluxo__acoes">
+          <a class="btn btn--contorno" href="/login">Voltar ao login</a>
+        </div>
+        <p class="fluxo__texto fluxo__texto--suave">
+          Volte ao login para consultar as formas de acesso disponíveis.
+        </p>
+      </section>
+
+      <!-- Cancelou no Google, ou o provedor negou -->
+      <section class="fluxo__estado fluxo__estado--erro" data-google-cancelado hidden role="alert">
+        <p class="fluxo__sobrelinha">Acesso não concluído</p>
+        <h1 class="fluxo__titulo">Você <span class="destaque-magenta">cancelou</span></h1>
+        <p class="fluxo__texto" data-google-cancelado-texto>
+          O acesso com o Google foi interrompido antes do fim. O acesso não foi concluído.
+        </p>
+        <a class="btn btn--primario" href="/login">Voltar para o login</a>
+      </section>
+
+      <section class="fluxo__estado fluxo__estado--erro" data-google-erro hidden role="alert">
+        <p class="fluxo__sobrelinha">Não deu certo</p>
+        <h1 class="fluxo__titulo">Falha ao <span class="destaque-magenta">entrar</span></h1>
+        <p class="fluxo__texto" data-google-erro-texto></p>
+        <a class="btn btn--contorno" href="/login">Tentar de outro jeito</a>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/main.js"></script>
+  <script src="js/fluxo-conta.js"></script>
+</body>
+</html>

@@ -120,7 +120,7 @@
     preencherImagem(selecionar('[data-banner]'), perfil.bannerUrl, 'Banner de ' + (perfil.nomeExibicao || 'perfil'));
 
     if (tipo === 'ARTISTA') {
-      renderizarTags(perfil.tags);
+      renderizarTags(perfil.funcoes);
       var portfolio = urlHttpSegura(perfil.urlPortfolio);
       var abaPortfolio = selecionar('[data-aba="portfolio"]');
       if (portfolio) {

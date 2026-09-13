@@ -72,6 +72,7 @@ export default function LoginPage({ onAuthenticated = redirectToLegacyDashboard 
             <p className="login__cadastro">Ainda não está no <span className="destaque-magenta">Palco</span>? <a href="/cadastro">Crie uma conta.</a></p>
             <p className="texto-legal login__legal">Ao continuar, você concorda com os <span className="auth-pending-link" role="link" aria-disabled="true">Termos de Serviço do Palco</span> e confirma que leu nossa <span className="auth-pending-link" role="link" aria-disabled="true">Política de Privacidade</span>.</p>
           </form>
+          <a className="btn btn--contorno" href="/google-callback.html">Acessar com Google</a>
         </div>
       </main>
     </AuthLayout>

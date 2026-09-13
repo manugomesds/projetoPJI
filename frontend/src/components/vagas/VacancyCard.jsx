@@ -1,6 +1,6 @@
 import {
   brazilianDate,
-  currency,
+  vacancyRemuneration,
   enumLabel,
   textOr,
   vacancyImage,
@@ -51,7 +51,7 @@ function SearchVacancyCard({ vacancy, cancelled, index }) {
           <span>{location || 'Local não informado'}</span>
           <span>{enumLabel(vacancy.modeloTrabalho) || 'Modelo não informado'}</span>
           <span>{textOr(vacancy.tipoContrato, 'Contrato não informado')}</span>
-          <span>{currency(vacancy.remuneraValor)}</span>
+          <span>{vacancyRemuneration(vacancy)}</span>
         </div>
         <p className="vaga-busca-card__descricao">
           {textOr(vacancy.descricao, 'Descrição não informada.')}
@@ -71,7 +71,7 @@ function HomeVacancyCard({ vacancy, index, featured }) {
   const location = [textOr(vacancy.cidade, ''), textOr(vacancy.estado, '')]
     .filter(Boolean)
     .join(', ');
-  const details = [location, enumLabel(vacancy.modeloTrabalho), currency(vacancy.remuneraValor)]
+  const details = [location, enumLabel(vacancy.modeloTrabalho), vacancyRemuneration(vacancy)]
     .filter((value) => value && value !== 'Remuneração não informada');
 
   return (

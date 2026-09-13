@@ -5,10 +5,10 @@ import { getSuggestedArtists } from '../../services/vagas/vagaService';
 import { STATUS_LABELS } from './CandidaturaAction';
 
 const ACTIONS = {
-  PENDENTE: ['EM_ANALISE', 'APROVADO', 'REJEITADO'],
-  EM_ANALISE: ['APROVADO', 'REJEITADO'],
+  PENDENTE: ['EM_ANALISE', 'ACEITA', 'REJEITADA'],
+  EM_ANALISE: ['ACEITA', 'REJEITADA'],
 };
-const ACTION_LABELS = { EM_ANALISE: 'Iniciar análise', APROVADO: 'Aprovar', REJEITADO: 'Rejeitar' };
+const ACTION_LABELS = { EM_ANALISE: 'Iniciar análise', ACEITA: 'Aprovar', REJEITADA: 'Rejeitar' };
 
 function ApplicationReview({ vacancyId, application }) {
   const [status, setStatus] = useState(application.status);

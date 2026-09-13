@@ -46,18 +46,13 @@ test('calcula idade respeitando aniversário e rejeita data inválida', () => {
   expect(calculateAge('2026-02-31', new Date(2026, 7, 31))).toBeNull();
 });
 
-test('adulto ARTISTA envia o contrato suportado e segue ao login', async () => {
-  authService.cadastrar.mockResolvedValue({ id: 10 });
-  renderRegistration();
-  fillCommon();
-
+test('adulto ARTISTA aguarda catálogo real sem enviar um ID inventado', () => {
+  renderRegistration(); fillCommon();
+  fireEvent.change(screen.getByLabelText('Tipo de perfil artístico'), { target: { value: 'ARTISTA_SOLO' } });
   fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
-
-  await waitFor(() => expect(authService.cadastrar).toHaveBeenCalledWith(expect.objectContaining({
-    nome: 'Pessoa Teste', tipoUsuario: 'ARTISTA', nomeResponsavel: '',
-    telefoneResponsavel: '', emailResponsavel: '',
-  })));
-  expect(await screen.findByRole('heading', { name: 'Login após cadastro' })).toBeInTheDocument();
+  expect(authService.cadastrar).not.toHaveBeenCalled();
+  expect(screen.getByRole('alert')).toHaveTextContent('catálogo de áreas');
+  expect(screen.getByLabelText('Área principal')).toBeDisabled();
 });
 
 test('contratante usa o mesmo formulário conforme contrato real', async () => {
@@ -96,7 +91,7 @@ test('entre 14 e 17 anos exibe e exige os três dados do responsável', () => {
 test('menor de 18 com responsável completo envia os campos oficiais', async () => {
   authService.cadastrar.mockResolvedValue({ id: 12 });
   renderRegistration();
-  fillCommon({ age: 17 });
+  fillCommon({ age: 17, role: 'CONTRATANTE' });
   fireEvent.change(screen.getByLabelText('Nome do responsável'), { target: { value: 'Responsável Teste' } });
   fireEvent.change(screen.getByLabelText('Telefone do responsável'), { target: { value: '11988888888' } });
   fireEvent.change(screen.getByLabelText('E-mail do responsável'), { target: { value: 'responsavel@palco.test' } });
@@ -140,7 +135,7 @@ test('senha fora da política mostra a mensagem oficial e bloqueia a API', () =>
 test('email duplicado recebe mensagem contextual sem detalhe interno', async () => {
   authService.cadastrar.mockRejectedValue({ status: 409, message: 'constraint usuarios_email_key' });
   renderRegistration();
-  fillCommon();
+  fillCommon({ role: 'CONTRATANTE' });
   fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Este e-mail já está cadastrado.');
@@ -150,7 +145,7 @@ test('email duplicado recebe mensagem contextual sem detalhe interno', async () 
 test('erro técnico é seguro', async () => {
   authService.cadastrar.mockRejectedValue({ status: 500, message: 'stack trace sensível' });
   renderRegistration();
-  fillCommon();
+  fillCommon({ role: 'CONTRATANTE' });
   fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
 
   expect(await screen.findByRole('alert')).toHaveTextContent('Não foi possível concluir o cadastro.');
@@ -161,7 +156,7 @@ test('loading evita cadastro duplicado', async () => {
   let resolveRequest;
   authService.cadastrar.mockReturnValue(new Promise((resolve) => { resolveRequest = resolve; }));
   renderRegistration();
-  fillCommon();
+  fillCommon({ role: 'CONTRATANTE' });
   const form = screen.getByRole('button', { name: 'Registrar' }).closest('form');
 
   fireEvent.submit(form);

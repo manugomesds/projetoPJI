@@ -6,16 +6,17 @@ const EDITABLE_FIELDS = [
   'titulo',
   'descricao',
   'requisitos',
-  'remuneraValor',
-  'formaPagamento',
+  'areaId',
+  'valorMinimo',
+  'valorMaximo',
+  'formaRemuneracao',
   'cidade',
   'estado',
   'enderecoCompleto',
   'beneficios',
   'modeloTrabalho',
   'tipoContrato',
-  'tagIds',
-  'categoria',
+  'funcaoIds',
   'experiencia',
   'dataLimiteCandidatura',
   'abrangencia',
@@ -31,18 +32,19 @@ export function normalizeVacancyPayload(source) {
   payload.titulo = String(payload.titulo || '').trim();
   payload.descricao = String(payload.descricao || '').trim();
   payload.requisitos = String(payload.requisitos || '').trim();
-  payload.remuneraValor = Number(payload.remuneraValor);
-  payload.formaPagamento = String(payload.formaPagamento || '').trim();
+  payload.areaId = Number(payload.areaId);
+  payload.valorMinimo = payload.valorMinimo === '' || payload.valorMinimo == null ? null : Number(payload.valorMinimo);
+  payload.valorMaximo = payload.valorMaximo === '' || payload.valorMaximo == null ? null : Number(payload.valorMaximo);
+  payload.formaRemuneracao = payload.formaRemuneracao || null;
   payload.cidade = String(payload.cidade || '').trim();
   payload.estado = String(payload.estado || '').trim().toUpperCase();
   payload.tipoContrato = String(payload.tipoContrato || '').trim();
   payload.enderecoCompleto = String(payload.enderecoCompleto || '').trim() || null;
   payload.beneficios = String(payload.beneficios || '').trim() || null;
-  payload.categoria = String(payload.categoria || '').trim() || null;
   payload.experiencia = String(payload.experiencia || '').trim() || null;
   payload.dataLimiteCandidatura = payload.dataLimiteCandidatura || null;
-  payload.abrangencia = String(payload.abrangencia || '').trim() || null;
-  payload.tagIds = [...new Set((Array.isArray(payload.tagIds) ? payload.tagIds : [])
+  payload.abrangencia = String(payload.abrangencia || '').trim().toUpperCase() || null;
+  payload.funcaoIds = [...new Set((Array.isArray(payload.funcaoIds) ? payload.funcaoIds : [])
     .map(Number)
     .filter((id) => Number.isInteger(id) && id > 0))];
   payload.fotos = (Array.isArray(payload.fotos) ? payload.fotos : [])
@@ -66,7 +68,7 @@ export function getRelatedVacancies(id) {
 }
 
 export function listVacancyTags() {
-  return apiClient.get('/tags');
+  return apiClient.get('/funcoes');
 }
 
 export function listReceivedApplications({ page = 0, size = 50 } = {}) {

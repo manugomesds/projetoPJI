@@ -27,8 +27,8 @@ export function buildVacancyParams(filters = {}, pagination = {}) {
     if (hasValue(filters[field])) params.set(field, String(filters[field]).trim());
   });
 
-  if (Array.isArray(filters.tagIds)) {
-    filters.tagIds.filter(hasValue).forEach((tagId) => params.append('tagIds', String(tagId)));
+  if (Array.isArray(filters.funcaoIds)) {
+    filters.funcaoIds.filter(hasValue).forEach((tagId) => params.append('funcaoIds', String(tagId)));
   }
   if (hasValue(pagination.cursor)) params.set('cursor', String(pagination.cursor));
   if (hasValue(pagination.cursorCanceladas)) {

@@ -21,7 +21,7 @@ const artist = {
   urlPortfolio: 'https://portfolio.example/lia',
   bannerUrl: 'https://cdn.example/banner.jpg',
   avatarUrl: 'https://cdn.example/avatar.jpg',
-  tags: [
+  funcoes: [
     { id: 1, nome: 'Música' },
     { id: 2, nome: 'Teatro' },
   ],

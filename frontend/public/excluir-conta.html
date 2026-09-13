@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Exclusão definitiva da sua conta Palco.">
+  <title>Excluir conta — Palco</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/componentes.css">
+  <link rel="stylesheet" href="css/fluxo.css">
+</head>
+<body class="pagina-escura">
+
+  <header>
+    <nav class="navbar" aria-label="Navegação principal">
+      <a href="/">
+        <img class="navbar__logo" src="assets/logo-palco.png" alt="Palco">
+      </a>
+      <ul class="navbar__menu">
+        <li><a class="navbar__link navbar__link--destaque" href="buscar-vagas.html">Vagas</a></li>
+      </ul>
+      <div class="navbar__acoes">
+        <a class="navbar__link" href="/login">Login</a>
+        <a class="navbar__link navbar__link--destaque" href="index.html?tela=tipo-usuario">Cadastrar</a>
+      </div>
+    </nav>
+  </header>
+
+
+  <main class="fluxo">
+    <div class="card fluxo__card fluxo__card--largo">
+
+      <section class="fluxo__estado" data-exclusao-form>
+        <p class="fluxo__sobrelinha">Encerrar conta</p>
+        <h1 class="fluxo__titulo">Excluir sua conta <span class="destaque-magenta">definitivamente</span></h1>
+
+        <p class="fluxo__texto" role="status">A exclusão de conta está indisponível nesta versão. A solicitação pode ser recusada e sua conta será mantida.</p>
+
+
+
+        <div class="campo">
+          <label class="campo__rotulo" for="exclusao-confirmacao">
+            Para confirmar, digite <strong>EXCLUIR</strong>
+          </label>
+          <input class="campo__input" id="exclusao-confirmacao" type="text"
+                 autocomplete="off" spellcheck="false"
+                 aria-describedby="exclusao-confirmacao-ajuda">
+          <p class="campo__ajuda" id="exclusao-confirmacao-ajuda">
+            Confirme somente se deseja solicitar o encerramento.
+          </p>
+        </div>
+
+        <div class="fluxo__acoes">
+          <button class="btn btn--perigo" type="button" data-exclusao-confirmar disabled>
+            Excluir minha conta
+          </button>
+          <a class="btn btn--contorno" href="/perfil">Cancelar</a>
+        </div>
+
+        <p class="fluxo__aviso" data-exclusao-erro hidden role="alert"></p>
+      </section>
+
+      <section class="fluxo__estado" data-exclusao-processando hidden>
+        <span class="fluxo__spinner" aria-hidden="true"></span>
+        <p class="fluxo__texto">Excluindo sua conta...</p>
+      </section>
+
+      <section class="fluxo__estado" data-exclusao-sucesso hidden>
+        <p class="fluxo__sobrelinha">Conta excluída</p>
+        <h1 class="fluxo__titulo">Sua conta foi <span class="destaque-magenta">removida</span></h1>
+        <p class="fluxo__texto">
+          O servidor confirmou a exclusão e sua sessão foi encerrada neste navegador.
+        </p>
+        <p class="fluxo__texto fluxo__texto--suave">
+          O servidor não devolve comprovante de exclusão, então não há protocolo a
+          mostrar aqui.
+        </p>
+        <a class="btn btn--primario" href="/">Voltar ao início</a>
+      </section>
+    </div>
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

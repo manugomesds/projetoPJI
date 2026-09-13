@@ -12,6 +12,8 @@ export default function AccountLayout({ children }) {
             <li><a className="navbar__link" href="/dashboard">Dashboard</a></li>
             <li><a className="navbar__link" href="/perfil">Meu perfil</a></li>
             <li><a className="navbar__link" href="/mensagens">Mensagens</a></li>
+            <li><a className="navbar__link" href="/minhas-candidaturas.html">Candidaturas</a></li>
+            <li><a className="navbar__link" href="/notificacoes.html">Notificações</a></li>
           </ul>
           <div className="app-navbar__acoes">
             <LogoutButton />

@@ -3,12 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Editar vaga · fotos e local — Palco</title>
+  <meta name="description" content="Central de notificações da sua conta Palco.">
+  <title>Notificações — Palco</title>
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/componentes.css">
   <link rel="stylesheet" href="css/app.css">
-  <link rel="stylesheet" href="css/detalhe-vaga.css">
-  <link rel="stylesheet" href="css/editar-vaga.css">
 </head>
 <body class="pagina-app">
 
@@ -26,19 +25,20 @@
     <div class="drawer__divisor"></div>
 
     <nav class="drawer__opcoes">
+      <a class="drawer__opcao" href="buscar-vagas.html">
+        <img src="assets/menu-vagas.png" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Vagas</span>
+          <span class="drawer__opcao-desc">Oportunidades abertas para artistas independentes.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
+
       <a class="drawer__opcao" href="minhas-candidaturas.html">
         <img src="assets/icone-candidaturas.svg" alt="">
         <span>
           <span class="drawer__opcao-nome">Minhas candidaturas</span>
           <span class="drawer__opcao-desc">Acompanhe o andamento do que você enviou.</span>
-        </span>
-        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
-      </a>
-      <a class="drawer__opcao" href="/minhas-vagas">
-        <img src="assets/menu-vagas.png" alt="">
-        <span>
-          <span class="drawer__opcao-nome">Vagas</span>
-          <span class="drawer__opcao-desc">Oportunidades abertas para artistas independentes.</span>
         </span>
         <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
       </a>
@@ -116,58 +116,43 @@
           <span class="app-navbar__badge" aria-hidden="true"></span>
         </a>
 
-        <span class="app-navbar__divisor" aria-hidden="true"></span>
 
-        <a href="/perfil" aria-label="Meu perfil">
-          <img class="app-navbar__perfil" src="assets/avatar-perfil.png" alt="">
-        </a>
       </div>
     </nav>
   </header>
 
-  <main class="editar">
-    <form class="editar__card" id="form-editar-midia">
+  <main class="busca">
+    <div class="central__cabecalho">
+      <h1 class="busca__titulo">Suas <span class="destaque-magenta">notificações</span></h1>
+      <button class="btn btn--contorno" type="button" data-notificacoes-marcar-todas>
+        Marcar todas como lidas
+      </button>
+    </div>
 
-      <h1 class="sr-only">Editar vaga — fotos e localização</h1>
+    <p class="busca__resumo" data-notificacoes-resumo role="status" aria-live="polite"></p>
 
-      <div class="editar-midia">
+    <div class="busca__estado" data-notificacoes-carregando hidden>
+      <span class="busca__spinner" aria-hidden="true"></span>
+      <p>Carregando notificações...</p>
+    </div>
 
-        <!-- Galeria de fotos -->
-        <section class="galeria" aria-label="Fotos da vaga">
-          <img class="galeria__item" data-vaga-foto src="assets/vaga-foto-1.png" alt="Equipe montando o set de gravação" tabindex="0">
-          <img class="galeria__item" data-vaga-foto src="assets/vaga-foto-2.png" alt="Operador de câmera durante a gravação" tabindex="0">
-          <img class="galeria__item" data-vaga-foto src="assets/vaga-foto-3.png" alt="Profissional ajustando o equipamento" tabindex="0">
-          <img class="galeria__item" data-vaga-foto src="assets/vaga-foto-3.png" alt="Bastidores da produção" tabindex="0">
-        </section>
+    <div class="busca__estado busca__estado--erro" data-notificacoes-erro hidden role="alert">
+      <p data-notificacoes-erro-texto></p>
+      <button class="btn btn--contorno" type="button" data-notificacoes-tentar>Tentar de novo</button>
+    </div>
 
-        <!-- Localização -->
-        <section class="localizacao" aria-label="Localização da vaga">
-          <img class="localizacao__mapa" src="assets/mapa-localizacao.png"
-               alt="Mapa com a localização da vaga em São Paulo">
+    <div class="busca__estado" data-notificacoes-vazio hidden>
+      <p>Nenhuma notificação por aqui ainda.</p>
+    </div>
 
-          <div class="localizacao__busca">
-            <img src="assets/icone-buscar-mapa.svg" alt="">
-            <input class="localizacao__endereco" type="text" id="endereco" name="endereco"
-                   value="Avenida Surubim, 100, Jardim Guaracy, CEP 00786-324"
-                   aria-label="Endereço da vaga">
-          </div>
+    <ul class="central-lista" data-notificacoes-lista></ul>
 
-          <select class="localizacao__abrangencia" id="abrangencia" name="abrangencia"
-                  aria-label="Abrangência da vaga">
-            <option value="REGIONAL" selected>Regional</option>
-            <option value="LOCAL">Local</option>
-            <option value="NACIONAL">Nacional</option>
-            <option value="REMOTO">Remoto</option>
-          </select>
-        </section>
-
-      </div>
-
-      <div class="editar__acoes">
-        <button class="editar__publicar" type="submit">Publicar</button>
-      </div>
-
-    </form>
+    <div class="busca__paginacao">
+      <button class="btn btn--contorno" type="button" data-notificacoes-mais hidden>
+        Carregar mais
+      </button>
+      <p class="busca__fim" data-notificacoes-fim hidden>Você chegou ao fim da lista.</p>
+    </div>
   </main>
 
   <script src="js/main.js"></script>

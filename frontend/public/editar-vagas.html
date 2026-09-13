@@ -26,6 +26,14 @@
     <div class="drawer__divisor"></div>
 
     <nav class="drawer__opcoes">
+      <a class="drawer__opcao" href="minhas-candidaturas.html">
+        <img src="assets/icone-candidaturas.svg" alt="">
+        <span>
+          <span class="drawer__opcao-nome">Minhas candidaturas</span>
+          <span class="drawer__opcao-desc">Acompanhe o andamento do que você enviou.</span>
+        </span>
+        <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
+      </a>
       <a class="drawer__opcao" href="/minhas-vagas">
         <img src="assets/menu-vagas.png" alt="">
         <span>
@@ -35,7 +43,7 @@
         <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
       </a>
 
-      <a class="drawer__opcao" href="buscar-artistas.html">
+      <a class="drawer__opcao" role="link" aria-disabled="true" title="Indisponível nesta versão">
         <img src="assets/menu-artistas.png" alt="">
         <span>
           <span class="drawer__opcao-nome">Artistas</span>
@@ -44,7 +52,7 @@
         <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
       </a>
 
-      <a class="drawer__opcao" href="contratantes.html">
+      <a class="drawer__opcao" role="link" aria-disabled="true" title="Indisponível nesta versão">
         <img src="assets/menu-contratantes.png" alt="">
         <span>
           <span class="drawer__opcao-nome">Contratantes</span>
@@ -53,7 +61,7 @@
         <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
       </a>
 
-      <a class="drawer__opcao" href="galeria-virtual.html">
+      <a class="drawer__opcao" role="link" aria-disabled="true" title="Indisponível nesta versão">
         <img src="assets/menu-galeria.png" alt="">
         <span>
           <span class="drawer__opcao-nome">Galeria Virtual</span>
@@ -62,7 +70,7 @@
         <span class="drawer__opcao-seta" aria-hidden="true">&rsaquo;</span>
       </a>
 
-      <a class="drawer__opcao" href="top-da-semana.html">
+      <a class="drawer__opcao" role="link" aria-disabled="true" title="Indisponível nesta versão">
         <img src="assets/menu-top-semana.png" alt="">
         <span>
           <span class="drawer__opcao-nome">Top da Semana</span>
@@ -72,7 +80,7 @@
       </a>
     </nav>
 
-    <a class="drawer__cta" href="explorar.html">
+    <a class="drawer__cta" href="/vagas">
       VER TUDO EM EXPLORAR <span aria-hidden="true">&rarr;</span>
     </a>
   </aside>
@@ -93,13 +101,13 @@
       </a>
 
       <ul class="app-navbar__menu">
-        <li><a class="navbar__link navbar__link--destaque" href="explorar.html">Explorar</a></li>
-        <li><a class="navbar__link" href="comunidade.html">Comunidade</a></li>
-        <li><a class="navbar__link" href="empresa.html">Empresa</a></li>
+        <li><a class="navbar__link navbar__link--destaque" href="/vagas">Explorar</a></li>
+        <li><a class="navbar__link" role="link" aria-disabled="true" title="Indisponível nesta versão">Comunidade</a></li>
+        <li><a class="navbar__link" href="/#sobre">Empresa</a></li>
       </ul>
 
       <div class="app-navbar__acoes">
-        <a class="app-navbar__icone" href="meus-salvos.html" aria-label="Favoritos">
+        <a class="app-navbar__icone" role="link" aria-disabled="true" title="Indisponível nesta versão" aria-label="Favoritos">
           <img src="assets/icone-favoritos.png" alt="">
         </a>
 
@@ -171,7 +179,7 @@
               </td>
               <td>
                 <div class="editar__celula">
-                  <input type="text" name="formaPagamento" value="Valor fixo" aria-label="Remuneração" required>
+                  <select class="campo__select" name="formaRemuneracao" required><option value="">Selecione</option><option value="POR_HORA">Por hora</option><option value="DIARIA">Diária</option><option value="POR_EVENTO">Por evento</option><option value="POR_PROJETO">Por projeto</option><option value="MENSAL">Mensal</option><option value="A_COMBINAR">A combinar</option></select>
                   <button class="editar__lapis" type="button" aria-label="Editar remuneração">
                     <img src="assets/icone-editar-campo.svg" alt="">
                   </button>
@@ -179,7 +187,7 @@
               </td>
               <td>
                 <div class="editar__celula">
-                  <input type="text" name="remuneraValor" value="R$ 150,00" aria-label="Valor" required>
+                  <input class="campo__input" name="valorMinimo" type="number" min="0" step="0.01" aria-label="Remuneração mínima"><input class="campo__input" name="valorMaximo" type="number" min="0" step="0.01" aria-label="Remuneração máxima">
                   <button class="editar__lapis" type="button" aria-label="Editar valor">
                     <img src="assets/icone-editar-campo.svg" alt="">
                   </button>

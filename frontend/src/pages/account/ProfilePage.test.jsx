@@ -11,8 +11,8 @@ jest.mock('../../services/account/accountService', () => ({ getPrivateProfile: j
 const userArtist = { id: 7, nome: 'Artista', dataNascimento: '1990-01-01', telefone: '1199', email: 'artista@test', tipoUsuario: 'ARTISTA', perfilCompleto: false };
 const artistResult = {
   usuario: userArtist,
-  perfil: { usuarioId: 7, biografia: 'Bio', localizacao: 'Recife', urlPortfolio: 'https://portfolio.test', bannerUrl: '', avatarUrl: '/avatar.png', tagIds: [1] },
-  tags: [{ id: 1, nome: 'Música' }, { id: 2, nome: 'Teatro' }],
+  perfil: { areaPrincipalId: 6, usuarioId: 7, biografia: 'Bio', localizacao: 'Recife', urlPortfolio: 'https://portfolio.test', bannerUrl: '', avatarUrl: '/avatar.png', funcaoIds: [1] },
+  tags: [{ id: 1, areaId: 6, nome: 'Música' }, { id: 2, areaId: 6, nome: 'Teatro' }],
 };
 const contractorResult = {
   usuario: { ...userArtist, id: 8, nome: 'Contratante', email: 'owner@test', tipoUsuario: 'CONTRATANTE', perfilCompleto: true },
@@ -65,7 +65,7 @@ test('envia atualização válida usando usuário retornado por /me, nunca ID do
   fireEvent.click(screen.getByRole('button', { name: 'Salvar perfil' }));
   await waitFor(() => expect(updatePrivateProfile).toHaveBeenCalledTimes(1));
   expect(updatePrivateProfile.mock.calls[0][0].id).toBe(7);
-  expect(updatePrivateProfile.mock.calls[0][1].tagIds).toEqual([1, 2]);
+  expect(updatePrivateProfile.mock.calls[0][1].funcaoIds).toEqual([1, 2]);
   expect(await screen.findByRole('status')).toHaveTextContent('Perfil atualizado com sucesso');
 });
 

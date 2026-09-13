@@ -38,7 +38,7 @@ test('erro não falsifica sucesso nem estado final', async () => {
   expect(screen.queryByText('Análise registrada com sucesso.')).not.toBeInTheDocument();
 });
 
-test.each(['APROVADO', 'REJEITADO', 'RETIRADA', 'CANCELADA_POR_VAGA'])('não analisa estado final %s', async (status) => {
+test.each(['ACEITA', 'REJEITADA', 'RETIRADA', 'CANCELADA_POR_VAGA'])('não analisa estado final %s', async (status) => {
   getSuggestedArtists.mockResolvedValue({ content: [{ ...application, status }], hasNext: false });
   render(<CandidaturaReviewPanel vacancyId="42" />);
   await screen.findByText(application.nomeArtista);

@@ -11,6 +11,16 @@
 
 (function () {
   'use strict';
+  function remuneracaoDaVaga(vaga) {
+    var partes = [];
+    function moedaValor(v) { return Number(v).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
+    if (vaga.valorMinimo != null) partes.push(moedaValor(vaga.valorMinimo));
+    if (vaga.valorMaximo != null && vaga.valorMaximo !== vaga.valorMinimo) partes.push(moedaValor(vaga.valorMaximo));
+    if (!partes.length && vaga.remuneraValor != null) partes.push(moedaValor(vaga.remuneraValor));
+    if (vaga.formaRemuneracao) partes.push(vaga.formaRemuneracao.replace(/_/g, ' ').toLowerCase());
+    return partes.join(' · ') || 'Remuneração não informada';
+  }
+
 
   /* ------------------------------------------------------------------------
      Menu suspenso "Explorar" da navbar
@@ -408,7 +418,7 @@
     var local = document.createElement('p');
     local.className = 'vaga-mini__local';
     var localizacao = [valorOu(vaga.cidade, ''), valorOu(vaga.estado, '')].filter(Boolean).join(', ');
-    var detalhes = [localizacao, rotuloModelo(vaga.modeloTrabalho), moedaVaga(vaga.remuneraValor)]
+    var detalhes = [localizacao, rotuloModelo(vaga.modeloTrabalho), remuneracaoDaVaga(vaga)]
       .filter(Boolean);
     local.textContent = detalhes.length ? detalhes.join(' · ') : 'Detalhes na página da vaga';
     corpo.appendChild(local);
@@ -433,12 +443,13 @@
   async function carregarVagasReaisLanding() {
     var trilha = document.querySelector('[data-vagas-landing]');
     if (!trilha || !window.PalcoVagas) return;
+    trilha.replaceChildren();
     try {
       var resposta = await window.PalcoVagas.requisitar('/vagas?size=8');
       var vagas = (Array.isArray(resposta.content) ? resposta.content : []).filter(function (vaga) {
         return vaga && vaga.id !== null && vaga.id !== undefined;
       }).slice(0, 8);
-      if (!vagas.length) return;
+      if (!vagas.length) { trilha.textContent = 'Nenhuma vaga disponível no momento.'; trilha.dataset.fonteVagas = 'api'; return; }
 
       var fragmento = document.createDocumentFragment();
       vagas.forEach(function (vaga, indice) {
@@ -450,9 +461,8 @@
       var carrossel = trilha.closest('[data-carrossel]');
       if (carrossel) carrossel.dispatchEvent(new Event('palco:carrossel-atualizar'));
     } catch (erro) {
-      /* Progressive enhancement: indisponibilidade da API mantém os oito
-         cards demonstrativos, sem overlay, alerta ou quebra da landing. */
-      trilha.dataset.fonteVagas = 'fallback';
+      trilha.textContent = 'Não foi possível carregar as vagas. Tente novamente mais tarde.';
+      trilha.dataset.fonteVagas = 'erro';
     }
   }
 

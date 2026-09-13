@@ -66,8 +66,8 @@ function ProfileCard({ profile, type }) {
   const bannerUrl = safeHttpUrl(profile.bannerUrl);
   const portfolioUrl = type === 'ARTISTA' ? safeHttpUrl(profile.urlPortfolio) : null;
   const tags =
-    type === 'ARTISTA' && Array.isArray(profile.tags)
-      ? profile.tags.filter((tag) => typeof tag?.nome === 'string' && tag.nome.trim())
+    type === 'ARTISTA' && Array.isArray(profile.funcoes)
+      ? profile.funcoes.filter((tag) => typeof tag?.nome === 'string' && tag.nome.trim())
       : [];
   const canChat = Boolean(
     session?.token && profile.usuarioId && session.tipoUsuario !== type

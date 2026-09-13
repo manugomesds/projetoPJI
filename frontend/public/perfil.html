@@ -73,9 +73,9 @@
           <input class="campo__input" id="perfil-portfolio" name="urlPortfolio" type="url" maxlength="255">
         </div>
         <div class="campo" data-campo-artista>
-          <label class="campo__rotulo" for="perfil-tags">Áreas de atuação</label>
-          <select class="campo__input" id="perfil-tags" name="tagIds" multiple aria-describedby="perfil-tags-ajuda"></select>
-          <small id="perfil-tags-ajuda">Selecione ao menos uma área para completar o perfil de artista.</small>
+          <label class="campo__rotulo" for="perfil-tags">Funções artísticas</label>
+          <select class="campo__input" id="perfil-tags" name="funcaoIds" multiple aria-describedby="perfil-tags-ajuda"></select>
+          <small id="perfil-tags-ajuda">Selecione funções da sua área cadastrada. A mudança de área e as especializações ainda não estão disponíveis.</small>
         </div>
         <div class="campo">
           <label class="campo__rotulo" for="perfil-banner">URL do banner (opcional)</label>
@@ -83,9 +83,10 @@
         </div>
         <div class="cadastro__acoes">
           <button class="btn btn--primario cadastro__registrar" type="submit">Salvar perfil</button>
-          <button class="btn btn--contorno" type="button" data-excluir-conta>Excluir conta</button>
+
         </div>
       </form>
+      <section class="perfil__zona-risco"><h2 class="perfil__zona-risco-titulo">Encerrar conta</h2><p class="perfil__zona-risco-texto">A exclusão de conta está indisponível nesta versão.</p><a class="btn btn--perigo" href="excluir-conta.html">Opções de encerramento</a></section>
     </div>
   </main>
 

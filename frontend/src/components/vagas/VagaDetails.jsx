@@ -1,3 +1,4 @@
+import { vacancyRemuneration } from './vacancyPresentation';
 const STATUS_LABELS = {
   ABERTA: 'Em seleção',
   PAUSADA: 'Pausada',
@@ -17,10 +18,10 @@ function formatCurrency(value) {
 
 export default function VagaDetails({ vaga }) {
   const location = [vaga.cidade, vaga.estado].filter(Boolean).join('/');
-  const summary = [location, vaga.modeloTrabalho, formatCurrency(vaga.remuneraValor)]
+  const summary = [location, vaga.modeloTrabalho, vacancyRemuneration(vaga)]
     .filter(Boolean)
     .join(' · ');
-  const tagIds = Array.isArray(vaga.tagIds) ? vaga.tagIds : [];
+  const funcaoIds = Array.isArray(vaga.funcaoIds) ? vaga.funcaoIds : [];
 
   return (
     <article className="vaga-publica">
@@ -36,11 +37,11 @@ export default function VagaDetails({ vaga }) {
         <h2>Requisitos</h2>
         <p>{vaga.requisitos}</p>
       </section>
-      {tagIds.length > 0 && (
-        <div className="dashboard-card__tags" aria-label="Áreas da vaga">
-          {tagIds.map((tagId) => (
+      {funcaoIds.length > 0 && (
+        <div className="dashboard-card__tags" aria-label="Funções da vaga">
+          {funcaoIds.map((tagId) => (
             <span className="dashboard-card__tag" key={tagId}>
-              Área #{tagId}
+              Função #{tagId}
             </span>
           ))}
         </div>

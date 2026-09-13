@@ -51,3 +51,13 @@ export function vacancyImage(vacancy, index = 0) {
   const position = Number.isFinite(numericId) ? Math.abs(numericId) : index;
   return validPhoto || VACANCY_FALLBACK_IMAGES[position % VACANCY_FALLBACK_IMAGES.length];
 }
+
+export function vacancyRemuneration(vacancy) {
+  const parts = [];
+  if (vacancy.valorMinimo != null) parts.push(currency(vacancy.valorMinimo));
+  if (vacancy.valorMaximo != null && vacancy.valorMaximo !== vacancy.valorMinimo) parts.push(currency(vacancy.valorMaximo));
+  if (!parts.length && vacancy.remuneraValor != null) parts.push(currency(vacancy.remuneraValor));
+  if (vacancy.formaRemuneracao) parts.push(enumLabel(vacancy.formaRemuneracao));
+  else if (vacancy.formaPagamento) parts.push(vacancy.formaPagamento);
+  return parts.join(' · ') || 'Remuneração não informada';
+}

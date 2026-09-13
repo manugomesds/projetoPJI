@@ -18,6 +18,7 @@ export function calculateAge(dateOfBirth, today = new Date()) {
 
 const initialForm = {
   nome: '', dataNascimento: '', telefone: '', email: '', senha: '', confirmarSenha: '',
+  tipoPerfilArtistico: '', areaPrincipalId: '',
   tipoUsuario: 'ARTISTA', tipoPerfilContratante: '', nomeResponsavel: '',
   telefoneResponsavel: '', emailResponsavel: '', termos: false,
 };
@@ -45,6 +46,7 @@ export default function RegistrationPage() {
     if (form.senha !== form.confirmarSenha) return 'As senhas não conferem.';
     if (needsGuardian && (!form.nomeResponsavel.trim() || !form.telefoneResponsavel.trim() || !form.emailResponsavel.trim())) return 'Informe nome, telefone e e-mail do responsável legal.';
     if (!form.termos) return 'É preciso aceitar os Termos de Uso para continuar.';
+    if (form.tipoUsuario === 'ARTISTA') return 'Cadastro de artista indisponível: o catálogo de áreas ainda não está disponível.';
     return '';
   }
 
@@ -70,7 +72,7 @@ export default function RegistrationPage() {
       setForm(initialForm);
       navigate('/login?cadastro=sucesso', { replace: true });
     } catch (requestError) {
-      setError(requestError?.status === 409 ? 'Este e-mail já está cadastrado.' : 'Não foi possível concluir o cadastro. Tente novamente.');
+      setError(requestError?.status === 409 ? 'Este e-mail já está cadastrado.' : ([400, 422].includes(requestError?.status) ? requestError.message : 'Não foi possível concluir o cadastro. Tente novamente.'));
     } finally {
       submittingRef.current = false;
       setLoading(false);
@@ -91,6 +93,7 @@ export default function RegistrationPage() {
             <div className="campo"><label className="campo__rotulo" htmlFor="cadastro-telefone">Telefone</label><input className="campo__input" type="tel" id="cadastro-telefone" name="telefone" autoComplete="tel" maxLength={20} value={form.telefone} onChange={updateField} required /></div>
             <div className="campo"><label className="campo__rotulo" htmlFor="cadastro-email">E-mail</label><input className="campo__input" type="email" id="cadastro-email" name="email" autoComplete="email" maxLength={150} value={form.email} onChange={updateField} required /></div>
             <div className="campo"><label className="campo__rotulo" htmlFor="cadastro-tipo">Tipo de usuário</label><select className="campo__select auth-registration__select" id="cadastro-tipo" name="tipoUsuario" value={form.tipoUsuario} onChange={updateField}><option value="ARTISTA">Artista</option><option value="CONTRATANTE">Contratante</option></select></div>
+            {form.tipoUsuario === 'ARTISTA' ? <div className="campo auth-registration__wide"><label className="campo__rotulo" htmlFor="cadastro-subtipo">Tipo de perfil artístico</label><select id="cadastro-subtipo" className="campo__select" name="tipoPerfilArtistico" value={form.tipoPerfilArtistico} onChange={updateField} required><option value="">Selecione</option>{Object.entries({ARTISTA_SOLO:'Artista solo',DUPLA:'Dupla',BANDA:'Banda',GRUPO_ARTISTICO:'Grupo artístico',ESTUDIO:'Estúdio',PRODUTORA_EMPRESA:'Produtora/empresa'}).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select><p role="status">Cadastro de artista indisponível: o catálogo de áreas ainda não está disponível.</p><label>Área principal<select disabled aria-label="Área principal"><option>Catálogo indisponível</option></select></label></div> : null}
             {form.tipoUsuario === 'CONTRATANTE' ? <div className="campo"><label className="campo__rotulo" htmlFor="cadastro-perfil">Tipo de perfil contratante</label><select className="campo__select auth-registration__select" id="cadastro-perfil" name="tipoPerfilContratante" value={form.tipoPerfilContratante} onChange={updateField}><option value="">Selecione (opcional)</option><option>Pessoa Física</option><option>Instituição pública</option><option>Instituição Privada</option><option>Produtora Cultural</option><option>Agência</option><option>Instituição de Ensino</option><option>ONG</option><option>Outro</option></select></div> : null}
             <div className="campo"><label className="campo__rotulo" htmlFor="cadastro-senha">Senha</label><input className="campo__input" type="password" id="cadastro-senha" name="senha" autoComplete="new-password" maxLength={72} value={form.senha} onChange={updateField} required /></div>
             <div className="campo"><label className="campo__rotulo" htmlFor="cadastro-confirmar-senha">Confirme sua senha</label><input className="campo__input" type="password" id="cadastro-confirmar-senha" name="confirmarSenha" autoComplete="new-password" maxLength={72} value={form.confirmarSenha} onChange={updateField} required /></div>

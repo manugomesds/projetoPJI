@@ -455,6 +455,10 @@
   }
 
   .management-navbar .app-navbar__menu {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: .75rem;
     order: 3;
     width: 100%;
   }

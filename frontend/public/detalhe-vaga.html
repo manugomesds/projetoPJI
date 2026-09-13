@@ -37,6 +37,55 @@
       <section><h2>Sobre a oportunidade</h2><p data-vaga-descricao></p></section>
       <section><h2>Requisitos</h2><p data-vaga-requisitos></p></section>
       <div class="dashboard-card__tags" data-vaga-tags></div>
+      <section class="candidatura" data-candidatura aria-labelledby="candidatura-titulo">
+        <h2 class="candidatura__titulo" id="candidatura-titulo">Candidatar-se</h2>
+
+        <p class="candidatura__aviso" data-candidatura-aviso hidden></p>
+
+        <div class="candidatura__estado" data-candidatura-situacao hidden>
+          <p>
+            Situação da sua candidatura:
+            <strong data-candidatura-status-texto></strong>
+          </p>
+          <p class="candidatura__data" data-candidatura-data></p>
+          <button class="btn btn--contorno" type="button" data-candidatura-retirar hidden>
+            Retirar candidatura
+          </button>
+        </div>
+
+        <form class="candidatura__form" data-candidatura-form hidden novalidate>
+          <div class="campo">
+            <label class="campo__rotulo" for="candidatura-mensagem">
+              Mensagem de apresentação
+            </label>
+            <textarea class="campo__input candidatura__texto" id="candidatura-mensagem"
+                      name="mensagemApresentacao" required maxlength="2000"
+                      aria-describedby="candidatura-mensagem-ajuda"></textarea>
+            <p class="campo__ajuda" id="candidatura-mensagem-ajuda">
+              <span data-candidatura-contador>0</span>/2000 caracteres.
+            </p>
+          </div>
+
+          <div class="campo">
+            <label class="campo__rotulo" for="candidatura-link">
+              Link do portfólio ou currículo
+            </label>
+            <input class="campo__input" id="candidatura-link" name="linkPortfolioCandidatura"
+                   type="url" required maxlength="255" placeholder="https://"
+                   aria-describedby="candidatura-link-ajuda">
+            <p class="campo__ajuda" id="candidatura-link-ajuda">
+              Obrigatório. Até 255 caracteres.
+            </p>
+          </div>
+
+
+
+          <button class="btn btn--primario" type="submit" data-candidatura-enviar>
+            Enviar candidatura
+          </button>
+        </form>
+        <p class="candidatura__erro" data-candidatura-erro hidden role="alert"></p>
+      </section>
     </article>
   </main>
   <script src="js/main.js"></script>

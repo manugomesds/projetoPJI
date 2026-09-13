@@ -255,14 +255,14 @@ function montarLanding(fetchMock) {
   window.PalcoHome.iniciarCarrosseis();
 }
 
-test('landing mantém os oito demonstrativos se a API falhar', async () => {
+test('landing mostra erro sem vagas demonstrativas se a API falhar', async () => {
   montarLanding(jest.fn(() => Promise.reject(new Error('offline'))));
   await window.PalcoHome.carregarVagasReaisLanding();
 
   const trilha = document.querySelector('[data-vagas-landing]');
-  expect(trilha.children).toHaveLength(8);
-  expect(trilha.dataset.fonteVagas).toBe('fallback');
-  expect(trilha).toHaveTextContent('Cantora de jazz');
+  expect(trilha.children).toHaveLength(0);
+  expect(trilha.dataset.fonteVagas).toBe('erro');
+  expect(trilha).toHaveTextContent('Não foi possível carregar as vagas');
 });
 
 test('landing troca por vagas reais e o carrossel navega após refresh sem duplicar listeners', async () => {
@@ -300,6 +300,6 @@ test('fluxos públicos adicionais usam React e os destinos legados deliberados p
   expect(mainScript).toContain(`href="/vagas/' + encodeURIComponent(item.id) + '">`);
   expect(mainScript).toContain("'/detalhe-vaga.html'");
   expect(mainScript).toContain("paginaAtual !== 'detalhe-vaga.html'");
-  expect(mainScript).toContain("'/vagas/' + encodeURIComponent(vaga.id) + '/gerenciar'");
+  expect(mainScript).toContain("/vagas/' + encodeURIComponent(vaga.id) + '/gerenciar");
   expect(mainScript).toContain("window.location.href = '/vagas/' + encodeURIComponent(id) + '/gerenciar'");
 });

@@ -25,8 +25,8 @@ beforeEach(() => {
 
 const valid = {
   titulo: '  Cantora  ', descricao: '  Show  ', requisitos: '  Portfólio  ',
-  remuneraValor: '150.50', formaPagamento: ' Pix ', cidade: ' Recife ', estado: 'pe',
-  modeloTrabalho: 'PRESENCIAL', tipoContrato: ' Cachê ', tagIds: ['3', 3, 7, -1],
+  areaId: 6, valorMinimo: '150.50', valorMaximo: '300', formaRemuneracao: 'POR_EVENTO', cidade: ' Recife ', estado: 'pe',
+  modeloTrabalho: 'PRESENCIAL', tipoContrato: ' Cachê ', funcaoIds: ['3', 3, 7, -1],
   enderecoCompleto: ' ', beneficios: ' Transporte ', categoria: '', experiencia: ' Plena ',
   dataLimiteCandidatura: '', abrangencia: ' regional ', fotos: [' a.jpg ', '', 'b.jpg'],
   contratanteId: 999, usuarioId: 888, id: 77, status: 'CANCELADA', dataPublicacao: '2000-01-01',
@@ -34,7 +34,7 @@ const valid = {
 
 test('normaliza somente campos editáveis e remove identidade/status/dados controlados', () => {
   const payload = normalizeVacancyPayload(valid);
-  expect(payload).toMatchObject({ titulo: 'Cantora', remuneraValor: 150.5, estado: 'PE', tagIds: [3, 7], enderecoCompleto: null, fotos: ['a.jpg', 'b.jpg'] });
+  expect(payload).toMatchObject({ titulo: 'Cantora', valorMinimo: 150.5, valorMaximo: 300, areaId: 6, formaRemuneracao: 'POR_EVENTO', estado: 'PE', funcaoIds: [3, 7], enderecoCompleto: null, fotos: ['a.jpg', 'b.jpg'] });
   expect(payload).not.toHaveProperty('contratanteId');
   expect(payload).not.toHaveProperty('usuarioId');
   expect(payload).not.toHaveProperty('id');
@@ -54,7 +54,7 @@ test('consulta tags e candidaturas recebidas pelos endpoints reais', async () =>
   apiClient.get.mockResolvedValue([]);
   await listVacancyTags();
   await listReceivedApplications();
-  expect(apiClient.get).toHaveBeenNthCalledWith(1, '/tags');
+  expect(apiClient.get).toHaveBeenNthCalledWith(1, '/funcoes');
   expect(apiClient.get).toHaveBeenNthCalledWith(2, '/candidaturas/minhas-vagas?page=0&size=50');
 });
 
@@ -76,7 +76,7 @@ test('publica sem identidade e sem status no payload', async () => {
 test('edita somente detalhes autorizados', async () => {
   apiClient.put.mockResolvedValue({ id: 4 });
   await updateVacancy(4, valid);
-  expect(apiClient.put).toHaveBeenCalledWith('/vagas/4', expect.objectContaining({ titulo: 'Cantora', tagIds: [3, 7] }));
+  expect(apiClient.put).toHaveBeenCalledWith('/vagas/4', expect.objectContaining({ titulo: 'Cantora', funcaoIds: [3, 7] }));
   expect(apiClient.put.mock.calls[0][1]).not.toHaveProperty('status');
 });
 

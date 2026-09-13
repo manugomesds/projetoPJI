@@ -8,8 +8,8 @@ export const LINK_MAX_LENGTH = 255;
 export const STATUS_LABELS = {
   PENDENTE: 'Pendente',
   EM_ANALISE: 'Em análise',
-  APROVADO: 'Aprovada',
-  REJEITADO: 'Rejeitada',
+  ACEITA: 'Aprovada',
+  REJEITADA: 'Rejeitada',
   RETIRADA: 'Retirada',
   CANCELADA_POR_VAGA: 'Cancelada com a vaga',
 };
@@ -33,7 +33,7 @@ function ExistingApplication({ id, status, session }) {
   const pending = useRef(false);
   const currentStatus = withdrawn ? 'RETIRADA' : status;
   const eligible = id && session?.token && session.tipoUsuario === 'ARTISTA'
-    && ['PENDENTE', 'EM_ANALISE', 'REJEITADO'].includes(currentStatus);
+    && ['PENDENTE', 'EM_ANALISE', 'REJEITADA'].includes(currentStatus);
 
   async function withdraw() {
     if (pending.current) return;

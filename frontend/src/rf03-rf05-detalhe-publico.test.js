@@ -43,7 +43,7 @@ test('detalhe de vaga aberta carrega anonimamente sem redirecionar ao login', as
       descricao: 'Descrição pública',
       requisitos: 'Experiência',
       status: 'ABERTA',
-      tagIds: [3]
+      funcaoIds: [3]
     })
   });
 
@@ -77,7 +77,7 @@ test('detalhe mantém o envio do JWT quando existe sessão', async () => {
       descricao: 'Descrição pública',
       requisitos: 'Experiência',
       status: 'ABERTA',
-      tagIds: []
+      funcaoIds: []
     })
   });
 

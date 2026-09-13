@@ -19,13 +19,13 @@ test('serializa somente filtros preenchidos e os dois cursores', () => {
     titulo: '  cantora  ',
     cidade: '',
     estado: 'SP',
-    tagIds: [4, '', 9],
+    funcaoIds: [4, '', 9],
   }, { cursor: 25, cursorCanceladas: 7, size: 99 });
 
   expect(params.get('titulo')).toBe('cantora');
   expect(params.has('cidade')).toBe(false);
   expect(params.get('estado')).toBe('SP');
-  expect(params.getAll('tagIds')).toEqual(['4', '9']);
+  expect(params.getAll('funcaoIds')).toEqual(['4', '9']);
   expect(params.get('cursor')).toBe('25');
   expect(params.get('cursorCanceladas')).toBe('7');
   expect(params.get('size')).toBe('50');

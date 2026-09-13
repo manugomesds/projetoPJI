@@ -23,7 +23,7 @@ const vacancy = {
   id: 5, propriaDoContratante: true, titulo: 'Vaga de música', status: 'ABERTA',
   nomeContratante: 'Produtora', categoria: 'Música', tipoContrato: 'Freela',
   cidade: 'Recife', estado: 'PE', modeloTrabalho: 'PRESENCIAL', remuneraValor: 900,
-  formaPagamento: 'Pix', descricao: 'Descrição segura', requisitos: 'Requisitos', tagIds: [2],
+  formaPagamento: 'Pix', descricao: 'Descrição segura', requisitos: 'Requisitos', funcaoIds: [2],
 };
 
 function renderManage(path = '/vagas/5/gerenciar') {

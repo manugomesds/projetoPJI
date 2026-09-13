@@ -37,8 +37,8 @@
         <input class="campo__input" id="vaga-titulo" name="titulo" type="text" required maxlength="150">
       </div>
       <div class="campo">
-        <label class="campo__rotulo" for="vaga-categoria">Categoria artística</label>
-        <input class="campo__input" id="vaga-categoria" name="categoria" type="text" maxlength="100">
+        <label class="campo__rotulo" for="vaga-categoria">Área artística</label>
+        <select class="campo__select" disabled aria-label="Área artística"><option>Catálogo de áreas indisponível</option></select>
       </div>
       <div class="campo">
         <label class="campo__rotulo" for="vaga-descricao">Descrição</label>
@@ -50,11 +50,11 @@
       </div>
       <div class="campo">
         <label class="campo__rotulo" for="vaga-remuneracao">Remuneração</label>
-        <input class="campo__input" id="vaga-remuneracao" name="remuneraValor" type="number" min="0" step="0.01" required>
+        <input class="campo__input" name="valorMinimo" type="number" min="0" step="0.01" aria-label="Remuneração mínima"><input class="campo__input" name="valorMaximo" type="number" min="0" step="0.01" aria-label="Remuneração máxima">
       </div>
       <div class="campo">
-        <label class="campo__rotulo" for="vaga-pagamento">Forma de pagamento</label>
-        <input class="campo__input" id="vaga-pagamento" name="formaPagamento" type="text" required maxlength="100">
+        <label class="campo__rotulo" for="vaga-pagamento">Forma de remuneração</label>
+        <select class="campo__select" name="formaRemuneracao" required><option value="">Selecione</option><option value="POR_HORA">Por hora</option><option value="DIARIA">Diária</option><option value="POR_EVENTO">Por evento</option><option value="POR_PROJETO">Por projeto</option><option value="MENSAL">Mensal</option><option value="A_COMBINAR">A combinar</option></select>
       </div>
       <div class="campo">
         <label class="campo__rotulo" for="vaga-cidade">Cidade</label>

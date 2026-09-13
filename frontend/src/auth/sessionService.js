@@ -23,7 +23,9 @@ export function getSession() {
   if (!serializedSession) return null;
 
   try {
-    return JSON.parse(serializedSession);
+    const saved = JSON.parse(serializedSession);
+    if (saved?.status === 'AGUARDANDO_DADOS' || (saved?.statusConta && saved.statusConta !== 'ATIVA')) { clearLocalSession(); return null; }
+    return saved;
   } catch {
     clearLocalSession();
     return null;
@@ -31,6 +33,10 @@ export function getSession() {
 }
 
 export function saveSession(authResponse) {
+  if (authResponse?.status === 'AGUARDANDO_DADOS' || (authResponse?.statusConta && authResponse.statusConta !== 'ATIVA')) {
+    clearLocalSession();
+    throw new Error('Conta pendente. Conclua os dados antes de entrar.');
+  }
   const { session, local } = storages();
   const allowedFields = [
     'token',
@@ -41,6 +47,7 @@ export function saveSession(authResponse) {
     'perfilCompleto',
     'avatarUrl',
     'refreshToken',
+    'statusConta',
   ];
   const safeSession = allowedFields.reduce((result, field) => {
     if (authResponse?.[field] !== undefined) result[field] = authResponse[field];

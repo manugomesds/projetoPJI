@@ -183,7 +183,7 @@ test('mensagem de erro não confiável é renderizada somente como texto', async
   expect(window.comprometido).toBeUndefined();
 });
 
-test.each(['PENDENTE', 'EM_ANALISE', 'REJEITADO'])('retira candidatura %s e mantém histórico', async (status) => {
+test.each(['PENDENTE', 'EM_ANALISE', 'REJEITADA'])('retira candidatura %s e mantém histórico', async (status) => {
   withdrawCandidatura.mockResolvedValue(null);
   renderAction({ vagaAtual: { ...vaga, minhaCandidaturaId: 91, statusMinhaCandidatura: status } });
   fireEvent.click(screen.getByRole('button', { name: 'Retirar candidatura' }));
@@ -194,7 +194,7 @@ test.each(['PENDENTE', 'EM_ANALISE', 'REJEITADO'])('retira candidatura %s e mant
   expect(screen.queryByRole('button', { name: 'Retirar candidatura' })).not.toBeInTheDocument();
 });
 
-test.each(['APROVADO', 'RETIRADA', 'CANCELADA_POR_VAGA'])('estado %s não oferece retirada', (status) => {
+test.each(['ACEITA', 'RETIRADA', 'CANCELADA_POR_VAGA'])('estado %s não oferece retirada', (status) => {
   renderAction({ vagaAtual: { ...vaga, minhaCandidaturaId: 91, statusMinhaCandidatura: status } });
   expect(screen.queryByRole('button', { name: 'Retirar candidatura' })).not.toBeInTheDocument();
 });

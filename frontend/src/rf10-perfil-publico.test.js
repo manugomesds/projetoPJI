@@ -44,7 +44,7 @@ test('URL direta carrega artista sem JWT e renderiza somente dados públicos', a
       avatarUrl: 'https://cdn.example/avatar.jpg',
       bannerUrl: 'https://cdn.example/banner.jpg',
       urlPortfolio: 'https://portfolio.example/pessoa',
-      tags: [{ id: 1, nome: '<b>Teatro</b>' }]
+      funcoes: [{ id: 1, nome: '<b>Teatro</b>' }]
     })
   });
 
@@ -69,7 +69,7 @@ test('aba Portfólio troca o painel sem navegar ou recarregar', async () => {
       nomeExibicao: 'Artista',
       avatarUrl: 'https://cdn.example/avatar.jpg',
       urlPortfolio: 'https://portfolio.example/artista',
-      tags: []
+      funcoes: []
     })
   });
   iniciar('/perfil-publico.html?tipo=ARTISTA&id=7');
@@ -119,7 +119,7 @@ test('script evita sinks HTML e rejeita links com protocolo perigoso', async () 
   expect(script).not.toMatch(/\.innerHTML\s*=|insertAdjacentHTML|document\.write/);
   window.fetch.mockResolvedValue({
     ok: true,
-    json: async () => ({ nomeExibicao: 'Artista', avatarUrl: 'javascript:alert(1)', urlPortfolio: 'data:text/html,x', tags: [] })
+    json: async () => ({ nomeExibicao: 'Artista', avatarUrl: 'javascript:alert(1)', urlPortfolio: 'data:text/html,x', funcoes: [] })
   });
   iniciar('/perfil-publico.html?tipo=ARTISTA&id=5');
 

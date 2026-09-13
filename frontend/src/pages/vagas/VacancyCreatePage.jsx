@@ -41,8 +41,8 @@ export default function VacancyCreatePage() {
       <main className="vacancy-management">
         <header className="management-page-header"><p className="management-eyebrow">RF04</p><h1>Publicar nova vaga</h1><p>Os dados de propriedade e o status inicial são definidos com segurança pelo servidor.</p></header>
         <section className="management-card">
-          {tagsState.status === 'loading' ? <p role="status">Carregando tags…</p> : null}
-          {tagsState.status === 'error' ? <p className="management-feedback management-feedback--error" role="alert">{vacancyManagementError(tagsState.error, 'Não foi possível carregar as tags.')}</p> : null}
+          {tagsState.status === 'loading' ? <p role="status">Carregando funções…</p> : null}
+          {tagsState.status === 'error' ? <p className="management-feedback management-feedback--error" role="alert">{vacancyManagementError(tagsState.error, 'Não foi possível carregar as funções.')}</p> : null}
           {feedback ? <p className="management-feedback management-feedback--error" role="alert">{feedback}</p> : null}
           {tagsState.status !== 'loading' ? <VacancyForm tags={tagsState.tags} submitLabel="Publicar vaga" onSubmit={publish} /> : null}
         </section>

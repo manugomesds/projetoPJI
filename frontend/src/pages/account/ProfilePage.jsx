@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import sessionService from '../../auth/sessionService';
 import AccountLayout from '../../components/account/AccountLayout';
@@ -7,7 +7,7 @@ import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPo
 
 const EMPTY_VALUES = {
   nome: '', telefone: '', email: '', biografia: '', localizacao: '', bannerUrl: '',
-  urlPortfolio: '', tagIds: [], nomeEmpresa: '', tipoPerfil: '', senhaAtual: '', novaSenha: '',
+  urlPortfolio: '', funcaoIds: [], nomeEmpresa: '', tipoPerfil: '', senhaAtual: '', novaSenha: '',
 };
 
 function toValues(usuario, perfil) {
@@ -20,7 +20,8 @@ function toValues(usuario, perfil) {
     localizacao: perfil.localizacao || '',
     bannerUrl: perfil.bannerUrl || '',
     urlPortfolio: perfil.urlPortfolio || '',
-    tagIds: (perfil.tagIds || []).map(Number),
+    areaPrincipalId: perfil.areaPrincipalId || null,
+    funcaoIds: (perfil.funcaoIds || []).map(Number),
     nomeEmpresa: perfil.nomeEmpresa || '',
     tipoPerfil: perfil.tipoPerfil || '',
   };
@@ -54,12 +55,7 @@ export default function ProfilePage() {
   }, []);
 
   const artist = data?.usuario.tipoUsuario === 'ARTISTA';
-  const previewComplete = useMemo(() => {
-    if (!data) return false;
-    const registration = values.nome.trim() && data.usuario.dataNascimento && values.telefone.trim() && values.email.trim();
-    const profile = values.biografia.trim() && values.localizacao.trim();
-    return Boolean(registration && profile && (!artist || (values.urlPortfolio.trim() && values.tagIds.length > 0)));
-  }, [artist, data, values]);
+
 
   function change(event) {
     const { name, value } = event.target;
@@ -69,9 +65,9 @@ export default function ProfilePage() {
   function toggleTag(id) {
     setValues((current) => ({
       ...current,
-      tagIds: current.tagIds.includes(id)
-        ? current.tagIds.filter((tagId) => tagId !== id)
-        : [...current.tagIds, id],
+      funcaoIds: current.funcaoIds.includes(id)
+        ? current.funcaoIds.filter((tagId) => tagId !== id)
+        : [...current.funcaoIds, id],
     }));
   }
 
@@ -122,7 +118,7 @@ export default function ProfilePage() {
         <header className="account-heading"><div><p className="account-eyebrow">RF08</p><h1>Meu perfil</h1><p>Edite somente seus dados. A completude é confirmada pelo servidor.</p></div></header>
         <section className="profile-summary" aria-label="Resumo do perfil">
           {data.perfil.avatarUrl ? <img src={data.perfil.avatarUrl} alt="Seu avatar atual" /> : null}
-          <div><strong>{data.usuario.perfilCompleto ? 'Perfil completo' : 'Perfil incompleto'}</strong><p>Prévia dos requisitos atuais: {previewComplete ? 'todos preenchidos' : 'ainda há campos pendentes'}. O backend continua sendo a autoridade.</p></div>
+          <div><strong>{data.usuario.perfilCompleto ? 'Perfil completo' : 'Perfil incompleto'}</strong><p>A situação acima é confirmada após salvar seus dados.</p></div>
         </section>
         {values.bannerUrl ? <img className="profile-banner" src={values.bannerUrl} alt="Prévia do banner do perfil" /> : null}
         <form className="account-form" onSubmit={submit} noValidate>
@@ -139,7 +135,7 @@ export default function ProfilePage() {
             {artist ? <label>URL do portfólio<input name="urlPortfolio" value={values.urlPortfolio} onChange={change} type="url" maxLength={255} /></label> : null}
             <label className="account-form__wide">URL do banner<input name="bannerUrl" value={values.bannerUrl} onChange={change} type="url" maxLength={255} /></label>
           </fieldset>
-          {artist ? <fieldset className="account-form__wide"><legend>Áreas de atuação</legend><div className="profile-tags">{data.tags.map((tag) => <label key={tag.id}><input type="checkbox" checked={values.tagIds.includes(Number(tag.id))} onChange={() => toggleTag(Number(tag.id))} />{tag.nome}</label>)}</div><small>Selecione ao menos uma área para completar o perfil de artista.</small></fieldset> : null}
+          {artist ? <fieldset className="account-form__wide"><legend>Funções artísticas</legend><div className="profile-tags">{data.tags.filter(tag => Number(tag.areaId) === Number(values.areaPrincipalId)).map((tag) => <label key={tag.id}><input type="checkbox" checked={values.funcaoIds.includes(Number(tag.id))} onChange={() => toggleTag(Number(tag.id))} />{tag.nome}</label>)}</div><small>Funções do catálogo oficial. A mudança da área principal e as especializações ainda não estão disponíveis.</small></fieldset> : null}
           <fieldset><legend>Troca de senha</legend>
             <label>Senha atual<input name="senhaAtual" value={values.senhaAtual} onChange={change} type="password" maxLength={72} autoComplete="current-password" /></label>
             <label>Nova senha<input name="novaSenha" value={values.novaSenha} onChange={change} type="password" maxLength={72} autoComplete="new-password" /></label>
@@ -149,6 +145,7 @@ export default function ProfilePage() {
           {state.success ? <p className="account-feedback account-feedback--success" role="status">{state.success}</p> : null}
           <div className="account-form__actions"><a href="/dashboard">Cancelar</a><button className="btn btn--primario" type="submit" disabled={state.saving}>{state.saving ? 'Salvando…' : 'Salvar perfil'}</button></div>
         </form>
+        <section className="perfil__zona-risco"><h2>Encerrar conta</h2><p>A exclusão de conta está indisponível nesta versão.</p><a href="/excluir-conta.html">Opções de encerramento</a></section>
       </main>
     </AccountLayout>
   );

@@ -11,7 +11,9 @@
     var bruto = sessionStorage.getItem(CHAVE_SESSAO) || localStorage.getItem(CHAVE_SESSAO);
     if (!bruto) return null;
     try {
-      return JSON.parse(bruto);
+      var salva = JSON.parse(bruto);
+      if (salva && (salva.status === 'AGUARDANDO_DADOS' || (salva.statusConta && salva.statusConta !== 'ATIVA'))) { limparSessao(); return null; }
+      return salva;
     } catch (erro) {
       sessionStorage.removeItem(CHAVE_SESSAO);
       localStorage.removeItem(CHAVE_SESSAO);
@@ -20,6 +22,8 @@
   }
 
   function salvarSessao(dados) {
+    if (!dados || !dados.token || dados.status === 'AGUARDANDO_DADOS' || (dados.statusConta && dados.statusConta !== 'ATIVA')) { limparSessao(); throw new Error('Conta pendente. Conclua os dados antes de entrar.'); }
+    localStorage.removeItem(CHAVE_SESSAO);
     sessionStorage.setItem(CHAVE_SESSAO, JSON.stringify(dados));
   }
 
@@ -63,13 +67,14 @@
       headers['Content-Type'] = 'application/json';
       config.body = JSON.stringify(config.body);
     }
-    if (sessao && sessao.token) {
+    var autenticacaoPublica = /^\/auth\/(login|cadastro|google)$/.test(caminho);
+    if (sessao && sessao.token && !autenticacaoPublica) {
       headers.Authorization = 'Bearer ' + sessao.token;
     }
     config.headers = headers;
 
     var resposta = await fetch(API_BASE + caminho, config);
-    if (resposta.status === 401 && caminho !== '/auth/refresh' && !config._tentativaRenovada) {
+    if (resposta.status === 401 && !autenticacaoPublica && caminho !== '/auth/refresh' && !config._tentativaRenovada) {
       var tokenRenovado = await renovarToken();
       if (tokenRenovado) {
         config._tentativaRenovada = true;
@@ -78,9 +83,15 @@
       }
     }
     var tipo = resposta.headers.get('content-type') || '';
-    var corpo = tipo.indexOf('application/json') >= 0 ? await resposta.json() : null;
+    var corpo = resposta.status !== 204 && tipo.indexOf('application/json') >= 0 ? await resposta.json() : null;
     if (!resposta.ok) {
-      throw new Error(mensagemDaApi(corpo, resposta.status));
+      // O status viaja junto do erro: sem ele a tela nao distingue duplicata
+      // (409) de perfil incompleto/vaga fechada (422), e as duas viram a mesma
+      // mensagem generica. Quem so le `.message` continua funcionando igual.
+      var falha = new Error(mensagemDaApi(corpo, resposta.status));
+      falha.status = resposta.status;
+      falha.corpo = corpo;
+      throw falha;
     }
     return corpo;
   }
@@ -135,6 +146,15 @@
     return numero.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
+  function remuneracaoDaVaga(vaga) {
+    var valores = [];
+    if (vaga.valorMinimo != null) valores.push(moeda(vaga.valorMinimo));
+    if (vaga.valorMaximo != null && vaga.valorMaximo !== vaga.valorMinimo) valores.push(moeda(vaga.valorMaximo));
+    if (!valores.length && vaga.remuneraValor != null) valores.push(moeda(vaga.remuneraValor));
+    if (vaga.formaRemuneracao) valores.push(vaga.formaRemuneracao.replace(/_/g, ' ').toLowerCase());
+    return valores.join(' · ') || 'Remuneração não informada';
+  }
+
   function numeroMonetario(valor) {
     var texto = String(valor || '').replace(/[^\d,.-]/g, '');
     if (texto.indexOf(',') >= 0) texto = texto.replace(/\./g, '').replace(',', '.');
@@ -155,17 +175,17 @@
       titulo: vaga.titulo,
       descricao: vaga.descricao,
       requisitos: vaga.requisitos,
-      remuneraValor: Number(vaga.remuneraValor),
-      formaPagamento: vaga.formaPagamento,
+      areaId: vaga.areaId,
+      valorMinimo: vaga.valorMinimo,
+      valorMaximo: vaga.valorMaximo,
+      formaRemuneracao: vaga.formaRemuneracao,
       cidade: vaga.cidade,
       estado: vaga.estado,
       enderecoCompleto: vaga.enderecoCompleto || null,
       beneficios: vaga.beneficios || null,
       modeloTrabalho: vaga.modeloTrabalho,
       tipoContrato: vaga.tipoContrato,
-      status: vaga.status,
-      tagIds: vaga.tagIds || [],
-      categoria: vaga.categoria || null,
+      funcaoIds: vaga.funcaoIds || [],
       experiencia: vaga.experiencia || null,
       dataLimiteCandidatura: vaga.dataLimiteCandidatura || null,
       abrangencia: vaga.abrangencia || null,
@@ -474,7 +494,7 @@
     try {
       var resultados = await Promise.all([
         api('/vagas/minhas?size=50'),
-        api('/candidaturas/minhas-vagas').catch(function () { return []; })
+        api('/candidaturas/minhas-vagas')
       ]);
       var vagas = resultados[0].content || [];
       var porVaga = {};
@@ -745,7 +765,7 @@
 
     function tagsNoCard(card, tags, quantidade) {
       var area = elemento('div', 'dashboard-card__tags');
-      area.appendChild(elemento('span', 'dashboard-card__match', quantidade + ' área(s) em comum'));
+      area.appendChild(elemento('span', 'dashboard-card__match', quantidade + ' função(ões) em comum'));
       (tags || []).slice(0, 4).forEach(function (tag) {
         area.appendChild(elemento('span', 'dashboard-card__tag', tag.nome));
       });
@@ -786,9 +806,9 @@
         dados.appendChild(elemento(
           'p',
           'dashboard-card__texto',
-          vaga.nomeContratante + ' · ' + vaga.cidade + '/' + vaga.estado + ' · ' + moeda(vaga.remuneraValor)
+          vaga.nomeContratante + ' · ' + vaga.cidade + '/' + vaga.estado + ' · ' + remuneracaoDaVaga(vaga)
         ));
-        tagsNoCard(dados, vaga.tags, vaga.quantidadeTagsCoincidentes);
+        tagsNoCard(dados, vaga.funcoes, vaga.quantidadeFuncoesCoincidentes);
         card.appendChild(dados);
         card.appendChild(link('Ver vaga', '/vagas/' + encodeURIComponent(vaga.id), 'dashboard-card__link'));
         estrutura.lista.appendChild(card);
@@ -831,7 +851,7 @@
     function renderTalentos(secao) {
       var estrutura = painel(
         'Talentos sugeridos',
-        'Artistas adultos com perfil completo e áreas compatíveis com suas vagas ativas.',
+        'Artistas adultos com perfil completo e funções compatíveis com suas vagas ativas.',
         secao,
         false
       );
@@ -844,7 +864,7 @@
         var dados = elemento('div', 'dashboard-card__conteudo');
         dados.appendChild(elemento('h3', 'dashboard-card__titulo', talento.nomeExibicao));
         dados.appendChild(elemento('p', 'dashboard-card__texto', talento.localizacao || 'Localização não informada'));
-        tagsNoCard(dados, talento.tags, talento.quantidadeTagsCoincidentes);
+        tagsNoCard(dados, talento.funcoes, talento.quantidadeFuncoesCoincidentes);
         card.appendChild(avatar);
         card.appendChild(dados);
         card.appendChild(link(
@@ -879,7 +899,7 @@
         : 'Acompanhe candidaturas e encontre pessoas para seus projetos.';
       document.querySelector('[data-dashboard-saudacao]').textContent = 'Olá, ' + dados.nomeExibicao;
       document.querySelector('[data-dashboard-resumo]').textContent = artista
-        ? 'Estas recomendações consideram apenas vagas abertas com áreas em comum com o seu perfil.'
+        ? 'Estas recomendações consideram apenas vagas abertas com funções em comum com o seu perfil.'
         : 'As candidaturas pertencem às suas vagas ativas; os talentos usam as áreas dessas vagas como contexto.';
       var avatar = document.querySelector('[data-dashboard-avatar]');
       avatar.src = dados.avatarUrl;
@@ -923,6 +943,7 @@
         iniciarWebSocket();
         carregando.hidden = true;
         conteudo.hidden = false;
+
       } catch (erro) {
         carregando.hidden = true;
         erroBox.hidden = false;
@@ -969,7 +990,7 @@
       var descricao = document.querySelector('.vaga-detalhe__descricao');
       if (descricao) descricao.textContent = vaga.descricao;
       var celulas = document.querySelectorAll('.vaga-detalhe__tabela tbody td');
-      var valores = [vaga.tipoContrato, vaga.modeloTrabalho, vaga.formaPagamento, moeda(vaga.remuneraValor), vaga.experiencia || 'Não informado'];
+      var valores = [vaga.tipoContrato, vaga.modeloTrabalho, vaga.formaRemuneracao || vaga.formaPagamento || 'Não informada', remuneracaoDaVaga(vaga), vaga.experiencia || 'Não informado'];
       celulas.forEach(function (celula, indice) { if (valores[indice] != null) celula.textContent = valores[indice]; });
       preencherRequisitos(vaga);
       var editar = document.querySelector('a[title="Editar vaga"]');
@@ -1017,18 +1038,19 @@
       document.querySelector('[data-vaga-titulo]').textContent = vaga.titulo;
       document.querySelector('[data-vaga-empresa]').textContent = vaga.nomeContratante;
       document.querySelector('[data-vaga-resumo]').textContent =
-        vaga.cidade + '/' + vaga.estado + ' · ' + vaga.modeloTrabalho + ' · ' + moeda(vaga.remuneraValor);
+        vaga.cidade + '/' + vaga.estado + ' · ' + vaga.modeloTrabalho + ' · ' + remuneracaoDaVaga(vaga);
       document.querySelector('[data-vaga-descricao]').textContent = vaga.descricao;
       document.querySelector('[data-vaga-requisitos]').textContent = vaga.requisitos;
       var tags = document.querySelector('[data-vaga-tags]');
-      (vaga.tagIds || []).forEach(function (tagId) {
+      (vaga.funcaoIds || []).forEach(function (tagId) {
         var tag = document.createElement('span');
         tag.className = 'dashboard-card__tag';
-        tag.textContent = 'Área #' + tagId;
+        tag.textContent = 'Função #' + tagId;
         tags.appendChild(tag);
       });
       carregando.hidden = true;
       conteudo.hidden = false;
+      montarCandidatura(vaga);
     } catch (falha) {
       carregando.hidden = true;
       erro.hidden = false;
@@ -1056,6 +1078,7 @@
     }
     try {
       var vaga = await api('/vagas/' + encodeURIComponent(id));
+      if (!vaga.areaId) throw new Error('Edição indisponível: a vaga não possui área cadastrada.');
       form.dataset.vagaOriginal = JSON.stringify(vaga);
       form.elements.titulo.value = vaga.titulo;
       form.elements.responsavel.value = '@' + (vaga.nomeContratante || 'contratante');
@@ -1064,8 +1087,9 @@
       form.elements.descricao.value = vaga.descricao;
       form.elements.tipoContrato.value = vaga.tipoContrato;
       form.elements.modeloTrabalho.value = vaga.modeloTrabalho;
-      form.elements.formaPagamento.value = vaga.formaPagamento;
-      form.elements.remuneraValor.value = moeda(vaga.remuneraValor);
+      form.elements.formaRemuneracao.value = vaga.formaRemuneracao || '';
+      form.elements.valorMinimo.value = vaga.valorMinimo == null ? '' : vaga.valorMinimo;
+      form.elements.valorMaximo.value = vaga.valorMaximo == null ? '' : vaga.valorMaximo;
       form.elements.experiencia.value = vaga.experiencia || '';
       var categoria = form.querySelector('.vaga-card__categoria');
       if (categoria) categoria.textContent = vaga.categoria || vaga.tipoContrato;
@@ -1105,8 +1129,9 @@
       rascunho.titulo = form.elements.titulo.value.trim();
       rascunho.descricao = form.elements.descricao.value.trim();
       rascunho.requisitos = requisitosDaEdicao(form) || original.requisitos;
-      rascunho.remuneraValor = numeroMonetario(form.elements.remuneraValor.value);
-      rascunho.formaPagamento = form.elements.formaPagamento.value.trim();
+      rascunho.valorMinimo = form.elements.valorMinimo.value === '' ? null : Number(form.elements.valorMinimo.value);
+      rascunho.valorMaximo = form.elements.valorMaximo.value === '' ? null : Number(form.elements.valorMaximo.value);
+      rascunho.formaRemuneracao = form.elements.formaRemuneracao.value;
       rascunho.cidade = cidade;
       rascunho.estado = estado.substring(0, 2);
       rascunho.modeloTrabalho = normalizarModelo(form.elements.modeloTrabalho.value);
@@ -1128,7 +1153,7 @@
     try {
       vaga = await api('/vagas/' + encodeURIComponent(id));
       form.elements.endereco.value = vaga.enderecoCompleto || '';
-      form.elements.abrangencia.value = vaga.abrangencia || 'regional';
+      form.elements.abrangencia.value = vaga.abrangencia || '';
       var fotos = form.querySelectorAll('[data-vaga-foto]');
       fotos.forEach(function (foto, indice) {
         if (vaga.fotos && vaga.fotos[indice]) foto.src = vaga.fotos[indice];
@@ -1147,7 +1172,7 @@
       evento.preventDefault();
       var salvo = sessionStorage.getItem(CHAVE_RASCUNHO_VAGA);
       var rascunho = salvo ? JSON.parse(salvo) : null;
-      var payload = rascunho && String(rascunho.id) === String(id) ? rascunho.dados : payloadDaVaga(vaga);
+      var payload = rascunho && rascunho.dados.areaId && rascunho.dados.formaRemuneracao && String(rascunho.id) === String(id) ? payloadDaVaga(rascunho.dados) : payloadDaVaga(vaga);
       payload.enderecoCompleto = form.elements.endereco.value.trim() || null;
       payload.abrangencia = form.elements.abrangencia.value;
       payload.fotos = Array.from(form.querySelectorAll('[data-vaga-foto]')).map(function (foto) {
@@ -1164,63 +1189,20 @@
     });
   }
 
-  async function carregarTags(container) {
-    if (!container) return;
-    try {
-      var tags = await api('/tags');
-      container.innerHTML = tags.map(function (tag) {
-        return '<label class="requisitos__tag"><input type="checkbox" name="tagId" value="' + tag.id + '"> ' + escapar(tag.nome) + '</label>';
-      }).join('') || '<span>Nenhuma tag cadastrada.</span>';
-    } catch (erro) {
-      container.innerHTML = '<span>' + escapar(erro.message) + '</span>';
-    }
-  }
-
   function iniciarPublicacaoVaga() {
     var form = document.getElementById('form-publicar-vaga');
     if (!form) return;
-    var sessao = exigirSessaoContratante();
-    if (!sessao) return;
-    carregarTags(form.querySelector('[data-tags-vaga]'));
-    form.addEventListener('submit', async function (evento) {
-      evento.preventDefault();
-      if (!form.reportValidity()) return;
-      var dados = new FormData(form);
-      var payload = {
-        contratanteId: sessao.id,
-        titulo: dados.get('titulo').trim(),
-        descricao: dados.get('descricao').trim(),
-        requisitos: dados.get('requisitos').trim(),
-        remuneraValor: Number(dados.get('remuneraValor')),
-        formaPagamento: dados.get('formaPagamento').trim(),
-        cidade: dados.get('cidade').trim(),
-        estado: dados.get('estado').trim().toUpperCase(),
-        enderecoCompleto: dados.get('enderecoCompleto').trim() || null,
-        beneficios: dados.get('beneficios').trim() || null,
-        modeloTrabalho: dados.get('modeloTrabalho'),
-        tipoContrato: dados.get('tipoContrato').trim(),
-        tagIds: dados.getAll('tagId').map(Number),
-        categoria: dados.get('categoria').trim() || null,
-        experiencia: dados.get('experiencia').trim() || null,
-        dataLimiteCandidatura: dados.get('dataLimiteCandidatura') || null,
-        abrangencia: dados.get('abrangencia') || null,
-        fotos: dados.getAll('foto').map(function (url) { return url.trim(); }).filter(Boolean)
-      };
-      try {
-        var vaga = await api('/vagas', { method: 'POST', body: payload });
-        alert('Vaga publicada com sucesso.');
-        window.location.href = '/vagas/' + encodeURIComponent(vaga.id) + '/gerenciar';
-      } catch (erro) {
-        alert(erro.message);
-      }
-    });
+    if (!exigirSessaoContratante()) return;
+    form.insertAdjacentHTML('afterbegin', '<p role="status">Publicação indisponível: o catálogo de áreas ainda não está disponível. Nenhuma vaga será enviada.</p>');
+    form.querySelectorAll('input, select, textarea, button').forEach(function (campo) { campo.disabled = true; });
+    form.addEventListener('submit', function (event) { event.preventDefault(); });
   }
 
   async function iniciarPerfil() {
     var form = document.getElementById('form-perfil');
     if (!form) return;
     var sessao = lerSessao();
-    if (!sessao) {
+    if (!sessao || !sessao.token) {
       window.location.href = '/login';
       return;
     }
@@ -1245,9 +1227,9 @@
         document.querySelector('[data-campo-empresa]').hidden = true;
         document.querySelector('[data-campo-tipo-perfil]').hidden = true;
         form.elements.urlPortfolio.value = perfil.urlPortfolio || '';
-        var tagsDisponiveis = await api('/tags');
-        var tagsAtuais = new Set((perfil.tagIds || []).map(Number));
-        form.elements.tagIds.innerHTML = tagsDisponiveis.map(function (tag) {
+        var tagsDisponiveis = await api('/funcoes');
+        var tagsAtuais = new Set((perfil.funcaoIds || []).map(Number));
+        form.elements.funcaoIds.innerHTML = tagsDisponiveis.filter(function (tag) { return Number(tag.areaId) === Number(perfil.areaPrincipalId); }).map(function (tag) {
           return '<option value="' + tag.id + '"' + (tagsAtuais.has(Number(tag.id)) ? ' selected' : '') + '>' +
             escapar(tag.nome) + '</option>';
         }).join('');
@@ -1273,7 +1255,8 @@
           localizacao: form.elements.localizacao.value.trim(),
           urlPortfolio: form.elements.urlPortfolio.value.trim() || null,
           bannerUrl: form.elements.bannerUrl.value.trim() || null,
-          tagIds: Array.from(form.elements.tagIds.selectedOptions).map(function (opcao) { return Number(opcao.value); })
+          areaPrincipalId: perfil.areaPrincipalId,
+          funcaoIds: Array.from(form.elements.funcaoIds.selectedOptions).map(function (opcao) { return Number(opcao.value); })
         };
         await api((contratante ? '/perfis-contratantes/' : '/perfis-artistas/') + usuario.id, {
           method: 'PUT', body: perfilPayload
@@ -1292,6 +1275,7 @@
         var emailAlterado = atualizado.email !== sessao.email;
         sessao.nome = atualizado.nome;
         sessao.email = atualizado.email;
+        sessao.perfilCompleto = atualizado.perfilCompleto;
         salvarSessao(sessao);
         form.elements.novaSenha.value = '';
         form.elements.senhaAtual.value = '';
@@ -1303,19 +1287,6 @@
           window.location.href = '/login';
         }
       } catch (erro) {
-        alert(erro.message);
-      }
-    });
-    var excluir = form.querySelector('[data-excluir-conta]');
-    excluir.addEventListener('click', async function () {
-      if (!window.confirm('Tem certeza que deseja excluir sua conta? Esta ação não pode ser desfeita.')) return;
-      excluir.disabled = true;
-      try {
-        await api('/usuarios/me', { method: 'DELETE' });
-        limparSessao();
-        window.location.href = '/login';
-      } catch (erro) {
-        excluir.disabled = false;
         alert(erro.message);
       }
     });
@@ -1338,6 +1309,728 @@
     });
   }
 
+
+  var STATUS_RETIRAVEIS = ['PENDENTE', 'EM_ANALISE', 'REJEITADA'];
+  var TAMANHO_PAGINA_CANDIDATURAS = 20;
+  var TAMANHO_PAGINA_NOTIFICACOES = 20;
+  var TAMANHO_PAGINA_CANDIDATOS = 20;
+  var PALAVRA_EXCLUSAO = 'EXCLUIR';
+  function linkExternoSeguro(valor) { try { var u = new URL(valor); return ['https:', 'http:'].indexOf(u.protocol) >= 0 ? u.href : null; } catch (e) { return null; } }
+
+  function linkInternoSeguro(valor) {
+    if (!valor || typeof valor !== 'string') return null;
+    try {
+      var url = new URL(valor, window.location.href);
+      var permitidos = [
+        '/dashboard-contratante.html',
+        '/detalhe-vaga.html',
+        '/detalhe-vaga-proprietario.html',
+        '/perfil-publico.html',
+        '/mensagens.html',
+        '/buscar-vagas.html',
+        '/minhas-candidaturas.html',
+        '/minhas-vagas.html',
+        '/notificacoes.html'
+      ];
+      return url.origin === window.location.origin && (permitidos.indexOf(url.pathname) >= 0 || /^\/vagas\/\d+(?:\/gerenciar)?$/.test(url.pathname) || ['/dashboard', '/perfil', '/mensagens'].indexOf(url.pathname) >= 0)
+        ? url.pathname.substring(1) + url.search
+        : null;
+    } catch (erro) {
+      return null;
+    }
+  }
+
+  function rotuloCandidatura(status) {
+    // Valores oficiais trafegam intactos; os rótulos são apenas apresentação.
+    return {
+      PENDENTE: 'Candidatura enviada',
+      EM_ANALISE: 'Em análise',
+      ACEITA: 'Aprovada',
+      REJEITADA: 'Não selecionada',
+      RETIRADA: 'Retirada',
+      CANCELADA_POR_VAGA: 'Vaga cancelada'
+    }[status] || status;
+  }
+
+  // Falha de rede chega como TypeError com o texto cru do navegador ("Failed to
+  // fetch"), que nao diz nada a quem esta usando a tela. Erro vindo da API ja
+  // passou por mensagemDaApi() e pode ser mostrado como esta.
+  function mensagemDeFalha(erro) {
+    if (erro instanceof TypeError) {
+      return 'Não foi possível falar com o servidor agora. Verifique sua conexão e tente de novo.';
+    }
+    return erro.message;
+  }
+
+  function montarCandidatura(vaga) {
+    var raiz = document.querySelector('[data-candidatura]');
+    if (!raiz) return;
+
+    var aviso = raiz.querySelector('[data-candidatura-aviso]');
+    var situacao = raiz.querySelector('[data-candidatura-situacao]');
+    var statusTexto = raiz.querySelector('[data-candidatura-status-texto]');
+    var dataTexto = raiz.querySelector('[data-candidatura-data]');
+    var botaoRetirar = raiz.querySelector('[data-candidatura-retirar]');
+    var form = raiz.querySelector('[data-candidatura-form]');
+    var erroBox = raiz.querySelector('[data-candidatura-erro]');
+    var contador = raiz.querySelector('[data-candidatura-contador]');
+    var campoMensagem = raiz.querySelector('#candidatura-mensagem');
+    var botaoEnviar = raiz.querySelector('[data-candidatura-enviar]');
+
+    var sessao = lerSessao();
+
+    function mostrarAviso(html) {
+      aviso.innerHTML = html;
+      aviso.hidden = false;
+      situacao.hidden = true;
+      form.hidden = true;
+    }
+
+    function mostrarSituacao(status, data) {
+      statusTexto.textContent = rotuloCandidatura(status);
+      dataTexto.textContent = data ? 'Enviada em ' + dataBrasileira(data) : '';
+      botaoRetirar.hidden = STATUS_RETIRAVEIS.indexOf(status) < 0;
+      aviso.hidden = true;
+      situacao.hidden = false;
+      form.hidden = true;
+    }
+
+    function mostrarFormulario() {
+      aviso.hidden = true;
+      situacao.hidden = true;
+      form.hidden = false;
+    }
+
+    // --- Estados que impedem a candidatura, na ordem em que importam ---
+
+    if (!sessao || !sessao.token) {
+      mostrarAviso('Entre na sua conta de artista para se candidatar. ' +
+        '<a href="/login">Entrar</a>');
+      return;
+    }
+
+    if (sessao.tipoUsuario !== 'ARTISTA') {
+      if (vaga.propriaDoContratante) {
+        mostrarAviso('Esta vaga é sua. ' +
+          '<a href="/vagas/' + encodeURIComponent(vaga.id) + '/gerenciar">' +
+          'Ver candidaturas recebidas</a>');
+      } else {
+        mostrarAviso('Somente artistas podem se candidatar a vagas.');
+      }
+      return;
+    }
+
+    if (vaga.minhaCandidaturaId) {
+      mostrarSituacao(vaga.statusMinhaCandidatura, vaga.dataCandidatura);
+    } else if (vaga.status !== 'ABERTA') {
+      mostrarAviso('Esta vaga não está aberta para candidaturas no momento.');
+      return;
+    } else if (!sessao.perfilCompleto) {
+      // perfil_completo do servidor e a autoridade — nao ha checklist local que
+      // substitua isso para liberar o envio.
+      mostrarAviso('Complete seu perfil antes de se candidatar. ' +
+        '<a href="/perfil">Completar perfil</a>');
+      return;
+    } else {
+      mostrarFormulario();
+    }
+
+    // --- Contador de caracteres ---
+    if (campoMensagem && contador) {
+      var atualizarContador = function () {
+        contador.textContent = String(campoMensagem.value.length);
+      };
+      campoMensagem.addEventListener('input', atualizarContador);
+      atualizarContador();
+    }
+
+    // --- Retirada ---
+    if (botaoRetirar) {
+      botaoRetirar.addEventListener('click', async function () {
+        if (!window.confirm('Retirar sua candidatura para esta vaga?')) return;
+        botaoRetirar.disabled = true;
+        try {
+          await api('/candidaturas/' + encodeURIComponent(vaga.minhaCandidaturaId), { method: 'DELETE' });
+          // O servidor marca RETIRADA (nao apaga). Refletimos o que ele fez.
+          mostrarSituacao('RETIRADA', vaga.dataCandidatura);
+        } catch (falha) {
+          erroBox.textContent = mensagemDeFalha(falha);
+          erroBox.hidden = false;
+        } finally {
+          botaoRetirar.disabled = false;
+        }
+      });
+    }
+
+    // --- Envio ---
+    if (form) {
+      form.addEventListener('submit', async function (evento) {
+        evento.preventDefault();
+        erroBox.hidden = true;
+
+        var mensagem = form.elements.mensagemApresentacao.value.trim();
+        var link = form.elements.linkPortfolioCandidatura.value.trim();
+
+        // O contrato marca os dois como @NotBlank; validar antes evita um 400
+        // que nao diria qual campo falhou.
+        if (!mensagem || mensagem.length > 2000) {
+          erroBox.textContent = 'Escreva sua mensagem de apresentação.';
+          erroBox.hidden = false;
+          form.elements.mensagemApresentacao.focus();
+          return;
+        }
+        if (!link || !linkExternoSeguro(link) || link.length > 255) {
+          erroBox.textContent = 'Informe o link do seu portfólio ou currículo.';
+          erroBox.hidden = false;
+          form.elements.linkPortfolioCandidatura.focus();
+          return;
+        }
+
+        if (botaoEnviar.disabled) return;
+        botaoEnviar.disabled = true;              // impede clique duplo
+        var rotuloOriginal = botaoEnviar.textContent;
+        botaoEnviar.textContent = 'Enviando...';
+
+        try {
+          var criada = await api('/candidaturas', {
+            method: 'POST',
+            body: {
+              vagaId: Number(vaga.id),
+              artistaId: Number(sessao.id),
+              mensagemApresentacao: mensagem,
+              linkPortfolioCandidatura: link
+            }
+          });
+          // So declara sucesso depois da resposta do servidor.
+          vaga.minhaCandidaturaId = criada.id;
+          vaga.statusMinhaCandidatura = criada.status;
+          mostrarSituacao(criada.status, criada.dataCandidatura);
+        } catch (falha) {
+          if (falha.status === 409) {
+            // Duplicata: o estado real e "ja candidatado".
+            form.hidden = true; aviso.hidden = false; aviso.textContent = 'Já existe uma candidatura. Recarregue a vaga para consultar a situação atual.';
+            erroBox.textContent = 'Você já se candidatou a esta vaga.';
+            erroBox.hidden = false;
+          } else {
+            // 422 (perfil incompleto / vaga fechada), 403 e 404 ja chegam com
+            // mensagem propria do servidor; o preenchimento e preservado.
+            erroBox.textContent = mensagemDeFalha(falha);
+            erroBox.hidden = false;
+          }
+        } finally {
+          botaoEnviar.disabled = false;
+          botaoEnviar.textContent = rotuloOriginal;
+        }
+      });
+    }
+  }
+
+  function classeStatusCandidatura(status) {
+    if (status === 'ACEITA') return 'status--selecao';
+    if (status === 'REJEITADA' || status === 'CANCELADA_POR_VAGA') return 'status--expirada';
+    if (status === 'RETIRADA') return 'status--expirada';
+    return 'status--concluida';
+  }
+
+  function htmlLinhaCandidatura(candidatura) {
+    // CandidaturaResponse nao traz o titulo da vaga. Buscar vaga por linha seria
+    // uma requisicao por card, que o proprio criterio de desempenho proibe —
+    // entao a linha mostra o que o contrato da e leva ao detalhe da vaga.
+    var link = linkExternoSeguro(candidatura.linkPortfolioCandidatura);
+    var podeRetirar = STATUS_RETIRAVEIS.indexOf(candidatura.status) >= 0;
+    var mensagem = candidatura.mensagemApresentacao || '';
+
+    return '<li class="candidatura-linha" data-candidatura-id="' + escapar(candidatura.id) + '">' +
+      '<div class="candidatura-linha__topo">' +
+      '<a class="candidatura-linha__vaga" href="detalhe-vaga.html?id=' +
+        encodeURIComponent(candidatura.vagaId) + '">Ver a vaga #' + escapar(candidatura.vagaId) + '</a>' +
+      '<span class="status ' + classeStatusCandidatura(candidatura.status) + '">' +
+        escapar(rotuloCandidatura(candidatura.status)) + '</span>' +
+      '</div>' +
+      '<p class="candidatura-linha__data">Enviada em ' +
+        escapar(dataBrasileira(candidatura.dataCandidatura)) + '</p>' +
+      (mensagem
+        ? '<p class="candidatura-linha__mensagem">' + escapar(mensagem) + '</p>'
+        : '') +
+      (link
+        ? '<p class="candidatura-linha__link"><a href="' + escapar(link) +
+          '" target="_blank" rel="noopener noreferrer">Portfólio enviado</a></p>'
+        : '') +
+      (podeRetirar
+        ? '<button class="btn btn--contorno candidatura-linha__retirar" type="button" ' +
+          'data-retirar-candidatura="' + escapar(candidatura.id) + '">Retirar candidatura</button>'
+        : '') +
+      '</li>';
+  }
+
+  async function iniciarMinhasCandidaturas() {
+    if (paginaAtual !== 'minhas-candidaturas.html') return;
+
+    var lista = document.querySelector('[data-candidaturas-lista]');
+    if (!lista) return;
+    var sessao = exigirSessao();
+    if (!sessao) return;
+
+    var carregando = document.querySelector('[data-candidaturas-carregando]');
+    var caixaErro = document.querySelector('[data-candidaturas-erro]');
+    var textoErro = document.querySelector('[data-candidaturas-erro-texto]');
+    var vazio = document.querySelector('[data-candidaturas-vazio]');
+    var avisoContratante = document.querySelector('[data-candidaturas-contratante]');
+    var resumo = document.querySelector('[data-candidaturas-resumo]');
+    var botaoMais = document.querySelector('[data-candidaturas-mais]');
+    var avisoFim = document.querySelector('[data-candidaturas-fim]');
+
+    function mostrar(elemento, visivel) {
+      if (elemento) elemento.hidden = !visivel;
+    }
+
+    if (sessao.tipoUsuario === 'CONTRATANTE') {
+      mostrar(avisoContratante, true);
+      return;
+    }
+
+    var estado = { pagina: 0, total: 0, carregando: false, temMais: true };
+
+    async function carregar() {
+      if (estado.carregando || !estado.temMais) return;
+      estado.carregando = true;
+      mostrar(caixaErro, false);
+      mostrar(botaoMais, false);
+      mostrar(carregando, true);
+
+      try {
+        var itens = await api('/candidaturas?page=' + estado.pagina +
+          '&size=' + TAMANHO_PAGINA_CANDIDATURAS);
+        itens = itens || [];
+
+        lista.insertAdjacentHTML('beforeend', itens.map(htmlLinhaCandidatura).join(''));
+        estado.total += itens.length;
+        // O endpoint devolve lista crua, sem hasMore: a unica pista de que
+        // acabou e a pagina vir menor que o tamanho pedido.
+        estado.temMais = itens.length === TAMANHO_PAGINA_CANDIDATURAS;
+        estado.pagina += 1;
+
+        mostrar(vazio, estado.total === 0);
+        mostrar(botaoMais, estado.temMais);
+        mostrar(avisoFim, !estado.temMais && estado.total > 0);
+        if (resumo) {
+          resumo.textContent = estado.total === 0 ? '' :
+            estado.total + (estado.total === 1 ? ' candidatura' : ' candidaturas') +
+            (estado.temMais ? ' carregadas até aqui.' : ' no total.');
+        }
+      } catch (falha) {
+        if (textoErro) textoErro.textContent = mensagemDeFalha(falha);
+        mostrar(caixaErro, true);
+      } finally {
+        estado.carregando = false;
+        mostrar(carregando, false);
+      }
+    }
+
+    // Retirada por delegacao: as linhas sao inseridas em lotes, entao um
+    // listener na lista cobre as que ainda nem chegaram.
+    lista.addEventListener('click', async function (evento) {
+      var botao = evento.target.closest('[data-retirar-candidatura]');
+      if (!botao) return;
+      var id = botao.getAttribute('data-retirar-candidatura');
+      if (!window.confirm('Retirar esta candidatura?')) return;
+
+      botao.disabled = true;
+      try {
+        await api('/candidaturas/' + encodeURIComponent(id), { method: 'DELETE' });
+        var linha = botao.closest('.candidatura-linha');
+        var selo = linha.querySelector('.status');
+        selo.textContent = rotuloCandidatura('RETIRADA');
+        selo.className = 'status ' + classeStatusCandidatura('RETIRADA');
+        botao.remove();
+      } catch (falha) {
+        botao.disabled = false;
+        if (textoErro) textoErro.textContent = mensagemDeFalha(falha);
+        mostrar(caixaErro, true);
+      }
+    });
+
+    if (botaoMais) botaoMais.addEventListener('click', carregar);
+    var tentar = document.querySelector('[data-candidaturas-tentar]');
+    if (tentar) tentar.addEventListener('click', carregar);
+
+    carregar();
+  }
+
+  function rotuloTipoNotificacao(tipo) {
+    // Só os tipos habilitados no MVP ganham rotulo proprio. EDITAL pertence ao
+    // RF34, que esta fora do escopo: aparece como aviso generico em vez de
+    // reintroduzir o modulo pela porta dos fundos.
+    return {
+      CANDIDATURA: 'Candidatura',
+      MENSAGEM: 'Mensagem',
+      CONVITE: 'Convite',
+      SALVO: 'Salvo'
+    }[tipo] || 'Aviso';
+  }
+
+  function htmlNotificacao(notificacao) {
+    var destino = linkInternoSeguro(notificacao.link);
+    var lida = notificacao.lida === true;
+    var corpo =
+      '<span class="central-item__tipo">' + escapar(rotuloTipoNotificacao(notificacao.tipo)) + '</span>' +
+      '<span class="central-item__mensagem">' + escapar(notificacao.mensagem || '') + '</span>' +
+      '<span class="central-item__data">' + escapar(dataBrasileira(notificacao.data)) + '</span>';
+
+    return '<li class="central-item' + (lida ? '' : ' central-item--nao-lida') + '" ' +
+      'data-notificacao-id="' + escapar(notificacao.id) + '">' +
+      (destino
+        ? '<a class="central-item__link" href="' + escapar(destino) + '">' + corpo + '</a>'
+        : '<div class="central-item__link">' + corpo + '</div>') +
+      (lida ? '' :
+        '<button class="central-item__marcar" type="button" ' +
+        'data-marcar-notificacao="' + escapar(notificacao.id) + '">Marcar como lida</button>') +
+      '</li>';
+  }
+
+  async function iniciarCentralNotificacoes() {
+    if (paginaAtual !== 'notificacoes.html') return;
+
+    var lista = document.querySelector('[data-notificacoes-lista]');
+    if (!lista) return;
+    if (!exigirSessao()) return;
+
+    var carregando = document.querySelector('[data-notificacoes-carregando]');
+    var caixaErro = document.querySelector('[data-notificacoes-erro]');
+    var textoErro = document.querySelector('[data-notificacoes-erro-texto]');
+    var vazio = document.querySelector('[data-notificacoes-vazio]');
+    var resumo = document.querySelector('[data-notificacoes-resumo]');
+    var botaoMais = document.querySelector('[data-notificacoes-mais]');
+    var avisoFim = document.querySelector('[data-notificacoes-fim]');
+    var botaoTodas = document.querySelector('[data-notificacoes-marcar-todas]');
+
+    var estado = { pagina: 0, total: 0, carregando: false, temMais: true };
+
+    function mostrar(elemento, visivel) {
+      if (elemento) elemento.hidden = !visivel;
+    }
+
+    function atualizarResumo(naoLidas) {
+      if (!resumo) return;
+      if (estado.total === 0) { resumo.textContent = ''; return; }
+      resumo.textContent = estado.total + (estado.total === 1 ? ' notificação' : ' notificações') +
+        (naoLidas ? ' · ' + naoLidas + ' não lida' + (naoLidas === 1 ? '' : 's') : '');
+    }
+
+    function contarNaoLidasNaTela() {
+      return document.querySelectorAll('.central-item--nao-lida').length;
+    }
+
+    async function carregar() {
+      if (estado.carregando || !estado.temMais) return;
+      estado.carregando = true;
+      mostrar(caixaErro, false);
+      mostrar(botaoMais, false);
+      mostrar(carregando, true);
+
+      try {
+        var pagina = await api('/notificacoes?page=' + estado.pagina +
+          '&size=' + TAMANHO_PAGINA_NOTIFICACOES);
+        var itens = (pagina && pagina.content) || [];
+
+        lista.insertAdjacentHTML('beforeend', itens.map(htmlNotificacao).join(''));
+        estado.total += itens.length;
+        estado.temMais = pagina ? pagina.hasNext === true : false;
+        estado.pagina += 1;
+
+        mostrar(vazio, estado.total === 0);
+        mostrar(botaoMais, estado.temMais);
+        mostrar(avisoFim, !estado.temMais && estado.total > 0);
+        if (botaoTodas) botaoTodas.hidden = contarNaoLidasNaTela() === 0;
+        atualizarResumo(contarNaoLidasNaTela());
+      } catch (falha) {
+        if (textoErro) textoErro.textContent = mensagemDeFalha(falha);
+        mostrar(caixaErro, true);
+      } finally {
+        estado.carregando = false;
+        mostrar(carregando, false);
+      }
+    }
+
+    function marcarLidaNaTela(item) {
+      item.classList.remove('central-item--nao-lida');
+      var botao = item.querySelector('[data-marcar-notificacao]');
+      if (botao) botao.remove();
+    }
+
+    // Delegacao: os itens chegam em lotes.
+    lista.addEventListener('click', async function (evento) {
+      var botao = evento.target.closest('[data-marcar-notificacao]');
+      if (!botao) return;
+      var id = botao.getAttribute('data-marcar-notificacao');
+      botao.disabled = true;
+      try {
+        await api('/notificacoes/' + encodeURIComponent(id) + '/lida', { method: 'PATCH' });
+        marcarLidaNaTela(botao.closest('.central-item'));
+        if (botaoTodas) botaoTodas.hidden = contarNaoLidasNaTela() === 0;
+        atualizarResumo(contarNaoLidasNaTela());
+      } catch (falha) {
+        botao.disabled = false;
+        if (textoErro) textoErro.textContent = mensagemDeFalha(falha);
+        mostrar(caixaErro, true);
+      }
+    });
+
+    if (botaoTodas) {
+      botaoTodas.addEventListener('click', async function () {
+        botaoTodas.disabled = true;
+        try {
+          await api('/notificacoes/lidas', { method: 'PATCH' });
+          // So repinta depois do servidor confirmar.
+          Array.from(document.querySelectorAll('.central-item--nao-lida')).forEach(marcarLidaNaTela);
+          botaoTodas.hidden = true;
+          atualizarResumo(0);
+        } catch (falha) {
+          if (textoErro) textoErro.textContent = mensagemDeFalha(falha);
+          mostrar(caixaErro, true);
+        } finally {
+          botaoTodas.disabled = false;
+        }
+      });
+      botaoTodas.hidden = true;
+    }
+
+    if (botaoMais) botaoMais.addEventListener('click', carregar);
+    var tentar = document.querySelector('[data-notificacoes-tentar]');
+    if (tentar) tentar.addEventListener('click', carregar);
+
+    carregar();
+  }
+
+  function acoesDoContratante(status) {
+    if (status === 'PENDENTE') return ['EM_ANALISE', 'ACEITA', 'REJEITADA'];
+    if (status === 'EM_ANALISE') return ['ACEITA', 'REJEITADA'];
+    return [];
+  }
+
+  function rotuloAcao(status) {
+    return { EM_ANALISE: 'Colocar em análise', ACEITA: 'Aprovar', REJEITADA: 'Recusar' }[status];
+  }
+
+  function htmlCandidato(candidatura) {
+    var avatar = candidatura.avatarUrl || 'assets/avatar-perfil.png';
+    var coincidentes = candidatura.quantidadeFuncoesCoincidentes || 0;
+    var acoes = acoesDoContratante(candidatura.status).map(function (destino) {
+      return '<button class="btn btn--contorno candidato__acao" type="button" ' +
+        'data-analisar="' + escapar(candidatura.candidaturaId) + '" ' +
+        'data-destino="' + destino + '">' + rotuloAcao(destino) + '</button>';
+    }).join('');
+
+    return '<li class="candidato" data-candidatura-id="' + escapar(candidatura.candidaturaId) + '">' +
+      '<img class="candidato__avatar" src="' + escapar(avatar) + '" alt="" loading="lazy" decoding="async">' +
+      '<div class="candidato__corpo">' +
+      '<div class="candidato__cabecalho">' +
+      '<h2 class="candidato__nome">' +
+      '<a href="perfil-publico.html?tipo=artista&amp;id=' + encodeURIComponent(candidatura.artistaId) + '">' +
+      escapar(candidatura.nomeArtista || 'Artista') + '</a></h2>' +
+      '<span class="status ' + classeStatusCandidatura(candidatura.status) + '" data-candidato-status>' +
+      escapar(rotuloCandidatura(candidatura.status)) + '</span>' +
+      '</div>' +
+      (candidatura.localizacao
+        ? '<p class="candidato__local">' + escapar(candidatura.localizacao) + '</p>' : '') +
+      // Compatibilidade explicada so com fator real que o contrato entrega.
+      (coincidentes > 0
+        ? '<p class="candidato__compat">' + coincidentes +
+          (coincidentes === 1 ? ' função em comum com a vaga' : ' funções em comum com a vaga') + '</p>'
+        : '') +
+      (candidatura.mensagemApresentacao
+        ? '<p class="candidato__mensagem">' + escapar(candidatura.mensagemApresentacao) + '</p>' : '') +
+      '<p class="candidato__links">' +
+      (candidatura.linkPortfolioCandidatura
+        ? '<a href="' + escapar(linkExternoSeguro(candidatura.linkPortfolioCandidatura) || '#') +
+          '" target="_blank" rel="noopener noreferrer">Portfólio da candidatura</a>' : '') +
+      '</p>' +
+      '<p class="candidato__data">Candidatou-se em ' +
+      escapar(dataBrasileira(candidatura.dataCandidatura)) + '</p>' +
+      (acoes ? '<div class="candidato__acoes">' + acoes + '</div>' : '') +
+      '</div></li>';
+  }
+
+  async function iniciarCandidatosDaVaga() {
+    if (paginaAtual !== 'candidatos-vaga.html') return;
+
+    var lista = document.querySelector('[data-cand-lista]');
+    if (!lista) return;
+    if (!exigirSessaoContratante()) return;
+
+    var vagaId = new URLSearchParams(window.location.search).get('vaga');
+    var carregando = document.querySelector('[data-cand-carregando]');
+    var caixaErro = document.querySelector('[data-cand-erro]');
+    var textoErro = document.querySelector('[data-cand-erro-texto]');
+    var vazio = document.querySelector('[data-cand-vazio]');
+    var resumo = document.querySelector('[data-cand-resumo]');
+    var botaoMais = document.querySelector('[data-cand-mais]');
+    var avisoFim = document.querySelector('[data-cand-fim]');
+
+    function mostrar(elemento, visivel) { if (elemento) elemento.hidden = !visivel; }
+
+    if (!vagaId || !/^\d+$/.test(vagaId)) {
+      if (textoErro) textoErro.textContent = 'Vaga não informada no endereço.';
+      mostrar(caixaErro, true);
+      return;
+    }
+
+    // Cache local do payload de cada candidatura: o PUT exige vagaId, artistaId,
+    // mensagem e link de volta, e alterar vaga/artista e recusado pelo servidor.
+    var porId = {};
+    var estado = { pagina: 0, total: 0, carregando: false, temMais: true };
+
+    api('/vagas/' + encodeURIComponent(vagaId)).then(function (vaga) {
+      var alvo = document.querySelector('[data-cand-vaga-titulo]');
+      if (alvo && vaga && vaga.titulo) alvo.textContent = vaga.titulo;
+      document.title = 'Candidatos — ' + vaga.titulo + ' — Palco';
+    }).catch(function (falha) { var alvo = document.querySelector('[data-cand-vaga-titulo]'); if (alvo) alvo.textContent = 'vaga #' + vagaId; if (textoErro) textoErro.textContent = mensagemDeFalha(falha); mostrar(caixaErro, true); });
+
+    async function carregar() {
+      if (estado.carregando || !estado.temMais) return;
+      estado.carregando = true;
+      mostrar(caixaErro, false);
+      mostrar(botaoMais, false);
+      mostrar(carregando, true);
+      try {
+        var pagina = await api('/vagas/' + encodeURIComponent(vagaId) + '/candidaturas?page=' +
+          estado.pagina + '&size=' + TAMANHO_PAGINA_CANDIDATOS);
+        var itens = (pagina && pagina.content) || [];
+        itens.forEach(function (item) { porId[item.candidaturaId] = item; });
+
+        lista.insertAdjacentHTML('beforeend', itens.map(htmlCandidato).join(''));
+        estado.total += itens.length;
+        estado.temMais = pagina ? pagina.hasNext === true : false;
+        estado.pagina += 1;
+
+        mostrar(vazio, estado.total === 0);
+        mostrar(botaoMais, estado.temMais);
+        mostrar(avisoFim, !estado.temMais && estado.total > 0);
+        if (resumo && pagina) {
+          resumo.textContent = pagina.totalElements +
+            (pagina.totalElements === 1 ? ' candidatura' : ' candidaturas') + ' nesta vaga.';
+        }
+      } catch (falha) {
+        if (textoErro) textoErro.textContent = mensagemDeFalha(falha);
+        mostrar(caixaErro, true);
+      } finally {
+        estado.carregando = false;
+        mostrar(carregando, false);
+      }
+    }
+
+    lista.addEventListener('click', async function (evento) {
+      var botao = evento.target.closest('[data-analisar]');
+      if (!botao) return;
+      var id = botao.getAttribute('data-analisar');
+      var destino = botao.getAttribute('data-destino');
+      var original = porId[id];
+      if (!original) return;
+
+      if (destino !== 'EM_ANALISE' &&
+          !window.confirm('Confirmar "' + rotuloAcao(destino) + '" para ' +
+            (original.nomeArtista || 'este artista') + '? Esta decisão é final.')) {
+        return;
+      }
+
+      var item = botao.closest('.candidato');
+      var botoes = Array.from(item.querySelectorAll('[data-analisar]'));
+      botoes.forEach(function (b) { b.disabled = true; });
+
+      try {
+        var atualizada = await api('/candidaturas/' + encodeURIComponent(id), {
+          method: 'PUT',
+          body: {
+            vagaId: original.vagaId != null ? original.vagaId : Number(vagaId),
+            artistaId: original.artistaId,
+            mensagemApresentacao: original.mensagemApresentacao,
+            linkPortfolioCandidatura: original.linkPortfolioCandidatura,
+            status: destino
+          }
+        });
+        // Repinta com o status que o servidor devolveu, nao com o pedido.
+        original.status = atualizada.status;
+        var selo = item.querySelector('[data-candidato-status]');
+        selo.textContent = rotuloCandidatura(atualizada.status);
+        selo.className = 'status ' + classeStatusCandidatura(atualizada.status);
+        var caixaAcoes = item.querySelector('.candidato__acoes');
+        var restantes = acoesDoContratante(atualizada.status);
+        if (!restantes.length) {
+          if (caixaAcoes) caixaAcoes.remove();
+        } else {
+          botoes.forEach(function (b) {
+            var mantem = restantes.indexOf(b.getAttribute('data-destino')) >= 0;
+            if (mantem) { b.disabled = false; } else { b.remove(); }
+          });
+        }
+      } catch (falha) {
+        botoes.forEach(function (b) { b.disabled = false; });
+        if (textoErro) textoErro.textContent = mensagemDeFalha(falha);
+        mostrar(caixaErro, true);
+      }
+    });
+
+    if (botaoMais) botaoMais.addEventListener('click', carregar);
+    var tentar = document.querySelector('[data-cand-tentar]');
+    if (tentar) tentar.addEventListener('click', carregar);
+
+    carregar();
+  }
+
+  function iniciarExclusaoDeConta() {
+    if (paginaAtual !== 'excluir-conta.html') return;
+
+    var confirmacao = document.getElementById('exclusao-confirmacao');
+    var botao = document.querySelector('[data-exclusao-confirmar]');
+    if (!confirmacao || !botao) return;
+    if (!exigirSessao()) return;
+
+    var form = document.querySelector('[data-exclusao-form]');
+    var processando = document.querySelector('[data-exclusao-processando]');
+    var sucesso = document.querySelector('[data-exclusao-sucesso]');
+    var erro = document.querySelector('[data-exclusao-erro]');
+
+    confirmacao.addEventListener('input', function () {
+      botao.disabled = confirmacao.value.trim().toUpperCase() !== PALAVRA_EXCLUSAO;
+    });
+
+    botao.addEventListener('click', async function () {
+      if (botao.disabled) return;
+      botao.disabled = true;
+      if (erro) erro.hidden = true;
+      if (form) form.hidden = true;
+      if (processando) processando.hidden = false;
+
+      try {
+        await api('/usuarios/me', { method: 'DELETE' });
+        // A sessao so cai depois do servidor confirmar: esconder a interface
+        // antes disso seria fingir que a conta acabou.
+        limparSessao();
+        if (processando) processando.hidden = true;
+        if (sucesso) sucesso.hidden = false;
+      } catch (falha) {
+        if (processando) processando.hidden = true;
+        if (form) form.hidden = false;
+        botao.disabled = false;
+        if (erro) {
+          erro.textContent = (falha.status === 403 || falha.status === 422 ? 'A exclusão de conta está indisponível. Sua conta foi mantida. ' : '') + mensagemDeFalha(falha);
+          erro.hidden = false;
+        }
+      }
+    });
+  }
+
+  window.PalcoGoogle = {
+    entrar: async function (credential) {
+      if (typeof credential !== 'string' || !credential.trim()) throw new Error('Credencial Google ausente.');
+      var resposta = await api('/auth/google', { method: 'POST', body: { idToken: credential } });
+      if (resposta.status === 'AGUARDANDO_DADOS' || (resposta.statusConta && resposta.statusConta !== 'ATIVA')) { limparSessao(); return resposta; }
+      if (resposta.status !== 'AUTENTICADO' || !resposta.token) throw new Error('Resposta de autenticação Google inválida.');
+      salvarSessao(resposta);
+      return resposta;
+    }
+  };
+
   document.addEventListener('DOMContentLoaded', function () {
     aplicarDadosDaSessao();
     iniciarDrawer();
@@ -1355,6 +2048,10 @@
     iniciarEdicaoMidia();
     iniciarPublicacaoVaga();
     iniciarPerfil();
+    iniciarMinhasCandidaturas();
+    iniciarCentralNotificacoes();
+    iniciarCandidatosDaVaga();
+    iniciarExclusaoDeConta();
     iniciarLogout();
   });
 })();

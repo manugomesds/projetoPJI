@@ -512,3 +512,580 @@
     padding-inline: 1.25rem;
   }
 }
+
+
+.busca {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem 4rem;
+}
+
+.busca__titulo {
+  font-family: var(--fonte-display);
+  font-size: var(--texto-3xl);
+  letter-spacing: 0.02em;
+  margin: 0 0 1.5rem;
+}
+
+.busca__titulo:focus-visible {
+  outline: 3px solid var(--cor-magenta);
+  outline-offset: 4px;
+}
+
+.busca__form {
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-card);
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.busca__linha-principal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.busca__campo {
+  flex: 1 1 200px;
+  min-width: 0;          /* deixa o campo encolher abaixo do conteudo */
+}
+
+.busca__campo--largo {
+  flex: 2 1 280px;
+}
+
+.busca__enviar {
+  flex: 0 0 auto;
+  min-height: 48px;
+}
+
+.busca__avancado {
+  margin-top: 1.25rem;
+  border-top: 1px solid var(--cor-linha);
+  padding-top: 1rem;
+}
+
+.busca__avancado-resumo {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--cor-magenta);
+  padding: 0.25rem 0;
+}
+
+.busca__avancado-resumo:focus-visible {
+  outline: 2px solid var(--cor-magenta);
+  outline-offset: 2px;
+}
+
+.busca__grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.busca__aviso {
+  color: var(--cor-magenta);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  margin: 0.75rem 0 0;
+}
+
+.busca__acoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.busca__limpar {
+  background: none;
+  border: none;
+  color: var(--cor-magenta);
+  font-family: var(--fonte-corpo);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0.5rem;
+}
+
+.busca__resumo {
+  color: var(--cor-texto-suave);
+  font-size: var(--texto-sm);
+  margin: 0 0 1rem;
+  min-height: 1.25rem;      /* reserva a linha para o texto nao empurrar a lista */
+}
+
+.busca__estado {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--cor-texto-suave);
+}
+
+.busca__estado--erro {
+  color: var(--cor-magenta);
+  font-weight: 600;
+}
+
+.busca__spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--cor-linha);
+  border-top-color: var(--cor-magenta);
+  border-radius: 50%;
+  animation: busca-girar 0.9s linear infinite;
+}
+
+@keyframes busca-girar {
+  to { transform: rotate(360deg); }
+}
+
+.busca__paginacao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 2rem;
+}
+
+.busca__fim {
+  color: var(--cor-texto-suave);
+  font-size: var(--texto-sm);
+  margin: 0;
+}
+
+.busca__subtitulo {
+  font-family: var(--fonte-display);
+  font-size: var(--texto-xl);
+  margin: 3rem 0 1rem;
+}
+
+.busca__canceladas {
+  border-top: 1px solid var(--cor-linha);
+  margin-top: 2rem;
+}
+
+.busca__topo {
+  position: fixed;
+  right: 1.5rem;
+  bottom: 1.5rem;
+  z-index: 40;
+  padding: 0.75rem 1.25rem;
+  border: 1px solid var(--cor-magenta);
+  border-radius: var(--raio-pill);
+  background-color: var(--cor-branco);
+  color: var(--cor-magenta);
+  font-family: var(--fonte-corpo);
+  font-size: var(--texto-sm);
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--sombra-card);
+}
+
+/* Elementos novos do card, usados na listagem publica */
+.vaga-card__link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.vaga-card__link:hover,
+.vaga-card__link:focus-visible {
+  text-decoration: underline;
+}
+
+.vaga-card__remuneracao {
+  font-weight: 600;
+  margin: 0.25rem 0;
+}
+
+.vaga-card__selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.vaga-card__selo {
+  display: inline-block;
+  padding: 0.2rem 0.7rem;
+  border-radius: var(--raio-pill);
+  border: 1px solid var(--cor-linha);
+  background-color: var(--cor-lilas);
+  color: var(--cor-texto-suave);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+}
+
+.vaga-card__selo--propria {
+  border-color: var(--cor-magenta);
+  color: var(--cor-magenta);
+  background-color: rgba(156, 0, 136, 0.08);
+}
+
+@media (max-width: 800px) {
+  .busca {
+    padding: 1.5rem 1rem 3rem;
+  }
+
+  .busca__linha-principal {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  /* Em coluna, `flex: 1 1 200px` fazia cada campo crescer na vertical e abrir
+     buracos de ~200px entre os rotulos. Na vertical o campo tem a altura do
+     proprio conteudo. */
+  .busca__campo,
+  .busca__campo--largo {
+    flex: 0 0 auto;
+  }
+
+  .busca__enviar {
+    width: 100%;
+  }
+
+  .busca__topo {
+    right: 1rem;
+    bottom: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .busca__spinner {
+    animation-duration: 4s;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   RF06 — Caixa de candidatura no detalhe da vaga
+   -------------------------------------------------------------------------- */
+.candidatura {
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-card);
+}
+
+.candidatura__titulo {
+  font-family: var(--fonte-display);
+  font-size: var(--texto-xl);
+  margin: 0 0 1rem;
+}
+
+.candidatura__aviso {
+  margin: 0;
+  color: var(--cor-texto-suave);
+  line-height: 1.6;
+}
+
+.candidatura__aviso a {
+  color: var(--cor-magenta);
+  font-weight: 600;
+}
+
+.candidatura__estado p {
+  margin: 0 0 0.5rem;
+}
+
+.candidatura__data {
+  color: var(--cor-texto-suave);
+  font-size: var(--texto-sm);
+}
+
+.candidatura__texto {
+  min-height: 140px;
+  resize: vertical;
+  padding: 0.75rem 1rem;
+  line-height: 1.5;
+  border-radius: var(--raio-sm);
+}
+
+.candidatura__erro {
+  color: var(--cor-magenta);
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.candidatura__form .campo {
+  margin-bottom: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   RF06 — Histórico de candidaturas
+   -------------------------------------------------------------------------- */
+.candidaturas-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.candidatura-linha {
+  padding: 1.25rem 1.5rem;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-card);
+}
+
+.candidatura-linha__topo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.candidatura-linha__vaga {
+  font-size: var(--texto-lg);
+  font-weight: 600;
+  color: var(--cor-magenta);
+}
+
+.candidatura-linha__data {
+  margin: 0.5rem 0 0;
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-suave);
+}
+
+.candidatura-linha__mensagem {
+  margin: 0.75rem 0 0;
+  line-height: 1.6;
+  /* Mensagem pode ter 2.000 caracteres: corta em 3 linhas para a lista nao
+     virar um muro de texto, sem esconder que existe mais. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.candidatura-linha__link {
+  margin: 0.75rem 0 0;
+  font-size: var(--texto-sm);
+}
+
+.candidatura-linha__link a {
+  color: var(--cor-magenta);
+  font-weight: 600;
+}
+
+.candidatura-linha__retirar {
+  margin-top: 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   RF36 — Central de notificações
+   -------------------------------------------------------------------------- */
+.central__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.central-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.central-item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-linha);
+  border-left: 4px solid transparent;
+  border-radius: var(--raio-sm);
+  box-shadow: var(--sombra-card);
+}
+
+/* Não lida se distingue por barra + peso, não só por cor: cor sozinha não
+   serve como único sinal de estado. */
+.central-item--nao-lida {
+  border-left-color: var(--cor-magenta);
+  background-color: var(--cor-lilas);
+}
+
+.central-item--nao-lida .central-item__mensagem {
+  font-weight: 600;
+}
+
+.central-item__link {
+  display: grid;
+  gap: 0.25rem;
+  flex: 1 1 260px;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.central-item__link:hover .central-item__mensagem,
+a.central-item__link:focus-visible .central-item__mensagem {
+  text-decoration: underline;
+}
+
+.central-item__tipo {
+  font-size: var(--texto-xs);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--cor-magenta);
+}
+
+.central-item__mensagem {
+  line-height: 1.5;
+}
+
+.central-item__data {
+  font-size: var(--texto-xs);
+  color: var(--cor-texto-suave);
+}
+
+.central-item__marcar {
+  flex-shrink: 0;
+  padding: 0.4rem 0.9rem;
+  font-family: var(--fonte-corpo);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  color: var(--cor-magenta);
+  background: none;
+  border: 1px solid var(--cor-magenta);
+  border-radius: var(--raio-pill);
+  cursor: pointer;
+}
+
+/* --------------------------------------------------------------------------
+   RF05 / RF06 — Candidatos de uma vaga
+   -------------------------------------------------------------------------- */
+.candidatos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.candidato {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  gap: var(--gap-md);
+  padding: 1.25rem 1.5rem;
+  background-color: var(--cor-branco);
+  border: 1px solid var(--cor-linha);
+  border-radius: var(--raio-md);
+  box-shadow: var(--sombra-card);
+}
+
+.candidato__avatar {
+  width: 72px;
+  height: 72px;
+  object-fit: cover;
+  background-color: var(--cor-lilas);
+  border-radius: 50%;
+}
+
+.candidato__corpo {
+  min-width: 0;
+}
+
+.candidato__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.candidato__nome {
+  margin: 0;
+  font-size: var(--texto-xl);
+}
+
+.candidato__nome a {
+  color: inherit;
+}
+
+.candidato__local,
+.candidato__data {
+  margin: 0.35rem 0 0;
+  font-size: var(--texto-sm);
+  color: var(--cor-texto-suave);
+}
+
+/* Compatibilidade explicada por fator real do contrato, sem score oculto. */
+.candidato__compat {
+  display: inline-block;
+  margin: 0.5rem 0 0;
+  padding: 0.2rem 0.7rem;
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  color: var(--cor-magenta);
+  background-color: rgba(156, 0, 136, 0.08);
+  border: 1px solid var(--cor-magenta);
+  border-radius: var(--raio-pill);
+}
+
+.candidato__mensagem {
+  margin: 0.75rem 0 0;
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.candidato__links {
+  margin: 0.6rem 0 0;
+  font-size: var(--texto-sm);
+}
+
+.candidato__links a {
+  color: var(--cor-magenta);
+  font-weight: 600;
+}
+
+.candidato__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap-sm);
+  margin-top: 1rem;
+}
+
+.candidato__acao {
+  padding: 0.5rem 1.1rem;
+  font-size: var(--texto-sm);
+}
+
+@media (max-width: 700px) {
+  .candidato {
+    grid-template-columns: 1fr;
+  }
+
+  .candidato__acao {
+    flex: 1 1 auto;
+  }
+}
+
+[hidden] { display: none !important; }
+
+@media (max-width: 768px) { .app-navbar__menu { flex-wrap: wrap; justify-content: center; } }

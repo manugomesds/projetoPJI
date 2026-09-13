@@ -13,7 +13,7 @@ export async function getPrivateProfile() {
     apiClient.get(artista
       ? `/perfis-artistas/${usuario.id}`
       : `/perfis-contratantes/${usuario.id}`),
-    artista ? apiClient.get('/tags') : Promise.resolve([]),
+    artista ? apiClient.get('/funcoes') : Promise.resolve([]),
   ]);
   return { usuario, perfil, tags };
 }
@@ -30,7 +30,7 @@ function profilePayload(usuario, values) {
     return {
       ...shared,
       urlPortfolio: values.urlPortfolio.trim() || null,
-      tagIds: values.tagIds.map(Number),
+      ...(values.areaPrincipalId ? { areaPrincipalId: Number(values.areaPrincipalId), funcaoIds: values.funcaoIds.map(Number) } : {}),
     };
   }
 

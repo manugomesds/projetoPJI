@@ -27,7 +27,7 @@ function Availability({ title, data, href, action }) {
 function Tags({ tags = [], matches }) {
   return (
     <div className="account-tags">
-      {typeof matches === 'number' ? <span className="account-tag account-tag--match">{matches} área(s) em comum</span> : null}
+      {typeof matches === 'number' ? <span className="account-tag account-tag--match">{matches} função(ões) em comum</span> : null}
       {tags.map((tag) => <span className="account-tag" key={tag.id}>{tag.nome}</span>)}
     </div>
   );
@@ -49,7 +49,7 @@ function ArtistDashboard({ data }) {
           {section.content.length === 0 ? <p className="account-empty">Nenhuma vaga compatível no momento.</p> : null}
           {section.content.map((vaga) => (
             <article className="account-card" key={vaga.id}>
-              <div><h3>{vaga.titulo}</h3><p>{vaga.nomeContratante} · {vaga.cidade}/{vaga.estado} · {money(vaga.remuneraValor)}</p><Tags tags={vaga.tags} matches={vaga.quantidadeTagsCoincidentes} /></div>
+              <div><h3>{vaga.titulo}</h3><p>{vaga.nomeContratante} · {vaga.cidade}/{vaga.estado} · {money(vaga.remuneraValor)}</p><Tags tags={vaga.funcoes} matches={vaga.quantidadeFuncoesCoincidentes} /></div>
               <a href={`/vagas/${encodeURIComponent(vaga.id)}`}>Ver vaga</a>
             </article>
           ))}
@@ -85,7 +85,7 @@ function ContractorDashboard({ data }) {
           {talents.content.map((talent) => (
             <article className="account-card" key={talent.artistaId}>
               <img src={talent.avatarUrl} alt="" />
-              <div><h3>{talent.nomeExibicao}</h3><p>{talent.localizacao || 'Localização não informada'}</p><Tags tags={talent.tags} matches={talent.quantidadeTagsCoincidentes} /></div>
+              <div><h3>{talent.nomeExibicao}</h3><p>{talent.localizacao || 'Localização não informada'}</p><Tags tags={talent.funcoes} matches={talent.quantidadeFuncoesCoincidentes} /></div>
               <a href={`/perfis/ARTISTA/${encodeURIComponent(talent.artistaId)}`}>Ver perfil</a>
             </article>
           ))}

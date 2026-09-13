@@ -1,6 +1,16 @@
 /* Palco — RF03 frontend público: filtros, cursor e scroll infinito. */
 (function (global) {
   'use strict';
+  function remuneracaoDaVaga(vaga) {
+    var partes = [];
+    function moedaValor(v) { return Number(v).toLocaleString('pt-BR', {style:'currency', currency:'BRL'}); }
+    if (vaga.valorMinimo != null) partes.push(moedaValor(vaga.valorMinimo));
+    if (vaga.valorMaximo != null && vaga.valorMaximo !== vaga.valorMinimo) partes.push(moedaValor(vaga.valorMaximo));
+    if (!partes.length && vaga.remuneraValor != null) partes.push(moedaValor(vaga.remuneraValor));
+    if (vaga.formaRemuneracao) partes.push(vaga.formaRemuneracao.replace(/_/g, ' ').toLowerCase());
+    return partes.join(' · ') || 'Remuneração não informada';
+  }
+
 
   var TAMANHO_PAGINA = 20;
   var CAMPOS = [
@@ -95,7 +105,7 @@
     metas.appendChild(elemento('span', '', local || 'Local não informado'));
     metas.appendChild(elemento('span', '', rotuloEnum(vaga.modeloTrabalho) || 'Modelo não informado'));
     metas.appendChild(elemento('span', '', texto(vaga.tipoContrato, 'Contrato não informado')));
-    metas.appendChild(elemento('span', '', moeda(vaga.remuneraValor)));
+    metas.appendChild(elemento('span', '', remuneracaoDaVaga(vaga)));
     conteudo.appendChild(metas);
 
     conteudo.appendChild(elemento('p', 'vaga-busca-card__descricao', texto(vaga.descricao, 'Descrição não informada.')));

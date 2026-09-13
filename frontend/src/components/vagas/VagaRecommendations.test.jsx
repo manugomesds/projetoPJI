@@ -39,8 +39,8 @@ test('resposta antiga não sobrescreve recomendações após mudança da vaga', 
             candidaturaId: 2,
             artistaId: 22,
             nomeArtista: 'Artista da vaga atual',
-            tagsCoincidentes: [],
-            quantidadeTagsCoincidentes: 0,
+            funcoesCoincidentes: [],
+            quantidadeFuncoesCoincidentes: 0,
           }],
         })
   ));
@@ -57,8 +57,8 @@ test('resposta antiga não sobrescreve recomendações após mudança da vaga', 
         candidaturaId: 1,
         artistaId: 11,
         nomeArtista: 'Resposta antiga',
-        tagsCoincidentes: [],
-        quantidadeTagsCoincidentes: 0,
+        funcoesCoincidentes: [],
+        quantidadeFuncoesCoincidentes: 0,
       }],
     });
   });

@@ -51,7 +51,7 @@ export default function VacancyEditPage() {
   }
 
   let content;
-  if (state.status === 'loading') content = <section className="management-state" role="status"><p>Carregando vaga e tags…</p></section>;
+  if (state.status === 'loading') content = <section className="management-state" role="status"><p>Carregando vaga e funções…</p></section>;
   else if (state.status === 'forbidden') content = <section className="management-state management-state--error" role="alert"><h1>Acesso negado</h1><p>Somente o proprietário pode editar esta vaga.</p><a className="btn btn--primario" href="/minhas-vagas">Voltar às minhas vagas</a></section>;
   else if (state.status === 'error') content = <section className="management-state management-state--error" role="alert"><h1>Não foi possível editar a vaga</h1><p>{vacancyManagementError(state.error, 'Tente novamente.')}</p><a className="btn btn--primario" href="/minhas-vagas">Voltar às minhas vagas</a></section>;
   else content = <><header className="management-page-header"><p className="management-eyebrow">RF07</p><h1>Editar vaga</h1><p>Propriedade, status, ID e data de publicação não fazem parte deste formulário.</p></header><section className="management-card">{feedback ? <p className="management-feedback management-feedback--error" role="alert">{feedback}</p> : null}<VacancyForm initialValue={state.vacancy} tags={state.tags} submitLabel="Salvar alterações" onSubmit={save} cancelHref={`/vagas/${id}/gerenciar`} /></section></>;
