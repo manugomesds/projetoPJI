@@ -93,6 +93,6 @@ begin
           or (v.data_publicacao, v.id) < (p_cursor_data_publicacao, p_cursor_id)
       )
     order by v.data_publicacao desc, v.id desc
-    limit greatest(1, least(p_limit, 100));
+    limit greatest(1, least(p_limit, 50));
 end;
 $$ language plpgsql;
