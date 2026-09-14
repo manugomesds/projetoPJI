@@ -1,7 +1,8 @@
 create table perfis_artistas (
     usuario_id bigint primary key references usuarios(id) on delete cascade,
     biografia text,
-    localizacao varchar(150),
+    cidade varchar(100),
+    estado char(2),
     url_portfolio varchar(255),
     tipo_perfil_artistico tipo_perfil_artistico_enum not null,
     disponivel_oportunidades boolean,
