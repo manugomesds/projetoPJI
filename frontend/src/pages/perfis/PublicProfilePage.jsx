@@ -4,6 +4,7 @@ import sessionService from '../../auth/sessionService';
 import ErrorState from '../../components/common/ErrorState';
 import LoadingState from '../../components/common/LoadingState';
 import ApiError from '../../services/api/ApiError';
+import PortfolioSection from '../../components/portfolio/PortfolioSection';
 import {
   createConversation,
   getPublicProfile,
@@ -140,7 +141,7 @@ function ProfileCard({ profile, type }) {
           >
             Sobre
           </button>
-          {portfolioUrl && (
+          {type === 'ARTISTA' && (
             <button
               id="aba-portfolio"
               className="perfil-publico__aba"
@@ -174,7 +175,7 @@ function ProfileCard({ profile, type }) {
           )}
         </section>
 
-        {portfolioUrl && (
+        {type === 'ARTISTA' && (
           <section
             id="painel-portfolio"
             className="perfil-publico__painel"
@@ -182,7 +183,7 @@ function ProfileCard({ profile, type }) {
             aria-labelledby="aba-portfolio"
             hidden={activeTab !== 'portfolio'}
           >
-            <h2>Portfólio</h2>
+            {portfolioUrl ? <>
             <p>O portfólio completo será aberto em uma nova aba.</p>
             <a
               className="perfil-publico__portfolio-link"
@@ -192,6 +193,8 @@ function ProfileCard({ profile, type }) {
             >
               Acessar portfólio
             </a>
+            </> : null}
+            {activeTab === 'portfolio' ? <PortfolioSection artistId={profile.usuarioId} /> : null}
           </section>
         )}
       </div>
@@ -267,7 +270,7 @@ export default function PublicProfilePage() {
       />
     );
   } else {
-    content = <ProfileCard profile={state.profile} type={type} />;
+    content = <ProfileCard key={`${type}-${state.profile.usuarioId}`} profile={state.profile} type={type} />;
   }
 
   return (

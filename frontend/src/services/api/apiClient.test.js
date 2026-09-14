@@ -3,6 +3,27 @@ import { DEFAULT_API_BASE_URL, resolveApiBaseUrl } from '../../config/apiConfig'
 import ApiError from './ApiError';
 import apiClient from './apiClient';
 
+test('RF16 mantém FormData e deixa boundary para o navegador mesmo com header informado', async () => {
+  global.fetch.mockResolvedValue(response({ status: 201, body: { id: 1 } }));
+  sessionService.getAccessToken.mockReturnValue('jwt');
+  const form = new FormData(); const file = new File(['%PDF-1.7'], 'a.pdf', { type: 'application/pdf' }); form.append('arquivo', file);
+  await apiClient.post('/portfolio/arquivos', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+  const options = global.fetch.mock.calls[0][1];
+  expect(options.body).toBe(form); expect(options.body.get('arquivo')).toBe(file);
+  expect(options.headers.has('Content-Type')).toBe(false); expect(options.headers.get('Authorization')).toBe('Bearer jwt');
+});
+test('RF16 recebe blob autenticado sem converter para texto', async () => {
+  const blob = new Blob(['pdf'], { type: 'application/pdf' });
+  const reply = { ...response(), blob: jest.fn().mockResolvedValue(blob) };
+  global.fetch.mockResolvedValue(reply);
+  expect(await apiClient.get('/portfolio/arquivos/1/conteudo', { responseType: 'blob' })).toBe(blob);
+  expect(reply.json).not.toHaveBeenCalled(); expect(reply.text).not.toHaveBeenCalled();
+});
+test.each([422, 413, 500])('RF16 preserva erro HTTP %s no download blob', async status => {
+  global.fetch.mockResolvedValue(response({ status, body: { mensagem: 'Mensagem real do backend.' } }));
+  await expect(apiClient.get('/portfolio/arquivos/1/conteudo', { responseType: 'blob' })).rejects.toMatchObject({ status, message: 'Mensagem real do backend.' });
+});
+
 function response({ body = null, status = 200, contentType = 'application/json' } = {}) {
   return {
     status,

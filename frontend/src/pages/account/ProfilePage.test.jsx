@@ -8,6 +8,8 @@ import { PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 jest.mock('../../components/account/AccountLayout', () => function Layout({ children }) { return children; });
 jest.mock('../../services/account/accountService', () => ({ getPrivateProfile: jest.fn(), updatePrivateProfile: jest.fn() }));
 
+jest.mock('../../services/portfolio/portfolioService', () => ({ ...jest.requireActual('../../services/portfolio/portfolioService'), listPortfolio: jest.fn().mockResolvedValue({ content: [], hasMore: false }) }));
+
 const userArtist = { id: 7, nome: 'Artista', dataNascimento: '1990-01-01', telefone: '1199', email: 'artista@test', tipoUsuario: 'ARTISTA', perfilCompleto: false };
 const artistResult = {
   usuario: userArtist,
@@ -152,4 +154,14 @@ test('bloqueia reenvio evidente enquanto a atualização está pendente', async 
   expect(screen.getByRole('button', { name: 'Salvando…' })).toBeDisabled();
   resolve({ ...userArtist });
   await screen.findByRole('status');
+});
+
+
+test('RF16 gerenciador aparece somente no perfil ARTISTA', async () => {
+  getPrivateProfile.mockResolvedValue(artistResult);
+  const { unmount } = renderPage();
+  expect(await screen.findByLabelText('Arquivo do portfólio')).toBeInTheDocument();
+  unmount(); getPrivateProfile.mockResolvedValue(contractorResult); renderPage();
+  await screen.findByLabelText('Nome');
+  expect(screen.queryByLabelText('Arquivo do portfólio')).not.toBeInTheDocument();
 });

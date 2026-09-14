@@ -1,0 +1,21 @@
+.portfolio-section { margin: 2rem 0; padding: 1.25rem; border: 1px solid #d6dce2; border-radius: 14px; background: #fff; color: #17202b; min-width: 0; }
+.portfolio-section h2, .portfolio-section h3 { margin: 0 0 1rem; }
+.portfolio-section h3 { margin-top: 1.5rem; }
+.portfolio-section form, .portfolio-section p { margin: .75rem 0; }
+.portfolio-section fieldset { display: flex; flex-direction: column; gap: .65rem; border: 0; padding: 0; min-width: 0; }
+.portfolio-section label { font-weight: 700; }
+.portfolio-section input { width: 100%; min-width: 0; box-sizing: border-box; padding: .65rem; border: 1px solid #697787; border-radius: 7px; font: inherit; }
+.portfolio-section button, .portfolio-section a { font: inherit; overflow-wrap: anywhere; }
+.portfolio-section button { min-height: 44px; padding: .55rem .85rem; border-radius: 7px; border: 1px solid #28384b; color: #17202b; background: #f5f7fa; cursor: pointer; }
+.portfolio-section button:disabled { opacity: .55; cursor: default; }
+.portfolio-section button:focus-visible, .portfolio-section a:focus-visible, .portfolio-section input:focus-visible { outline: 3px solid #1675ab; outline-offset: 3px; }
+.portfolio-section [role="alert"] { color: #a52121; font-weight: 600; }
+.portfolio-section [role="status"] { font-weight: 600; }
+.portfolio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 1rem; }
+.portfolio-item { display: flex; flex-direction: column; gap: .65rem; padding: 1rem; border: 1px solid #d6dce2; border-radius: 10px; min-width: 0; overflow-wrap: anywhere; }
+.portfolio-item h4, .portfolio-item p { margin: 0; }
+.portfolio-item img { width: 100%; aspect-ratio: 4 / 3; max-height: 340px; object-fit: contain; }
+.portfolio-item audio { width: 100%; min-width: 0; }
+.portfolio-item iframe { width: 100%; aspect-ratio: 16 / 9; border: 0; }
+.portfolio-pagination { display: flex; align-items: center; justify-content: space-between; gap: .5rem; margin-top: 1rem; }
+@media(max-width: 420px) { .portfolio-section { padding: .75rem; } .portfolio-item { padding: .65rem; } .portfolio-pagination { font-size: .85rem; } }

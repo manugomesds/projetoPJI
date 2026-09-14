@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import sessionService from '../../auth/sessionService';
 import AccountLayout from '../../components/account/AccountLayout';
+import PortfolioSection from '../../components/portfolio/PortfolioSection';
 import { getPrivateProfile, updatePrivateProfile } from '../../services/account/accountService';
 import { isPasswordValid, PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 
@@ -145,6 +146,7 @@ export default function ProfilePage() {
           {state.success ? <p className="account-feedback account-feedback--success" role="status">{state.success}</p> : null}
           <div className="account-form__actions"><a href="/dashboard">Cancelar</a><button className="btn btn--primario" type="submit" disabled={state.saving}>{state.saving ? 'Salvando…' : 'Salvar perfil'}</button></div>
         </form>
+        {artist ? <PortfolioSection owner /> : null}
         <section className="perfil__zona-risco"><h2>Encerrar conta</h2><p>A exclusão de conta está indisponível nesta versão.</p><a href="/excluir-conta.html">Opções de encerramento</a></section>
       </main>
     </AccountLayout>

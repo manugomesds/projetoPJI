@@ -6,6 +6,7 @@ import * as publicProfileService from '../../services/perfis/publicProfileServic
 import PublicProfilePage from './PublicProfilePage';
 
 jest.mock('../../services/api/apiClient', () => ({
+  ...jest.requireActual('../../services/api/apiClient'),
   __esModule: true,
   default: {
     get: jest.fn(),
@@ -26,6 +27,17 @@ const artist = {
     { id: 2, nome: 'Teatro' },
   ],
 };
+
+test('RF16 exibe arquivos no perfil público mesmo sem URL externa', async () => {
+  apiClient.get.mockImplementation(path => Promise.resolve(path.includes('/portfolio/')
+    ? { content: path.includes('/arquivos?') ? [{ id: 81, nomeOriginal: 'Cena.png', tamanhoBytes: 90, tipoMime: 'image/png', tipo: 'IMAGEM' }] : [], hasMore: false }
+    : { ...artist, urlPortfolio: null }));
+  renderPage(); await screen.findByRole('heading', { name: artist.nomeExibicao });
+  expect(apiClient.get).toHaveBeenCalledTimes(1);
+  fireEvent.click(screen.getByRole('tab', { name: 'Portfólio' }));
+  expect(await screen.findByRole('img', { name: 'Cena.png' })).toHaveAttribute('src', 'http://localhost:8080/api/portfolio/publico/arquivos/81/conteudo');
+  expect(screen.queryByLabelText('Arquivo do portfólio')).not.toBeInTheDocument();
+});
 
 const contractor = {
   usuarioId: 30,
@@ -133,7 +145,7 @@ test('campos opcionais ausentes preservam o perfil e o texto padrão', async () 
   expect(screen.queryByLabelText('Áreas de atuação')).not.toBeInTheDocument();
 });
 
-test('exibe tags e abre a aba do portfólio sem reload nem nova requisição', async () => {
+test('exibe tags e carrega arquivos e vídeos ao abrir a aba do portfólio sem recarregar o perfil', async () => {
   apiClient.get.mockResolvedValue(artist);
   renderPage();
 
@@ -149,7 +161,9 @@ test('exibe tags e abre a aba do portfólio sem reload nem nova requisição', a
     'https://portfolio.example/lia'
   );
   expect(screen.queryByText('Cantora e compositora.')).not.toBeVisible();
-  expect(apiClient.get).toHaveBeenCalledTimes(1);
+  await waitFor(() => expect(apiClient.get).toHaveBeenCalledTimes(3));
+  expect(apiClient.get).toHaveBeenCalledWith('/portfolio/publico/artistas/12/arquivos?page=0&size=20', expect.objectContaining({ token: null }));
+  expect(apiClient.get).toHaveBeenCalledWith('/portfolio/publico/artistas/12/videos?page=0&size=20', expect.objectContaining({ token: null }));
 });
 
 test('URLs não HTTP são descartadas', async () => {
@@ -162,7 +176,9 @@ test('URLs não HTTP são descartadas', async () => {
   renderPage();
 
   await screen.findByRole('heading', { name: 'Lia do Palco' });
-  expect(screen.queryByRole('tab', { name: 'Portfólio' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('link', { name: 'Acessar portfólio' })).not.toBeInTheDocument();
+  expect(document.querySelector('[href^="javascript:"]')).toBeNull();
+  expect(screen.getByRole('tab', { name: 'Portfólio' })).toBeInTheDocument();
   expect(screen.queryByRole('img', { name: /Lia do Palco/ })).not.toBeInTheDocument();
 });
 

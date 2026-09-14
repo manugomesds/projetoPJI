@@ -32,7 +32,9 @@ async function request(path, options = {}) {
   const accessToken = token === undefined ? sessionService.getAccessToken() : token;
   let requestBody = body;
 
-  if (body !== undefined && body !== null && typeof body !== 'string') {
+  if (typeof FormData !== 'undefined' && body instanceof FormData) {
+    headers.delete('Content-Type'); // O navegador gera o boundary multipart.
+  } else if (body !== undefined && body !== null && typeof body !== 'string') {
     headers.set('Content-Type', 'application/json');
     requestBody = JSON.stringify(body);
   }
@@ -47,6 +49,7 @@ async function request(path, options = {}) {
     body: requestBody,
   });
   if (response.ok && responseType === 'stream') return response;
+  if (response.ok && responseType === 'blob') return response.blob();
   const responseBody = await parseResponse(response);
 
   if (!response.ok) {
