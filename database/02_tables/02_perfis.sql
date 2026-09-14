@@ -17,7 +17,7 @@ create table perfis_contratantes (
     nome_empresa varchar(150),
     cpf varchar(14) unique,
     cnpj varchar(14) unique,
-    tipo_perfil varchar(100),
+    tipo_contratante tipo_contratante_enum not null,
     biografia text,
     localizacao varchar(150),
     banner_url varchar(255)
