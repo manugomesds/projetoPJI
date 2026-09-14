@@ -15,8 +15,6 @@ create table perfis_artistas (
 create table perfis_contratantes (
     usuario_id bigint primary key references usuarios(id) on delete cascade,
     nome_empresa varchar(150),
-    cpf varchar(14) unique,
-    cnpj varchar(14) unique,
     tipo_contratante tipo_contratante_enum not null,
     biografia text,
     localizacao varchar(150),
