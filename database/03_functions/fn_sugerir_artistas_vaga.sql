@@ -1,4 +1,4 @@
-limit greatest(1, least(p_limit, 50));create or replace function fn_sugerir_artistas_vaga(
+create or replace function fn_sugerir_artistas_vaga(
     p_vaga_id bigint,
     p_limit integer default 20,
     p_cursor_funcoes integer default null,
