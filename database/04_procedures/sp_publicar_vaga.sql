@@ -113,3 +113,34 @@ begin
         )
         returning id into p_vaga_id;
     end if;
+   -- 4. funções
+    if p_funcoes_ids is not null then
+        delete from vaga_funcao where vaga_id = p_vaga_id;
+        foreach v_func_id in array p_funcoes_ids loop
+            insert into vaga_funcao (vaga_id, funcao_id)
+            values (p_vaga_id, v_func_id)
+            on conflict do nothing;
+        end loop;
+    end if;
+ 
+    -- 5. especializações
+    if p_especializacoes_ids is not null then
+        delete from vaga_especializacao where vaga_id = p_vaga_id;
+        foreach v_esp_id in array p_especializacoes_ids loop
+            insert into vaga_especializacao (vaga_id, especializacao_id)
+            values (p_vaga_id, v_esp_id)
+            on conflict do nothing;
+        end loop;
+    end if;
+ 
+    -- 6. categorias afirmativas
+    if p_categorias_afirmativas_ids is not null then
+        delete from vagas_categorias_afirmativas where vaga_id = p_vaga_id;
+        foreach v_cat_id in array p_categorias_afirmativas_ids loop
+            insert into vagas_categorias_afirmativas (vaga_id, categoria_id)
+            values (p_vaga_id, v_cat_id)
+            on conflict do nothing;
+        end loop;
+    end if;
+end;
+$$;
