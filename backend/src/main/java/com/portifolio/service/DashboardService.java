@@ -20,11 +20,9 @@ import com.portifolio.repository.PerfilArtistaRepository;
 import com.portifolio.repository.PerfilContratanteRepository;
 import com.portifolio.repository.VagaRepository;
 import com.portifolio.repository.projection.CandidaturaDashboardProjection;
-import com.portifolio.repository.projection.TalentoSugeridoProjection;
 import com.portifolio.repository.projection.VagaRecomendadaProjection;
 import com.portifolio.security.AuthenticatedUserResolver;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,6 +55,7 @@ public class DashboardService {
     private final CandidaturaRepository candidaturaRepository;
     private final MensagemChatRepository mensagemChatRepository;
     private final AvatarService avatarService;
+    private final TalentoService talentoService;
 
     @Transactional(readOnly = true)
     public DashboardResponse buscar(Integer size) {
@@ -97,8 +96,6 @@ public class DashboardService {
                 || perfil.getNomeEmpresa().isBlank()
                 ? usuario.getNome()
                 : perfil.getNomeEmpresa();
-        Set<Long> tagsContexto = vagaRepository.findFuncaoIdsDasVagasAtivasDoContratante(
-                usuario.getId(), STATUS_ATIVOS);
 
         return DashboardResponse.builder()
                 .tipoUsuario(usuario.getTipoUsuario())
@@ -109,7 +106,8 @@ public class DashboardService {
                 .notificacoes(NOTIFICACOES_DISPONIVEIS)
                 .mensagens(mensagensDisponiveis(usuario.getId()))
                 .candidaturasRecentes(buscarCandidaturasRecentes(usuario.getId(), tamanho))
-                .talentosSugeridos(buscarTalentosSugeridos(tagsContexto, tamanho))
+                .talentosSugeridos(usuario.getStatusConta() == com.portifolio.model.enums.StatusConta.ATIVA
+                        ? buscarTalentosSugeridos(usuario.getId(), tamanho) : secaoVazia())
                 .build();
     }
 
@@ -163,32 +161,18 @@ public class DashboardService {
         return secao(content, pagina.getTotalElements(), pagina.hasNext());
     }
 
-    private DashboardSecaoResponse<DashboardTalentoResponse> buscarTalentosSugeridos(
-            Set<Long> funcaoIds, int tamanho) {
-        if (funcaoIds.isEmpty()) {
-            return secaoVazia();
-        }
-
-        Page<TalentoSugeridoProjection> pagina = perfilArtistaRepository.findSugeridosPorFuncoes(
-                funcaoIds, PageRequest.of(0, tamanho));
-        if (pagina.isEmpty()) {
-            return secaoVazia();
-        }
-        List<Long> ids = pagina.getContent().stream().map(TalentoSugeridoProjection::getUsuarioId).toList();
-        Map<Long, PerfilArtista> perfis = perfilArtistaRepository.buscarPublicosPorUsuarioIds(ids).stream()
-                .collect(Collectors.toMap(PerfilArtista::getUsuarioId, Function.identity(), (a, b) -> a,
-                        LinkedHashMap::new));
-        Map<Long, Long> coincidencias = pagina.getContent().stream()
-                .collect(Collectors.toMap(
-                        TalentoSugeridoProjection::getUsuarioId,
-                        TalentoSugeridoProjection::getQuantidadeFuncoesCoincidentes));
-
-        List<DashboardTalentoResponse> content = ids.stream()
-                .map(perfis::get)
-                .filter(perfil -> perfil != null)
-                .map(perfil -> toTalentoResponse(perfil, coincidencias.get(perfil.getUsuarioId())))
-                .toList();
-        return secao(content, pagina.getTotalElements(), pagina.hasNext());
+    private DashboardSecaoResponse<DashboardTalentoResponse> buscarTalentosSugeridos(Long dono, int tamanho) {
+        var pagina = talentoService.recomendarDoContratante(dono, tamanho);
+        var content = pagina.content().stream().map(t -> DashboardTalentoResponse.builder()
+                .artistaId(t.getArtistaId()).nomeExibicao(t.getNomeExibicao())
+                .biografia(t.getBiografia()).localizacao(t.getLocalizacao()).urlPortfolio(t.getUrlPortfolio())
+                .avatarUrl(t.getAvatarUrl())
+                .funcoes(t.getAreas().stream().flatMap(a -> a.funcoes().stream().map(f ->
+                        FuncaoResponse.builder().id(f.id()).areaId(a.id()).nome(f.nome()).build()))
+                        .collect(Collectors.toCollection(LinkedHashSet::new)))
+                .quantidadeFuncoesCoincidentes(t.getQuantidadeFuncoesCoincidentes())
+                .quantidadeEspecializacoesCoincidentes(t.getQuantidadeEspecializacoesCoincidentes()).build()).toList();
+        return secao(content, pagina.totalElements(), pagina.hasMore());
     }
 
     private DashboardVagaResponse toVagaResponse(Vaga vaga, Long coincidencias) {
@@ -207,21 +191,6 @@ public class DashboardService {
                 .modeloTrabalho(vaga.getModeloTrabalho())
                 .dataPublicacao(vaga.getDataPublicacao())
                 .funcoes(toFuncoes(vaga.getFuncoes()))
-                .quantidadeFuncoesCoincidentes(coincidencias == null ? 0 : coincidencias)
-                .build();
-    }
-
-    private DashboardTalentoResponse toTalentoResponse(PerfilArtista perfil, Long coincidencias) {
-        Usuario usuario = perfil.getUsuario();
-        return DashboardTalentoResponse.builder()
-                .artistaId(perfil.getUsuarioId())
-                .nomeExibicao(usuario.getNome())
-                .biografia(perfil.getBiografia())
-                .localizacao(perfil.getLocalizacao())
-                .urlPortfolio(perfil.getUrlPortfolio())
-                .avatarUrl(avatarService.resolverUrl(
-                        perfil.getUsuarioId(), usuario.getFotoPerfil(), null))
-                .funcoes(toFuncoes(perfil.getFuncoes()))
                 .quantidadeFuncoesCoincidentes(coincidencias == null ? 0 : coincidencias)
                 .build();
     }

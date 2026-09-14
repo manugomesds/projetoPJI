@@ -17,6 +17,7 @@ import AuthenticatedOnly from '../../components/account/AuthenticatedOnly';
 import DashboardPage from '../../pages/account/DashboardPage';
 import ProfilePage from '../../pages/account/ProfilePage';
 import MessagesPage from '../../pages/chat/MessagesPage';
+import TalentBankPage from '../../pages/talentos/TalentBankPage';
 
 export function AppRoutes() {
   return (
@@ -30,6 +31,7 @@ export function AppRoutes() {
       <Route path="/perfil" element={<AuthenticatedOnly><ProfilePage /></AuthenticatedOnly>} />
       <Route path="/mensagens" element={<AuthenticatedOnly><MessagesPage /></AuthenticatedOnly>} />
       <Route path="/vagas" element={<VacancySearchPage />} />
+      <Route path="/talentos" element={<ContractorOnly description="Seu perfil não tem permissão para consultar o Banco de Talentos."><TalentBankPage /></ContractorOnly>} />
       <Route path="/minhas-vagas" element={<ContractorOnly><MyVacanciesPage /></ContractorOnly>} />
       <Route path="/vagas/nova" element={<ContractorOnly><VacancyCreatePage /></ContractorOnly>} />
       <Route path="/vagas/:id/gerenciar" element={<ContractorOnly><VacancyManagePage /></ContractorOnly>} />

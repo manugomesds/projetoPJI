@@ -11,7 +11,7 @@ public class FrontendController {
         return "forward:/index.html";
     }
 
-    @GetMapping("/minhas-vagas")
+    @GetMapping({"/minhas-vagas", "/talentos", "/talentos/"})
     public String encaminharMinhasVagasReact() {
         return "forward:/index.html";
     }

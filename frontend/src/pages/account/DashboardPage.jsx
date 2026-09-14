@@ -79,7 +79,7 @@ function ContractorDashboard({ data }) {
         </div>
       </section>
       <section className="account-panel" aria-labelledby="talents-title">
-        <header><h2 id="talents-title">Talentos sugeridos</h2><p>Artistas completos e compatíveis com suas vagas ativas.</p></header>
+        <header><h2 id="talents-title">Talentos sugeridos</h2><p>Artistas ativos e completos, compatíveis com sua vaga ativa mais recente.</p><a href="/talentos">Abrir Banco de Talentos</a></header>
         <div className="account-list">
           {talents.content.length === 0 ? <p className="account-empty">Nenhum talento compatível no momento.</p> : null}
           {talents.content.map((talent) => (

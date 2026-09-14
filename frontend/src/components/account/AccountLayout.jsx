@@ -1,4 +1,5 @@
 import LogoutButton from './LogoutButton';
+import TalentLink from './TalentLink';
 
 export default function AccountLayout({ children }) {
   return (
@@ -11,6 +12,7 @@ export default function AccountLayout({ children }) {
           <ul className="app-navbar__menu">
             <li><a className="navbar__link" href="/dashboard">Dashboard</a></li>
             <li><a className="navbar__link" href="/perfil">Meu perfil</a></li>
+            <li><TalentLink className="navbar__link" /></li>
             <li><a className="navbar__link" href="/mensagens">Mensagens</a></li>
             <li><a className="navbar__link" href="/minhas-candidaturas.html">Candidaturas</a></li>
             <li><a className="navbar__link" href="/notificacoes.html">Notificações</a></li>

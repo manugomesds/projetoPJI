@@ -15,4 +15,5 @@ public class DashboardTalentoResponse {
     private String avatarUrl;
     private Set<FuncaoResponse> funcoes;
     private long quantidadeFuncoesCoincidentes;
+    private long quantidadeEspecializacoesCoincidentes;
 }

@@ -1,3 +1,4 @@
+import TalentLink from '../../components/account/TalentLink';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BackToTopButton from '../../components/common/BackToTopButton';
@@ -207,7 +208,7 @@ function HomeHeader() {
             </button>
             <div className="explorar__menu" id="menu-explorar" hidden={!exploreOpen}>
               <a className="explorar__item explorar__item--ativo" href="/vagas">Vagas</a>
-              <PendingLink className="explorar__item" title="Busca de artistas ainda não disponível">Artistas</PendingLink>
+              <TalentLink className="explorar__item" />
               <PendingLink className="explorar__item" title="Catálogo de contratantes ainda não disponível">Contratantes</PendingLink>
               <PendingLink className="explorar__item" title="Galeria Virtual (RF20) ainda não disponível">Galeria Virtual</PendingLink>
               <PendingLink className="explorar__item" title="Top da semana (RF28) ainda não disponível">Top da semana</PendingLink>
@@ -229,9 +230,9 @@ function HomeHeader() {
           <p className="hero__marca">Atividade - Fim</p>
           <div className="hero__acoes">
             <a className="btn-palco btn-palco--amarelo" href="/vagas">Conheça Vagas</a>
-            <PendingLink className="btn-palco btn-palco--texto" title="Busca de artistas ainda não disponível">
+            <TalentLink className="btn-palco btn-palco--texto">
               <span aria-hidden="true">←</span> Conheça Artistas
-            </PendingLink>
+            </TalentLink>
           </div>
         </div>
         <div className="hero__vitrine">
@@ -384,7 +385,7 @@ function HomeFooter() {
   return (
     <footer className="rodape"><div className="rodape__interno">
       <a className="rodape__marca" href="/" aria-label="Palco — voltar ao início"><img className="rodape__logo" src="/assets/home/logo-palco-branco.png" alt="" /></a>
-      <nav className="rodape__coluna" aria-labelledby="rodape-navegar"><h2 className="rodape__rotulo" id="rodape-navegar">Navegar</h2><ul><li><a href="/vagas">Vagas</a></li><li><PendingLink title="Busca de artistas ainda não disponível">Artistas</PendingLink></li><li><PendingLink title="Comunidade ainda não disponível">Comunidade</PendingLink></li><li><a href="#sobre">Sobre nós</a></li></ul></nav>
+      <nav className="rodape__coluna" aria-labelledby="rodape-navegar"><h2 className="rodape__rotulo" id="rodape-navegar">Navegar</h2><ul><li><a href="/vagas">Vagas</a></li><li><TalentLink /></li><li><PendingLink title="Comunidade ainda não disponível">Comunidade</PendingLink></li><li><a href="#sobre">Sobre nós</a></li></ul></nav>
       <nav className="rodape__coluna" aria-labelledby="rodape-suporte"><h2 className="rodape__rotulo" id="rodape-suporte">Suporte</h2><ul><li><a href="#saq">SAQ</a></li><li><a href="mailto:suporte@palco.com.br">Email de suporte</a></li><li><PendingLink title="Telefone de suporte ainda não configurado">Telefone de suporte</PendingLink></li></ul></nav>
       <p className="rodape__manifesto">Conectando artistas independentes com oportunidades e conexões profissionais.</p>
     </div><div className="rodape__base"><ul className="rodape__legal"><li><PendingLink title="Política de privacidade ainda não publicada">Política de privacidade</PendingLink></li><li><PendingLink title="Termos de Uso ainda não publicados">Termos de Uso</PendingLink></li></ul></div></footer>

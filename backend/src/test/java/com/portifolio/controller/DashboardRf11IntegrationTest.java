@@ -214,9 +214,10 @@ class DashboardRf11IntegrationTest {
         mockMvc.perform(get("/api/dashboard")
                         .header("Authorization", bearer(dono.getUsuario())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.talentosSugeridos.content.length()").value(1))
+                .andExpect(jsonPath("$.talentosSugeridos.content.length()").value(2))
                 .andExpect(jsonPath("$.talentosSugeridos.content[0].artistaId").value(compativel.getUsuarioId()))
                 .andExpect(jsonPath("$.talentosSugeridos.content[0].quantidadeFuncoesCoincidentes").value(2))
+                .andExpect(jsonPath("$.talentosSugeridos.content[1].quantidadeFuncoesCoincidentes").value(0))
                 .andExpect(jsonPath("$.talentosSugeridos.content[0].email").doesNotExist())
                 .andExpect(jsonPath("$.talentosSugeridos.content[0].dataNascimento").doesNotExist());
     }
@@ -348,6 +349,7 @@ class DashboardRf11IntegrationTest {
         usuario.setEmail(email);
         usuario.setSenha("hash-privado");
         usuario.setTipoUsuario(tipo);
+        usuario.setStatusConta(com.portifolio.model.enums.StatusConta.ATIVA);
         usuario.setPerfilCompleto(completo);
         usuario.setDataCriacao(LocalDateTime.now());
         return usuarioRepository.save(usuario);

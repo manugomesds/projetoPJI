@@ -51,7 +51,7 @@ class FrontendServingIntegrationTest {
         for (String rota : new String[]{
                 "/vagas", "/vagas/", "/vagas/1", "/vagas/999",
                 "/vagas/nova", "/vagas/1/gerenciar", "/vagas/1/editar",
-                "/minhas-vagas"}) {
+                "/minhas-vagas", "/talentos", "/talentos/"}) {
             Resposta resposta = get(rota);
             assertThat(resposta.status()).as(rota).isEqualTo(200);
             assertThat(resposta.body()).as(rota).isEqualTo(index);

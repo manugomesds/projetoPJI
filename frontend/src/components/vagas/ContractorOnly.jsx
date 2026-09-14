@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import sessionService from '../../auth/sessionService';
 
-export default function ContractorOnly({ children }) {
+export default function ContractorOnly({ children, description = 'Seu perfil não pode publicar ou gerenciar vagas.' }) {
   const location = useLocation();
   const session = sessionService.getSession();
 
@@ -15,7 +15,7 @@ export default function ContractorOnly({ children }) {
         <section className="management-state management-state--error" role="alert">
           <p className="management-eyebrow">Acesso protegido</p>
           <h1>Área exclusiva para contratantes</h1>
-          <p>Seu perfil não pode publicar ou gerenciar vagas.</p>
+          <p>{description}</p>
           <a className="btn btn--primario" href="/vagas">Explorar vagas</a>
         </section>
       </main>

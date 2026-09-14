@@ -2033,6 +2033,20 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     aplicarDadosDaSessao();
+    var sessaoTalentos = lerSessao();
+    if (sessaoTalentos && sessaoTalentos.token && sessaoTalentos.tipoUsuario === 'CONTRATANTE') {
+      document.querySelectorAll('a[aria-disabled="true"]').forEach(function (link) {
+        var nome = link.querySelector('.drawer__opcao-nome');
+        if ((nome ? nome.textContent : link.textContent).trim() === 'Artistas') {
+          link.href = '/talentos';
+          link.removeAttribute('aria-disabled');
+          link.removeAttribute('role');
+          link.title = 'Banco de Talentos';
+          var descricao = link.querySelector('.drawer__opcao-desc');
+          if (descricao) descricao.textContent = 'Encontre talentos por compatibilidade profissional.';
+        }
+      });
+    }
     iniciarDrawer();
     iniciarModalExclusao();
     iniciarBotoesDeSenha();

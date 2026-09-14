@@ -30,6 +30,20 @@ beforeEach(() => {
 });
 afterEach(() => jest.restoreAllMocks());
 
+test.each(['CONTRATANTE', 'ARTISTA', null])('navegação Artistas do legado respeita o papel %s', (tipoUsuario) => {
+  window.fetch.mockResolvedValue(json({ content: [] }));
+  mount('home.html', '', tipoUsuario ? { ...session, tipoUsuario } : null);
+  const link = Array.from(document.querySelectorAll('a')).find((item) => item.textContent.trim() === 'Artistas');
+  expect(link).toBeTruthy();
+  if (tipoUsuario === 'CONTRATANTE') {
+    expect(link).toHaveAttribute('href', '/talentos');
+    expect(link).not.toHaveAttribute('aria-disabled');
+  } else {
+    expect(link).not.toHaveAttribute('href');
+    expect(link).toHaveAttribute('aria-disabled', 'true');
+  }
+});
+
 test.each([
   { status: 'AGUARDANDO_DADOS', statusConta: 'PENDENTE_TIPO_PERFIL' },
   { status: 'AGUARDANDO_DADOS' },

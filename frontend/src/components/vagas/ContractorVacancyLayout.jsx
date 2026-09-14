@@ -1,4 +1,5 @@
 import LogoutButton from '../account/LogoutButton';
+import TalentLink from '../account/TalentLink';
 
 export default function ContractorVacancyLayout({ children }) {
   return (
@@ -11,6 +12,7 @@ export default function ContractorVacancyLayout({ children }) {
           <ul className="app-navbar__menu">
             <li><a className="navbar__link navbar__link--destaque" href="/minhas-vagas">Minhas vagas</a></li>
             <li><a className="navbar__link" href="/vagas/nova">Publicar vaga</a></li>
+            <li><TalentLink className="navbar__link" /></li>
             <li><a className="navbar__link" href="/notificacoes.html">Notificações</a></li>
           </ul>
           <div className="app-navbar__acoes management-navbar__actions">
