@@ -119,9 +119,11 @@ public class Vaga {
     @ManyToMany
     @JoinTable(name = "vaga_especializacao", joinColumns = @JoinColumn(name = "vaga_id"),
             inverseJoinColumns = @JoinColumn(name = "especializacao_id"))
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<Especializacao> especializacoes = new HashSet<>();
     @ManyToMany
     @JoinTable(name = "vagas_categorias_afirmativas", joinColumns = @JoinColumn(name = "vaga_id"),
             inverseJoinColumns = @JoinColumn(name = "categoria_id"))
+    @org.hibernate.annotations.BatchSize(size = 50)
     private Set<CategoriaAfirmativa> categoriasAfirmativas = new HashSet<>();
 }

@@ -35,6 +35,8 @@ public class VagaResponse {
     private StatusVaga status;
     private LocalDateTime dataPublicacao;
     private Set<Long> funcaoIds;
+    private Set<Long> especializacaoIds;
+    private Set<Integer> categoriaAfirmativaIds;
     private String categoria;
     private String experiencia;
     private LocalDate dataLimiteCandidatura;

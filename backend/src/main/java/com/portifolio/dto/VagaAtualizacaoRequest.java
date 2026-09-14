@@ -63,9 +63,14 @@ public class VagaAtualizacaoRequest {
     @Size(max = 100, message = "Tipo de contrato deve ter no máximo 100 caracteres")
     private String tipoContrato;
 
+    @Size(max = 5, message = "Selecione no máximo 5 funções")
     private Set<@NotNull(message = "ID de funcao não pode ser nulo")
             @Positive(message = "ID de funcao deve ser positivo") Long> funcaoIds;
 
+    @Size(max = 5, message = "Selecione no máximo 5 especializações")
+    private Set<@NotNull @Positive Long> especializacaoIds;
+
+    private Set<@NotNull @Positive Integer> categoriaAfirmativaIds;
 
     @Size(max = 100, message = "Experiência deve ter no máximo 100 caracteres")
     private String experiencia;

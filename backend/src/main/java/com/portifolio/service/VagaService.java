@@ -59,6 +59,8 @@ public class VagaService {
     private final VagaRepository vagaRepository;
     private final PerfilContratanteRepository perfilContratanteRepository;
     private final FuncaoRepository funcaoRepository;
+    private final com.portifolio.repository.EspecializacaoRepository especializacaoRepository;
+    private final com.portifolio.repository.CategoriaAfirmativaRepository categoriaAfirmativaRepository;
     private final com.portifolio.repository.AreaArtisticaRepository areaArtisticaRepository;
     private final CandidaturaRepository candidaturaRepository;
     private final LogVagaCanceladaRepository logVagaCanceladaRepository;
@@ -461,6 +463,7 @@ public class VagaService {
         if (request.getAreaId() == null || request.getAbrangencia() == null || request.getFormaRemuneracao() == null) {
             throw new IllegalArgumentException("Informe areaId, abrangencia e formaRemuneracao do catálogo oficial.");
         }
+        boolean mudouArea = vaga.getArea() != null && !vaga.getArea().getId().equals(request.getAreaId());
         vaga.setArea(areaArtisticaRepository.findById(request.getAreaId())
                 .orElseThrow(() -> new ResourceNotFoundException("Área artística não encontrada.")));
         vaga.setValorMinimo(request.getValorMinimo());
@@ -487,9 +490,30 @@ public class VagaService {
         }
         if (request.getFuncaoIds() != null) {
             vaga.setFuncoes(resolverFuncoes(request.getFuncaoIds()));
+        } else if (mudouArea) {
+            vaga.setFuncoes(new HashSet<>());
         }
         if (vaga.getFuncoes().stream().anyMatch(funcao -> !funcao.getArea().getId().equals(vaga.getArea().getId()))) {
             throw new IllegalArgumentException("As funções devem pertencer à área da vaga.");
+        }
+        Set<Long> compativeis = vaga.getFuncoes().stream()
+                .flatMap(funcao -> funcao.getEspecializacoes().stream())
+                .map(com.portifolio.model.Especializacao::getId).collect(Collectors.toSet());
+        if (request.getEspecializacaoIds() != null) {
+            if (!compativeis.containsAll(request.getEspecializacaoIds())) {
+                throw new IllegalArgumentException("As especializações devem pertencer às funções selecionadas da vaga.");
+            }
+            vaga.setEspecializacoes(new HashSet<>(especializacaoRepository.findAllById(request.getEspecializacaoIds())));
+        } else {
+            // Edição legada preserva seleções válidas e remove apenas as que ficaram órfãs.
+            vaga.getEspecializacoes().removeIf(especializacao -> !compativeis.contains(especializacao.getId()));
+        }
+        if (request.getCategoriaAfirmativaIds() != null) {
+            var categorias = categoriaAfirmativaRepository.findAllById(request.getCategoriaAfirmativaIds());
+            if (categorias.size() != request.getCategoriaAfirmativaIds().size()) {
+                throw new ResourceNotFoundException("Categoria afirmativa não encontrada.");
+            }
+            vaga.setCategoriasAfirmativas(new HashSet<>(categorias));
         }
     }
 
@@ -602,6 +626,10 @@ public class VagaService {
                 .status(vaga.getStatus())
                 .dataPublicacao(vaga.getDataPublicacao())
                 .funcaoIds(funcaoIds)
+                .especializacaoIds(vaga.getEspecializacoes().stream()
+                        .map(com.portifolio.model.Especializacao::getId).collect(Collectors.toSet()))
+                .categoriaAfirmativaIds(vaga.getCategoriasAfirmativas().stream()
+                        .map(com.portifolio.model.CategoriaAfirmativa::getId).collect(Collectors.toSet()))
                 .categoria(vaga.getArea().getNome())
                 .experiencia(vaga.getExperiencia())
                 .dataLimiteCandidatura(vaga.getDataLimiteCandidatura())

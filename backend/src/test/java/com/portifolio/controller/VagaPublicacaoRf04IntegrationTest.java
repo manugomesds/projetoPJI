@@ -278,6 +278,108 @@ class VagaPublicacaoRf04IntegrationTest {
         assertThat(vagaRepository.count()).isZero();
     }
 
+    @Test
+    void apiPersisteTaxonomiaCompletaPreservaOmitidosERemoveSomenteOrfaos() throws Exception {
+        Usuario dono = criarUsuario("taxonomia@rf04.teste", TipoUsuario.CONTRATANTE);
+        criarPerfil(dono, "Empresa");
+        Funcao primeira = criarFuncao("Função principal");
+        Funcao segunda = criarFuncao("Função secundária");
+        Long esp1 = jdbcTemplate.queryForObject("insert into especializacoes(nome) values ('Especialização A') returning id", Long.class);
+        Long esp2 = jdbcTemplate.queryForObject("insert into especializacoes(nome) values ('Especialização B') returning id", Long.class);
+        Integer categoria = jdbcTemplate.queryForObject("insert into categorias_afirmativas(nome) values ('Categoria auditada') returning id", Integer.class);
+        jdbcTemplate.update("insert into funcao_especializacao values (?,?), (?,?)", primeira.getId(), esp1, segunda.getId(), esp2);
+        ObjectNode payload = payloadValido();
+        payload.putArray("funcaoIds").add(primeira.getId()).add(segunda.getId());
+        payload.putArray("especializacaoIds").add(esp1).add(esp2);
+        payload.putArray("categoriaAfirmativaIds").add(categoria);
+        var resposta = publicar(dono, payload).andExpect(status().isCreated())
+                .andExpect(jsonPath("$.especializacaoIds.length()").value(2))
+                .andExpect(jsonPath("$.categoriaAfirmativaIds[0]").value(categoria)).andReturn();
+        long id = objectMapper.readTree(resposta.getResponse().getContentAsString()).get("id").asLong();
+        assertThat(jdbcTemplate.queryForList("select especializacao_id from vaga_especializacao where vaga_id=?", Long.class, id))
+                .containsExactlyInAnyOrder(esp1, esp2);
+        assertThat(jdbcTemplate.queryForObject("select count(*) from vaga_funcao where vaga_id=?", Integer.class, id)).isEqualTo(2);
+        assertThat(jdbcTemplate.queryForObject("select categoria_id from vagas_categorias_afirmativas where vaga_id=?", Integer.class, id)).isEqualTo(categoria);
+
+        payload.remove("especializacaoIds");
+        payload.remove("categoriaAfirmativaIds");
+        editarTaxonomia(id, dono, payload).andExpect(status().isOk())
+                .andExpect(jsonPath("$.especializacaoIds.length()").value(2));
+        payload.putArray("funcaoIds").add(segunda.getId());
+        editarTaxonomia(id, dono, payload).andExpect(status().isOk())
+                .andExpect(jsonPath("$.especializacaoIds[0]").value(esp2))
+                .andExpect(jsonPath("$.especializacaoIds.length()").value(1));
+        assertThat(jdbcTemplate.queryForList("select especializacao_id from vaga_especializacao where vaga_id=?", Long.class, id))
+                .containsExactly(esp2);
+        payload.putArray("funcaoIds").add(primeira.getId());
+        payload.putArray("especializacaoIds").add(esp1);
+        editarTaxonomia(id, dono, payload).andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForList("select especializacao_id from vaga_especializacao where vaga_id=?", Long.class, id))
+                .containsExactly(esp1);
+        mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get("/api/vagas/{id}",id))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.especializacaoIds[0]").value(esp1));
+        // Área nova sem seleções não mantém funções/especializações da área anterior.
+        payload.put("areaId", 2);
+        payload.remove("funcaoIds");
+        payload.remove("especializacaoIds");
+        editarTaxonomia(id, dono, payload).andExpect(status().isOk())
+                .andExpect(jsonPath("$.funcaoIds.length()").value(0))
+                .andExpect(jsonPath("$.especializacaoIds.length()").value(0))
+                .andExpect(jsonPath("$.categoriaAfirmativaIds[0]").value(categoria));
+        payload.putArray("categoriaAfirmativaIds");
+        editarTaxonomia(id, dono, payload).andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("select count(*) from vagas_categorias_afirmativas where vaga_id=?", Integer.class, id)).isZero();
+    }
+
+    @Test
+    void taxonomiaIncompativelOuInexistenteNaoPublica() throws Exception {
+        Usuario dono = criarUsuario("invalido-tax@rf04.teste", TipoUsuario.CONTRATANTE);
+        criarPerfil(dono, "Empresa");
+        Funcao funcao = criarFuncao("Função válida");
+        Long esp = jdbcTemplate.queryForObject("insert into especializacoes(nome) values ('Sem vínculo') returning id", Long.class);
+        ObjectNode payload = payloadValido();
+        payload.putArray("funcaoIds").add(funcao.getId());
+        payload.putArray("especializacaoIds").add(esp);
+        publicar(dono, payload).andExpect(status().isBadRequest());
+        payload.putArray("especializacaoIds").add(999999);
+        publicar(dono, payload).andExpect(status().isBadRequest());
+        payload.putArray("especializacaoIds");
+        payload.putArray("categoriaAfirmativaIds").add(999999);
+        publicar(dono, payload).andExpect(status().isNotFound());
+        payload.remove("categoriaAfirmativaIds");
+        payload.putArray("especializacaoIds").add(1).add(2).add(3).add(4).add(5).add(6);
+        publicar(dono, payload).andExpect(status().isBadRequest());
+        assertThat(vagaRepository.count()).isZero();
+    }
+
+    @Test
+    void edicaoInvalidaReverteCamposETaxonomiaPersistidos() throws Exception {
+        Usuario dono = criarUsuario("rollback-tax@rf04.teste", TipoUsuario.CONTRATANTE);
+        criarPerfil(dono, "Empresa");
+        Funcao funcao = criarFuncao("Função rollback");
+        Long esp = jdbcTemplate.queryForObject("insert into especializacoes(nome) values ('Vínculo rollback') returning id", Long.class);
+        jdbcTemplate.update("insert into funcao_especializacao values (?,?)", funcao.getId(), esp);
+        ObjectNode payload = payloadValido();
+        payload.putArray("funcaoIds").add(funcao.getId());
+        payload.putArray("especializacaoIds").add(esp);
+        var resposta = publicar(dono,payload).andExpect(status().isCreated()).andReturn();
+        long id = objectMapper.readTree(resposta.getResponse().getContentAsString()).get("id").asLong();
+        payload.put("titulo", "Não persistir");
+        payload.putArray("especializacaoIds").add(999999);
+        editarTaxonomia(id,dono,payload).andExpect(status().isBadRequest());
+        assertThat(jdbcTemplate.queryForObject("select titulo from vagas where id=?", String.class,id)).isEqualTo("Fotógrafo de evento");
+        assertThat(jdbcTemplate.queryForList("select especializacao_id from vaga_especializacao where vaga_id=?",Long.class,id)).containsExactly(esp);
+        payload.putArray("especializacaoIds");
+        editarTaxonomia(id,dono,payload).andExpect(status().isOk());
+        assertThat(jdbcTemplate.queryForObject("select count(*) from vaga_especializacao where vaga_id=?",Integer.class,id)).isZero();
+    }
+
+    private org.springframework.test.web.servlet.ResultActions editarTaxonomia(long id, Usuario dono, ObjectNode payload) throws Exception {
+        return mockMvc.perform(org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put("/api/vagas/{id}",id)
+                .header("Authorization", "Bearer " + jwtService.gerarToken(dono))
+                .contentType(MediaType.APPLICATION_JSON).content(json(payload)));
+    }
+
     private org.springframework.test.web.servlet.ResultActions publicar(
             Usuario usuario, ObjectNode payload) throws Exception {
         return mockMvc.perform(post("/api/vagas")
