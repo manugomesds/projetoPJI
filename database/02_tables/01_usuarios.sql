@@ -13,7 +13,7 @@ create table usuarios (
     cnpj varchar(14) unique,
     
     perfil_completo boolean default false,
-    status_conta status_conta_enum not null,
+    status_conta status_conta_enum not null default 'PENDENTE_VERIFICACAO_EMAIL',
     versao_termo varchar(50),
     
     email_verificado boolean default false,
