@@ -130,12 +130,15 @@
 
 .perfil-publico__identidade {
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 1.5rem;
-  margin-top: -62px;
+  margin-top: 0;
+  padding-top: 1.5rem;
+  position: relative;
 }
 
 .perfil-publico__avatar {
+  margin-top: -4rem;
   flex: 0 0 auto;
   width: 132px;
   height: 132px;
@@ -289,9 +292,10 @@
   }
 
   .perfil-publico__identidade {
-    align-items: center;
+    align-items: flex-start;
     gap: 1rem;
-    margin-top: -44px;
+    margin-top: 0;
+    flex-direction: column;
   }
 
   .perfil-publico__avatar {
@@ -301,7 +305,7 @@
 
   .perfil-publico__identidade > div {
     min-width: 0;
-    padding-top: 3.5rem;
+    padding-top: 0;
   }
 
   .perfil-publico__identidade h1 {

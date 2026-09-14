@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import authService from '../../services/auth/authService';
+import { getRegistrationAreas } from '../../services/auth/areaService';
 import RegistrationPage, { calculateAge } from './RegistrationPage';
 import { PASSWORD_POLICY_MESSAGE } from '../../utils/passwordPolicy';
 
@@ -8,6 +9,7 @@ jest.mock('../../services/auth/authService', () => ({
   __esModule: true,
   default: { login: jest.fn(), cadastrar: jest.fn() },
 }));
+jest.mock('../../services/auth/areaService');
 
 function dateYearsAgo(years) {
   const today = new Date();
@@ -38,7 +40,12 @@ function fillCommon({ age = 30, role = 'ARTISTA', email = 'pessoa@palco.test' } 
   fireEvent.click(screen.getByRole('checkbox'));
 }
 
-beforeEach(() => authService.cadastrar.mockReset());
+beforeEach(() => {
+  authService.cadastrar.mockReset();
+  getRegistrationAreas.mockReset();
+  getRegistrationAreas.mockReturnValue(new Promise(() => {}));
+  sessionStorage.clear(); localStorage.clear();
+});
 
 test('calcula idade respeitando aniversário e rejeita data inválida', () => {
   expect(calculateAge('2010-08-31', new Date(2026, 7, 31))).toBe(16);
@@ -52,6 +59,33 @@ test('adulto ARTISTA aguarda catálogo real sem enviar um ID inventado', () => {
   fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
   expect(authService.cadastrar).not.toHaveBeenCalled();
   expect(screen.getByRole('alert')).toHaveTextContent('catálogo de áreas');
+  expect(screen.getByLabelText('Área principal')).toBeDisabled();
+});
+
+test('artista cadastra com área retornada pela API, sem ID hardcoded', async () => {
+  getRegistrationAreas.mockResolvedValue([{ id: 47, nome: 'Área oficial de teste' }]);
+  authService.cadastrar.mockResolvedValue({ id: 90 });
+  renderRegistration(); fillCommon();
+  await screen.findByRole('option', { name: 'Área oficial de teste' });
+  fireEvent.change(screen.getByLabelText('Tipo de perfil artístico'), { target: { value: 'ARTISTA_SOLO' } });
+  fireEvent.change(screen.getByLabelText('Área principal'), { target: { value: '47' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Registrar' }));
+  await screen.findByRole('heading', { name: 'Login após cadastro' });
+  expect(authService.cadastrar).toHaveBeenCalledWith(expect.objectContaining({ tipoUsuario: 'ARTISTA', tipoPerfilArtistico: 'ARTISTA_SOLO', areaPrincipalId: '47' }));
+});
+
+test('erro de catálogo permite tentar novamente com dados reais', async () => {
+  getRegistrationAreas.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([{ id: 83, nome: 'Dança' }]);
+  renderRegistration();
+  fireEvent.click(await screen.findByRole('button', { name: 'Tentar carregar áreas novamente' }));
+  await screen.findByRole('option', { name: 'Dança' });
+  expect(screen.getByLabelText('Área principal')).toBeEnabled();
+});
+
+test('catálogo vazio não inventa opções', async () => {
+  getRegistrationAreas.mockResolvedValue([]);
+  renderRegistration();
+  await screen.findByText('Nenhuma área disponível para cadastro.');
   expect(screen.getByLabelText('Área principal')).toBeDisabled();
 });
 

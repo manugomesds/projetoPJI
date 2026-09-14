@@ -51,6 +51,8 @@ public class SecurityConfig {
                         // RF03: listagem/busca de vagas e publica (feed tipo LinkedIn).
                         // Candidatura (RF06) e criacao/edicao continuam exigindo autenticacao.
                         .requestMatchers(HttpMethod.GET, "/api/vagas").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/areas").permitAll()
+                        .requestMatchers("/api/areas", "/api/areas/**").denyAll()
                         .requestMatchers(HttpMethod.GET, "/api/talentos", "/api/talentos/**").hasRole("CONTRATANTE")
                         .requestMatchers("/api/talentos", "/api/talentos/**").denyAll()
                         .requestMatchers(new RegexRequestMatcher("^/api/vagas/\\d+$", "GET")).permitAll()

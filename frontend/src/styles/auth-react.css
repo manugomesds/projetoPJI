@@ -1,6 +1,6 @@
 .auth-page {
   min-height: 100vh;
-  background-color: var(--cor-magenta);
+  background-color: var(--cor-navy);
 }
 
 .auth-feedback {
@@ -40,8 +40,9 @@
 }
 
 .auth-registration__card {
-  width: min(100%, 70rem);
+  width: min(100%, 87.5rem);
   padding: clamp(1.5rem, 4vw, 3.5rem);
+  box-shadow: 0 8px 28px rgba(255, 249, 255, 0.2);
 }
 
 .auth-registration__header {
@@ -89,9 +90,8 @@
 }
 
 .auth-registration__terms {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
+  display: block;
+  line-height: 1.8;
 }
 
 .auth-registration__terms input {
@@ -99,7 +99,29 @@
   width: 1.35rem;
   height: 1.35rem;
   accent-color: var(--cor-magenta);
+  vertical-align: middle;
+  margin-right: .65rem;
 }
+
+.auth-registration__step { color: var(--cor-magenta); font-weight: 700; margin-bottom: .8rem; }
+.auth-registration__back { display: inline-block; margin-top: 1rem; color: var(--cor-magenta); text-decoration: underline; }
+.auth-registration .campo__select { width: 100%; min-width: 0; min-height: 56px; padding: .8rem 1.25rem; border: 1px solid var(--cor-magenta-borda); border-radius: 30px; box-shadow: var(--sombra-campo); background: transparent; color: var(--cor-navy); font: inherit; }
+.auth-catalog-error { color: #7a1230; font-size: .9rem; margin-top: .75rem; }
+.auth-catalog-error button { text-decoration: underline; min-height: 44px; font-weight: 700; }
+.auth-page--login { background-image: linear-gradient(#000b, #000b), var(--auth-background); background-position: center; background-size: cover; background-repeat: no-repeat; }
+.auth-page--login .auth-login { min-height: calc(100svh - 100px); align-items: center; padding: 3rem 1rem; }
+.auth-page--login .login__card { background: transparent; box-shadow: none; color: white; width: min(100%, 620px); padding: 1.5rem 2rem; }
+.auth-login__brand { width: 82px; height: 78px; object-fit: contain; margin: 0 auto 1rem; }
+.auth-page--login .login__titulo { font-size: 2rem; text-align: center; }
+.auth-page--login .destaque-magenta, .auth-page--login .login__cadastro a { color: var(--cor-amarelo); }
+.auth-page--login .campo__rotulo, .auth-page--login .campo__ajuda, .auth-page--login .texto-legal { color: white; }
+.auth-page--login .campo__input { color: white; background: #0a0e2a55; border-color: #fff9ffb3; box-shadow: none; }
+.auth-page--login .login__google { color: white; border-color: white; margin-inline: auto; width: 100%; box-shadow: none; }
+.auth-page--login .login__cadastro { color: white; }
+.auth-page--login .login__entrar { color: var(--cor-navy); background: var(--cor-amarelo); }
+.auth-page--login .campo__olho img { filter: brightness(0) invert(1); }
+.auth-page--login :focus-visible { outline: 3px solid var(--cor-amarelo); outline-offset: 4px; }
+@media(max-width: 600px) { .auth-page--login .login__card { padding-inline: .5rem; } }
 
 .auth-pending-link {
   text-decoration: underline;

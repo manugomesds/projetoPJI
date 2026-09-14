@@ -149,7 +149,9 @@ test('monta o perfil público e entrega tipo e ID da rota', () => {
 
 test.each([
   ['/login', 'Login React'],
-  ['/cadastro', 'Cadastro React'],
+  ['/cadastro', 'DEFINA O SEU TIPO DE USUÁRIO'],
+  ['/cadastro?tipoUsuario=ARTISTA', 'Cadastro React'],
+  ['/cadastro?tipoUsuario=CONTRATANTE', 'Cadastro React'],
   ['/recuperar-senha', 'Recuperar senha React'],
   ['/redefinir-senha', 'Redefinir senha React'],
 ])('monta a rota pública do RF09 %s', (path, heading) => {

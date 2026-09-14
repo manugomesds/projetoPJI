@@ -1,3 +1,4 @@
+import { PublicNavigation } from '../auth/UserTypePage';
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import sessionService from '../../auth/sessionService';
@@ -25,23 +26,7 @@ export function safeHttpUrl(value) {
   }
 }
 
-function PublicProfileHeader() {
-  return (
-    <header className="perfil-publico-topo">
-      <nav className="perfil-publico-nav" aria-label="Navegação principal">
-        <a className="perfil-publico-nav__marca" href="/login" aria-label="Palco — início">
-          <img src="/assets/logo-palco.png" alt="Palco" />
-        </a>
-        <div className="perfil-publico-nav__acoes">
-          <a href="/login">Entrar</a>
-          <a className="perfil-publico-nav__cadastro" href="/cadastro">
-            Criar conta
-          </a>
-        </div>
-      </nav>
-    </header>
-  );
-}
+function PublicProfileHeader() { return <PublicNavigation />; }
 
 function ProfileError({ title, message }) {
   return (
@@ -51,7 +36,7 @@ function ProfileError({ title, message }) {
       className="perfil-publico__estado perfil-publico__estado--erro"
       headingLevel="h1"
     >
-      <a className="perfil-publico__voltar" href="/login">
+      <a className="perfil-publico__voltar" href="/">
         Voltar para a Palco
       </a>
     </ErrorState>

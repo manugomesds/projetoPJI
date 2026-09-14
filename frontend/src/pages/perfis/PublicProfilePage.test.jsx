@@ -79,7 +79,7 @@ test('carrega artista anonimamente pela rota e parâmetros normalizados', async 
   expect(apiClient.get).toHaveBeenCalledWith('/perfis/publicos/ARTISTA/12', { token: null });
   expect(screen.getByText('ARTISTA')).toBeInTheDocument();
   expect(document.body).toHaveClass('perfil-publico-pagina');
-  expect(screen.getByRole('link', { name: 'Palco — início' })).toHaveAttribute('href', '/login');
+  expect(screen.getByRole('link', { name: 'Palco — página inicial' })).toHaveAttribute('href', '/');
 });
 
 test('renderiza o contratante e seu tipo de perfil', async () => {
@@ -110,7 +110,7 @@ test('404 usa a mesma resposta pública para inexistente ou menor oculto', async
   expect(screen.getByRole('alert')).toHaveTextContent(
     'Este perfil não existe ou não está disponível publicamente.'
   );
-  expect(screen.getByRole('link', { name: 'Voltar para a Palco' })).toHaveAttribute('href', '/login');
+  expect(screen.getByRole('link', { name: 'Voltar para a Palco' })).toHaveAttribute('href', '/');
 });
 
 test('erro inesperado recebe estado genérico sem expor detalhes internos', async () => {

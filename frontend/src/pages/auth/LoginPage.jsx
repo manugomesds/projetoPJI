@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { saveSession } from '../../auth/sessionService';
 import authService from '../../services/auth/authService';
@@ -9,6 +9,7 @@ export function redirectToLegacyDashboard() {
 }
 
 export default function LoginPage({ onAuthenticated = redirectToLegacyDashboard }) {
+  useEffect(() => { document.title = 'Login — Palco'; }, []);
   const [searchParams] = useSearchParams();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -50,7 +51,7 @@ export default function LoginPage({ onAuthenticated = redirectToLegacyDashboard 
     <AuthLayout currentPage="login">
       <main className="login auth-login">
         <div className="card login__card">
-          <h1 className="login__titulo">Bem-vindo(a) a <span className="destaque-magenta">Palco</span></h1>
+          <img className="auth-login__brand" src="/assets/home/logo-palco-branco.png" alt="" /><h1 className="login__titulo">Bem-vindo(a) a <span className="destaque-magenta">Palco</span></h1>
           {cadastroConcluido ? <p className="auth-feedback auth-feedback--success" role="status">Cadastro realizado com sucesso. Faça login.</p> : null}
           <form className="login__form" onSubmit={handleSubmit} noValidate>
             <div className="campo">
@@ -69,10 +70,10 @@ export default function LoginPage({ onAuthenticated = redirectToLegacyDashboard 
             </div>
             {error ? <p className="auth-feedback auth-feedback--error" role="alert">{error}</p> : null}
             <button className="btn btn--primario login__entrar" type="submit" disabled={loading}>{loading ? 'Entrando…' : 'Entrar'}</button>
+            <a className="btn btn--contorno login__google" href="/google-callback.html">Acessar com Google</a>
             <p className="login__cadastro">Ainda não está no <span className="destaque-magenta">Palco</span>? <a href="/cadastro">Crie uma conta.</a></p>
             <p className="texto-legal login__legal">Ao continuar, você concorda com os <span className="auth-pending-link" role="link" aria-disabled="true">Termos de Serviço do Palco</span> e confirma que leu nossa <span className="auth-pending-link" role="link" aria-disabled="true">Política de Privacidade</span>.</p>
           </form>
-          <a className="btn btn--contorno" href="/google-callback.html">Acessar com Google</a>
         </div>
       </main>
     </AuthLayout>

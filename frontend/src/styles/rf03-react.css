@@ -5,6 +5,11 @@
   text-align: center;
 }
 
+/* A composição Gabriel oculta o CTA fora do destaque. Vagas reais precisam
+   continuar acessíveis, inclusive quando a API retorna uma única vaga. */
+.pagina-home .vaga-mini:not(.vaga-mini--destaque) .vaga-mini__cta { display: inline-flex; }
+.pagina-home .vitrine .seta { box-shadow: 0 4px 18px #0a0e2a33; }
+
 .home-vagas-status:empty {
   display: none;
 }

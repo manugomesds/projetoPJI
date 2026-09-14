@@ -79,7 +79,7 @@ export default function PortfolioSection({ owner = false, artistId }) {
   const fileItems = Array.isArray(files?.content) ? files.content : [];
   const videoItems = Array.isArray(videos?.content) ? videos.content : [];
   return <section className="portfolio-section" aria-label="Portfólio multimídia">
-    <h2>Portfólio</h2>
+    <header className="portfolio-heading"><p className="portfolio-eyebrow">Trabalhos & criações</p><h2>Portfólio</h2><p>Uma seleção de imagens, sons e vídeos que dão vida ao trabalho artístico.</p></header>
     {owner ? <>
       <p>Os arquivos integram seu perfil público quando a exposição é permitida. Perfis de menores permanecem privados.</p>
       <form onSubmit={sendFile} aria-label="Enviar arquivo ao portfólio">
