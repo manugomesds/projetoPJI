@@ -29,6 +29,7 @@ public class PerfilPublicoService {
     private final PerfilArtistaRepository perfilArtistaRepository;
     private final PerfilContratanteRepository perfilContratanteRepository;
     private final AvatarService avatarService;
+    private final com.portifolio.repository.ItemSalvoRepository itemSalvoRepository;
 
     @Transactional(readOnly = true)
     public PerfilPublicoResponse buscar(TipoUsuario tipo, Long usuarioId) {
@@ -59,6 +60,8 @@ public class PerfilPublicoService {
                 .avatarUrl(avatarService.resolverUrl(
                         perfil.getUsuarioId(), usuario.getFotoPerfil(), null))
                 .funcoes(funcoes)
+                .quantidadeSalvos(itemSalvoRepository.countByTipoAlvoAndAlvoId(
+                        com.portifolio.model.enums.TipoAlvoSalvo.PERFIL_ARTISTA,usuarioId))
                 .build();
     }
 

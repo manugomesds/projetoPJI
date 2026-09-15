@@ -6,6 +6,7 @@ import ErrorState from '../../components/common/ErrorState';
 import LoadingState from '../../components/common/LoadingState';
 import NotFound from '../../components/common/NotFound';
 import VagaDetails from '../../components/vagas/VagaDetails';
+import SaveButton from '../../components/salvos/SaveButton';
 import VagaRecommendations from '../../components/vagas/VagaRecommendations';
 import ApiError from '../../services/api/ApiError';
 import apiClient from '../../services/api/apiClient';
@@ -65,6 +66,7 @@ function VagaPageHeader() {
           <img className="navbar__logo" src="/assets/logo-palco.png" alt="Palco" />
         </a>
         <div className="app-navbar__acoes">
+          {sessionService.getAccessToken() ? <a className="btn-dash btn-dash--secundario" href="/salvos">Meus Salvos</a> : null}
           <a className="btn-dash btn-dash--secundario" href="/dashboard">
             Voltar ao painel
           </a>
@@ -161,6 +163,7 @@ export default function VagaDetailPage() {
       <div className="rf05-detail-layout">
         <div className="rf05-detail-layout__main">
           <VagaDetails vaga={state.vaga} />
+          <SaveButton tipoAlvo="VAGA" alvoId={state.vaga.id} nome={state.vaga.titulo} />
           {isOwner ? (
             <OwnerActions vaga={state.vaga} />
           ) : (

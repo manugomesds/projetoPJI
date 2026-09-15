@@ -15,4 +15,5 @@ public class ArtistaPublicoResponse implements PerfilPublicoResponse {
     private String bannerUrl;
     private String avatarUrl;
     private Set<FuncaoResponse> funcoes;
+    private long quantidadeSalvos;
 }

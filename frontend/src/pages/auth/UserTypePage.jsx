@@ -34,7 +34,7 @@ export function PublicNavigation({ currentPage }) {
   }
 
   return (
-    <header className="tipo-navbar" onKeyDown={onEscape}>
+    <header className="tipo-navbar" data-authenticated={Boolean(session?.token)} onKeyDown={onEscape}>
       <nav aria-label="Navegação principal">
         <a className="tipo-navbar__brand" href="/" aria-label="Palco — página inicial">
           <img src={`${process.env.PUBLIC_URL || ''}/assets/home/logo-palco-branco.png`} alt="Palco" width="65" height="61" />
@@ -72,6 +72,7 @@ export function PublicNavigation({ currentPage }) {
             <li><a href="/#sobre">Sobre nós</a></li>
           </ul>
           <div className="tipo-navbar__account">
+            {session?.token ? <a href="/salvos">Meus Salvos</a> : null}
             <a href={session?.token ? '/dashboard' : '/login'} aria-current={currentPage === 'login' ? 'page' : undefined}>{session?.token ? 'Minha conta' : 'Login'}</a>
             {session?.token ? <a className="tipo-navbar__signup" href="/perfil">Meu perfil</a> : <a className="tipo-navbar__signup" href={signupUrl} aria-current={currentPage === 'cadastro' ? 'page' : undefined}>Cadastro</a>}
           </div>

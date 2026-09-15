@@ -6,6 +6,7 @@ import ErrorState from '../../components/common/ErrorState';
 import LoadingState from '../../components/common/LoadingState';
 import ApiError from '../../services/api/ApiError';
 import PortfolioSection from '../../components/portfolio/PortfolioSection';
+import SaveButton from '../../components/salvos/SaveButton';
 import {
   createConversation,
   getPublicProfile,
@@ -86,6 +87,7 @@ function ProfileCard({ profile, type }) {
             <p className="perfil-publico__tipo">{type}</p>
             <h1>{name}</h1>
             {profile.localizacao && <p className="perfil-publico__local">{profile.localizacao}</p>}
+            {type === 'ARTISTA' ? <SaveButton tipoAlvo="PERFIL_ARTISTA" alvoId={profile.usuarioId} nome={name} showCount initialCount={profile.quantidadeSalvos || 0} /> : null}
             {canChat && (
               <button
                 className="perfil-publico__mensagem"

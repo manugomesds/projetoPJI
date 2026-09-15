@@ -1,3 +1,9 @@
+// RF19 tem testes próprios de integração de superfície; a consulta de estrela é isolada aqui
+// para manter as asserções originais de RF10/RF13/RF05 sobre suas próprias requisições.
+jest.mock('../../services/salvos/savedService', () => ({
+  ...jest.requireActual('../../services/salvos/savedService'),
+  getSavedState: () => Promise.resolve({ salvo: false, quantidadeSalvos: 0 }),
+}));
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import ContractorOnly from '../../components/vagas/ContractorOnly';

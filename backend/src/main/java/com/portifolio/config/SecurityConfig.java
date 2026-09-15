@@ -85,6 +85,7 @@ public class SecurityConfig {
                                 "/api/perfis-artistas", "/api/perfis-artistas/",
                                 "/api/perfis-contratantes", "/api/perfis-contratantes/").denyAll()
                         // APIs nao listadas acima preservam o requisito de autenticacao.
+                        .requestMatchers("/api/salvos", "/api/salvos/**").authenticated()
                         .requestMatchers("/api/**").authenticated()
                         // Somente a interface e os recursos estaticos sao publicos.
                         // A autorizacao das APIs continua nas regras especificas acima.

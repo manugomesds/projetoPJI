@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import AccountLayout from '../../components/account/AccountLayout';
+import SaveButton from '../../components/salvos/SaveButton';
 import { getTalents, getTalentCatalog, talentError } from '../../services/talentos/talentService';
 import './talent-bank.css';
 
@@ -95,6 +96,7 @@ function TalentResults({ title, query, onPage }) {
         </div>)}
         <p>{talent.quantidadeFuncoesCoincidentes} função(ões) e {talent.quantidadeEspecializacoesCoincidentes} especialização(ões) em comum</p>
         <a href={'/perfis/ARTISTA/' + encodeURIComponent(talent.artistaId)}>Ver Perfil</a>
+        <SaveButton tipoAlvo="PERFIL_ARTISTA" alvoId={talent.artistaId} nome={talent.nomeExibicao} />
       </article>)}
     </div>
     {state.data && state.data.totalElements > 0 ? <Pagination page={state.data.page} hasMore={state.data.hasMore}

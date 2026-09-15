@@ -8,6 +8,9 @@
 .tipo-navbar__brand { flex-shrink: 0; }
 .tipo-navbar__brand img { width: 65px; height: 61px; object-fit: contain; }
 .tipo-navbar__links { display: flex; align-items: center; justify-content: space-between; flex: 1; margin-left: clamp(0px, 13.2vw, 254px); font-size: clamp(16px, 1.25vw, 24px); font-weight: 700; }
+@media (min-width: 1151px) {
+  .tipo-navbar[data-authenticated="true"] .tipo-navbar__links { margin-left: auto; }
+}
 .tipo-navbar__sections { display: flex; align-items: center; gap: clamp(20px, 3.1vw, 60px); }
 .tipo-navbar :is(a, button) { white-space: nowrap; }
 .tipo-navbar a:hover { color: var(--cor-amarelo); }
@@ -68,7 +71,7 @@
   .tipo-navbar__links[data-open="true"] { display: flex; align-items: stretch; flex-direction: column; gap: 24px; }
   .tipo-navbar__sections { align-items: stretch; flex-direction: column; gap: 4px; }
   .tipo-navbar__sections > li > a { display: block; padding-block: 10px; }
-  .tipo-navbar__account { margin-left: 0; }
+  .tipo-navbar__account { margin-left: 0; flex-wrap: wrap; }
   .tipo-connections__menu { position: static; width: min(100%, 360px); }
   .tipo-main { min-height: calc(100svh - 80px); padding-block: 40px; }
   .tipo-content { width: 90%; margin-inline: auto; grid-template-columns: 1fr 1fr; gap: 24px; padding: 0; max-width: 820px; }

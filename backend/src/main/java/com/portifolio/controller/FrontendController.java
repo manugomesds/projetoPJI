@@ -31,7 +31,7 @@ public class FrontendController {
         return "forward:/index.html";
     }
 
-    @GetMapping({"/dashboard", "/perfil"})
+    @GetMapping({"/dashboard", "/perfil", "/salvos", "/salvos/"})
     public String encaminharRotasReactDaConta() {
         return "forward:/index.html";
     }

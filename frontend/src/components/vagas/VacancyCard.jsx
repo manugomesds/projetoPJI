@@ -1,3 +1,4 @@
+import SaveButton from '../salvos/SaveButton';
 import {
   brazilianDate,
   vacancyRemuneration,
@@ -57,6 +58,7 @@ function SearchVacancyCard({ vacancy, cancelled, index }) {
           {textOr(vacancy.descricao, 'Descrição não informada.')}
         </p>
         <div className="vaga-busca-card__rodape">
+          <SaveButton tipoAlvo="VAGA" alvoId={vacancy.id} nome={vacancy.titulo} />
           <p className="vaga-busca-card__prazo">{brazilianDate(vacancy.dataLimiteCandidatura)}</p>
           <a className="vaga-busca-card__link" href={`/vagas/${encodeURIComponent(vacancy.id)}`}>
             Ver detalhes
@@ -97,6 +99,7 @@ function HomeVacancyCard({ vacancy, index, featured }) {
         <a className="btn-palco btn-palco--amarelo vaga-mini__cta" href={`/vagas/${encodeURIComponent(vacancy.id)}`}>
           Ver vaga
         </a>
+        <SaveButton tipoAlvo="VAGA" alvoId={vacancy.id} nome={vacancy.titulo} />
       </div>
     </li>
   );
