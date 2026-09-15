@@ -10,8 +10,7 @@ create table agenda_artista (
     contato_responsavel varchar(150),
     cache_valor numeric(10,2),
     necessidades_tecnicas text,
-    exibir_publico boolean default false,
-
+    exibir_publico boolean default false
 );
 
 create table ranking_top_da_semana (
