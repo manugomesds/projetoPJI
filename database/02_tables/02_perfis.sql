@@ -1,11 +1,12 @@
 create table perfis_artistas (
     usuario_id bigint primary key references usuarios(id) on delete cascade,
     biografia text,
-    localizacao varchar(150),
+    cidade varchar(100),
+    estado char(2),
     url_portfolio varchar(255),
     tipo_perfil_artistico tipo_perfil_artistico_enum not null,
     disponivel_oportunidades boolean,
-    raio_atuacao  abrangencia_enum,
+    raio_atuacao  abrangencia_enum not null,
     nome_integrantes varchar(150),
     banner_url varchar(255),
     ultima_atualizacao timestamp default current_timestamp
@@ -14,9 +15,7 @@ create table perfis_artistas (
 create table perfis_contratantes (
     usuario_id bigint primary key references usuarios(id) on delete cascade,
     nome_empresa varchar(150),
-    cpf varchar(14) unique,
-    cnpj varchar(14) unique,
-    tipo_perfil varchar(100),
+    tipo_contratante tipo_contratante_enum not null,
     biografia text,
     localizacao varchar(150),
     banner_url varchar(255)

@@ -1,3 +1,8 @@
+-- =============================================================
+-- 1. sp_publicar_vaga — SÓ cria vaga nova ou publica um RASCUNHO.
+--    Nunca mais usado para editar uma vaga já ABERTA/PAUSADA.
+-- =============================================================
+ 
 create or replace procedure sp_publicar_vaga(
     inout p_vaga_id bigint default null,
     p_contratante_id bigint default null,
@@ -12,11 +17,11 @@ create or replace procedure sp_publicar_vaga(
     p_estado varchar default null,
     p_endereco_completo text default null,
     p_beneficios text default null,
-    p_modelo_trabalho modelo_trabalho_enum default 'PRESENCIAL',
+    p_modelo_trabalho modelo_trabalho_enum default null,
     p_tipo_contrato varchar default null,
     p_experiencia varchar default null,
-    p_data_limite_candidatura timestamp default null,
-    p_abrangencia abrangencia_enum default 'LOCAL',
+    p_data_limite_candidatura date default null,
+    p_abrangencia abrangencia_enum default null,
     p_funcoes_ids bigint[] default null,
     p_especializacoes_ids bigint[] default null,
     p_categorias_afirmativas_ids integer[] default null
@@ -24,46 +29,75 @@ create or replace procedure sp_publicar_vaga(
 language plpgsql as $$
 declare
     v_tipo_usuario text;
+    v_status_atual status_vaga_enum;
     v_func_id bigint;
     v_esp_id bigint;
     v_cat_id integer;
 begin
-    -- 1. Validação do tipo de usuário contratante
-    select upper(tipo_usuario::text) 
-    into v_tipo_usuario 
-    from usuarios 
-    where id = p_contratante_id;
-
+    -- 1. contratante válido
+    select upper(tipo_usuario::text) into v_tipo_usuario
+    from usuarios where id = p_contratante_id;
+ 
     if v_tipo_usuario is null or v_tipo_usuario <> 'CONTRATANTE' then
         raise exception 'O usuário (ID: %) não é um contratante válido.', p_contratante_id;
     end if;
-
-    -- 2. Transição de RASCUNHO existente para ABERTA ou criação direta de nova vaga
+ 
+    -- 2. campos obrigatórios do RF04 (título, descrição, requisitos,
+    -- área, cidade, estado) — sem isso não existe publicação válida
+    if p_area_id is null then
+        raise exception 'A vaga deve ter exatamente uma área artística selecionada.';
+    end if;
+    if p_titulo is null or trim(p_titulo) = '' then
+        raise exception 'O título da vaga é obrigatório.';
+    end if;
+    if p_descricao is null or trim(p_descricao) = '' then
+        raise exception 'A descrição da vaga é obrigatória.';
+    end if;
+    if p_requisitos is null or trim(p_requisitos) = '' then
+        raise exception 'Os requisitos da vaga são obrigatórios.';
+    end if;
+    if p_cidade is null or p_estado is null then
+        raise exception 'Cidade e Estado são obrigatórios.';
+    end if;
+ 
+    -- 3. cria vaga nova OU publica um RASCUNHO existente
     if p_vaga_id is not null then
-        update vagas
-        set area_id = coalesce(p_area_id, area_id),
-            titulo = coalesce(p_titulo, titulo),
-            descricao = coalesce(p_descricao, descricao),
-            requisitos = coalesce(p_requisitos, requisitos),
-            forma_remuneracao = coalesce(p_forma_remuneracao, forma_remuneracao),
-            valor_minimo = coalesce(p_valor_minimo, valor_minimo),
-            valor_maximo = coalesce(p_valor_maximo, valor_maximo),
-            cidade = coalesce(p_cidade, cidade),
-            estado = coalesce(p_estado, estado),
-            endereco_completo = coalesce(p_endereco_completo, endereco_completo),
-            beneficios = coalesce(p_beneficios, beneficios),
-            modelo_trabalho = coalesce(p_modelo_trabalho, modelo_trabalho),
-            tipo_contrato = coalesce(p_tipo_contrato, tipo_contrato),
-            experiencia = coalesce(p_experiencia, experiencia),
-            data_limite_candidatura = coalesce(p_data_limite_candidatura, data_limite_candidatura),
-            abrangencia = coalesce(p_abrangencia, abrangencia),
-            status = 'ABERTA'::status_vaga_enum,
-            data_publicacao = current_timestamp
+        select status into v_status_atual
+        from vagas
         where id = p_vaga_id and contratante_id = p_contratante_id;
-
-        if not found then
+ 
+        if v_status_atual is null then
             raise exception 'Vaga (ID: %) não encontrada para este contratante.', p_vaga_id;
         end if;
+ 
+        -- RF23: a única transição de publicação é RASCUNHO -> ABERTA.
+        -- Editar uma vaga já publicada é responsabilidade do
+        -- sp_atualizar_vaga (RF07); mudar o estado dela é
+        -- responsabilidade dos procedimentos do RF23/RF28.
+        if v_status_atual <> 'RASCUNHO' then
+            raise exception 'Só é possível publicar vagas em RASCUNHO (estado atual: %). Use sp_atualizar_vaga para editar o conteúdo, ou os procedimentos de suspender/reabrir/encerrar/cancelar para mudar o estado.', v_status_atual;
+        end if;
+ 
+        update vagas
+        set area_id = p_area_id,
+            titulo = p_titulo,
+            descricao = p_descricao,
+            requisitos = p_requisitos,
+            forma_remuneracao = p_forma_remuneracao,
+            valor_minimo = p_valor_minimo,
+            valor_maximo = p_valor_maximo,
+            cidade = p_cidade,
+            estado = p_estado,
+            endereco_completo = p_endereco_completo,
+            beneficios = p_beneficios,
+            modelo_trabalho = p_modelo_trabalho,
+            tipo_contrato = p_tipo_contrato,
+            experiencia = p_experiencia,
+            data_limite_candidatura = p_data_limite_candidatura,
+            abrangencia = p_abrangencia,
+            status = 'ABERTA'::status_vaga_enum,
+            data_publicacao = current_timestamp
+        where id = p_vaga_id;
     else
         insert into vagas (
             contratante_id, area_id, titulo, descricao, requisitos,
@@ -74,12 +108,12 @@ begin
             p_contratante_id, p_area_id, p_titulo, p_descricao, p_requisitos,
             p_forma_remuneracao, p_valor_minimo, p_valor_maximo, p_cidade, p_estado,
             p_endereco_completo, p_beneficios, p_modelo_trabalho, p_tipo_contrato,
-            p_experiencia, p_data_limite_candidatura, p_abrangencia, 'ABERTA'::status_vaga_enum, current_timestamp
+            p_experiencia, p_data_limite_candidatura, p_abrangencia,
+            'ABERTA'::status_vaga_enum, current_timestamp
         )
         returning id into p_vaga_id;
     end if;
-
-    -- 3. Atualização das Funções (Taxonomia Relacional)
+   -- 4. funções
     if p_funcoes_ids is not null then
         delete from vaga_funcao where vaga_id = p_vaga_id;
         foreach v_func_id in array p_funcoes_ids loop
@@ -88,8 +122,8 @@ begin
             on conflict do nothing;
         end loop;
     end if;
-
-    -- 4. Atualização das Especializações (Taxonomia Relacional)
+ 
+    -- 5. especializações
     if p_especializacoes_ids is not null then
         delete from vaga_especializacao where vaga_id = p_vaga_id;
         foreach v_esp_id in array p_especializacoes_ids loop
@@ -98,8 +132,8 @@ begin
             on conflict do nothing;
         end loop;
     end if;
-
-    -- 5. Atualização das Categorias Afirmativas (Ações Afirmativas)
+ 
+    -- 6. categorias afirmativas
     if p_categorias_afirmativas_ids is not null then
         delete from vagas_categorias_afirmativas where vaga_id = p_vaga_id;
         foreach v_cat_id in array p_categorias_afirmativas_ids loop

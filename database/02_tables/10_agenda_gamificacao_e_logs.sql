@@ -1,4 +1,4 @@
-﻿create table agenda_artista (
+create table agenda_artista (
     id bigserial primary key,
     artista_id bigint not null references perfis_artistas(usuario_id) on delete cascade,
     titulo_compromisso varchar(150) not null,
@@ -10,7 +10,7 @@
     contato_responsavel varchar(150),
     cache_valor numeric(10,2),
     necessidades_tecnicas text,
-    exibir_publico boolean default false
+    exibir_publico boolean default false,
 
 );
 
